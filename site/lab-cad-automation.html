@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta
+      name="description"
+      content="CAD 白框类型图截图流程：全图导出、文本锚点、局部裁切和发布清单，不再靠手拖窗口。"
+    />
+    <title>CAD 白框截图自动化：从手拖窗口到运行清单 - FEIAN</title>
+    <link rel="stylesheet" href="/src/entry.css" />
+    <style>
+      .proof-badges,
+      .entry-anchor-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+      }
+
+      .entry-anchor-nav {
+        margin: 1rem 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .entry-anchor-nav a,
+      .proof-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.45rem 0.75rem;
+        border: 1px solid var(--line-strong);
+        border-radius: 999px;
+        background: var(--panel-soft);
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 0.76rem;
+        letter-spacing: 0.04em;
+      }
+
+      .entry-section code,
+      .proof-table code {
+        font-family: var(--mono);
+        font-size: 0.84em;
+        color: var(--accent-strong);
+      }
+
+      .proof-grid {
+        display: grid;
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+
+      .proof-card,
+      .proof-note {
+        padding: 1rem 1.05rem;
+        border: 1px solid var(--line);
+        background: var(--panel-soft);
+      }
+
+      .proof-card h3 {
+        margin: 0;
+        font-size: 1rem;
+        line-height: 1.5;
+      }
+
+      .proof-card p,
+      .proof-note {
+        color: var(--muted);
+        line-height: 1.8;
+      }
+
+      .proof-note {
+        margin-top: 1rem;
+        border-style: dashed;
+      }
+
+      .proof-pre {
+        margin: 1rem 0 0;
+        padding: 1rem 1.05rem;
+        overflow: auto;
+        border: 1px solid var(--line);
+        background: #091019;
+        color: var(--accent-strong);
+        font-family: var(--mono);
+        font-size: 0.8rem;
+        line-height: 1.75;
+      }
+
+      .proof-table {
+        width: 100%;
+        margin-top: 1rem;
+        border-collapse: collapse;
+      }
+
+      .proof-table th,
+      .proof-table td {
+        padding: 0.8rem 0.9rem;
+        border: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .proof-table th {
+        color: var(--accent);
+        font-family: var(--mono);
+        font-size: 0.76rem;
+        letter-spacing: 0.05em;
+      }
+
+      .proof-table td {
+        color: var(--muted);
+        line-height: 1.8;
+      }
+
+      body.entry-page--lab-cad .entry-filebar {
+        background:
+          linear-gradient(90deg, rgb(171 152 230 / 9%), transparent 42%),
+          linear-gradient(180deg, rgb(255 255 255 / 3%), rgb(255 255 255 / 1%));
+      }
+
+      @media (min-width: 760px) {
+        .proof-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 760px) {
+        .proof-table {
+          display: block;
+          overflow-x: auto;
+        }
+      }
+    </style>
+    <style data-critical-reset>
+      html {
+        color-scheme: dark;
+        background: #070a0f;
+        scroll-behavior: smooth;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-width: 320px;
+        color: #edf1f5;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        line-height: 1.58;
+        background: #070a0f;
+      }
+      .rain-canvas,
+      .fx-layer {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .rain-canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      .fx-layer {
+        z-index: 48;
+      }
+
+      .page-shell {
+        position: relative;
+        z-index: 2;
+        overflow: clip;
+        visibility: hidden;
+      }
+
+      .entry-shell {
+        position: relative;
+        z-index: 2;
+        overflow: clip;
+      }
+
+    </style>
+  </head>
+  <body class="entry-page entry-page--lab entry-page--lab-cad entry-page--enhanced">
+    <div class="entry-shell">
+      <header class="entry-topbar">
+        <a href="/index.html">
+          <strong>FEIAN</strong>
+          <span>项目实验 / cad</span>
+        </a>
+        <nav class="entry-nav" aria-label="页面导航">
+          <a href="/index.html">首页</a>
+          <a href="/lab.html">项目实验</a>
+          <a href="/archive.html">归档</a>
+        </nav>
+      </header>
+
+      <header class="entry-header entry-header-feature">
+        <div class="entry-filebar" aria-label="文章状态">
+          <div class="entry-filebar-tag">
+            <span>项目构建 / lab</span>
+            <strong>cad / automation / publish</strong>
+          </div>
+          <div class="entry-filebar-route">
+            <span>项目 → cad automation workbench</span>
+            <span>更新 2026-04-23</span>
+          </div>
+        </div>
+
+        <div class="entry-header-grid">
+          <div class="entry-header-copy">
+            <p class="entry-kicker">构建记录 / full extents → crop → publish</p>
+            <h1>CAD 白框截图自动化：从手拖窗口到运行清单</h1>
+            <p class="entry-subhead">这轮先跑通 BMC10：full_extents、文本 raw、局部裁切、最终 PNG 和 manifest 都留在 run root。</p>
+            <p class="entry-lede">
+              以前这类事情最容易卡在手工：开 CAD、找图、缩放、截图、改名、再挪回业务仓库。现在这一类至少把全图导出、文本锚点、局部裁切、caption 发布和运行清单一起放进了独立工作台。
+            </p>
+            <div class="entry-meta">
+              <span>2026-04-23 整理</span>
+              <span>CAD 自动化 / 批处理</span>
+              <span>fullsheet publish / manifest / PNG</span>
+            </div>
+          </div>
+
+          <aside class="entry-filecard entry-signalcard" aria-label="工作台速览">
+            <p class="entry-filecard-label">固定下来的对象</p>
+            <div class="entry-signalgrid">
+              <div>
+                <span>工作台</span>
+                <strong>研究、配置、样本、工具、运行目录从业务仓库里拆开</strong>
+              </div>
+              <div>
+                <span>CLI</span>
+                <strong><code>bmc10_fullsheet_publish.py</code> 成了可复用入口</strong>
+              </div>
+              <div>
+                <span>输入</span>
+                <strong>full extents、文本 raw、投影定位、局部裁切被接成固定流程</strong>
+              </div>
+              <div>
+                <span>输出</span>
+                <strong>发布到 <code>artifacts/material_library/pending</code>，并留下 manifest</strong>
+              </div>
+            </div>
+            <p class="entry-filecard-note">
+              run root、输出范围和真实 PNG 已经稳定下来，不再靠某次手动操作碰巧成功。
+            </p>
+          </aside>
+        </div>
+      </header>
+
+      <main class="entry-main">
+        <section class="entry-section">
+          <h2>先把 CAD 研究目录从业务仓库里拆出来</h2>
+          <p>
+            如果 CAD 研究、调试和运行产物继续堆在业务仓库里，后面无论成功多少次，都会越来越难接手。所以这轮先把 CAD 自动化工作台从业务仓库里拆出来，让研究资产、配置、样本和 runs 各归各位。
+          </p>
+          
+        </section>
+
+        <section class="entry-section" id="objects">
+          <h2>run root 里现在要看哪些东西</h2>
+          <table class="proof-table">
+            <thead>
+              <tr>
+                <th scope="col">对象</th>
+                <th scope="col">现在放在哪</th>
+                <th scope="col">放置理由</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>研究与归档</strong></td>
+                <td><code>archive/</code> / <code>docs/</code></td>
+                <td>不再让调试残骸和业务正式输出混在一起。</td>
+              </tr>
+              <tr>
+                <td><strong>配置与样本</strong></td>
+                <td><code>configs/</code> / <code>samples/</code></td>
+                <td>每次运行都能对上样本批次和配置来源。</td>
+              </tr>
+              <tr>
+                <td><strong>执行入口</strong></td>
+                <td><code>tools/bmc10_fullsheet_publish.py</code></td>
+                <td>把全量发布流程固定成一个能重跑的 CLI。</td>
+              </tr>
+              <tr>
+                <td><strong>运行清单</strong></td>
+                <td><code>runs/fullsheet_publish_*/manifest.json</code></td>
+                <td>这让“上次到底发布了什么”不再只能靠回忆。</td>
+              </tr>
+              <tr>
+                <td><strong>业务侧素材输出</strong></td>
+                <td><code>artifacts/material_library/pending</code></td>
+                <td>工作台负责调试和产出，业务仓库只接最终需要的素材。</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="entry-section" id="chain">
+          <h2>不再靠手拖窗口</h2>
+          <div class="proof-badges" aria-label="流程对象">
+            <span class="proof-badge">full_extents.png</span>
+            <span class="proof-badge">full_extents.json</span>
+            <span class="proof-badge">all_sdlx_texts_raw.txt</span>
+            <span class="proof-badge">modelspace_bmc_texts_raw.txt</span>
+            <span class="proof-badge">manifest.json</span>
+          </div>
+          <pre class="proof-pre">当前可复用 CLI：
+bmc10_fullsheet_publish.py
+
+使用：
+1. 已验证成功的 full_extents.png / full_extents.json
+2. 两份文本 raw
+3. 投影定位 + 局部裁切 + caption 发布
+
+输出：
+- artifacts/material_library/pending/start
+- artifacts/material_library/pending/busbar
+- runs/fullsheet_publish_<RUN_NAME>/manifest.json</pre>
+          <p>
+            这条流程最有用的地方，是它不再强依赖“实时拖 CAD 窗口把缩放调对”。一旦全图导出和文本锚点已经成立，后面更多是坐标和发布问题，而不是手工操作技巧。
+          </p>
+        </section>
+
+        <section class="entry-section" id="evidence">
+          <h2>材料：PNG、裁切和 manifest</h2>
+          <div class="proof-grid">
+            <article class="proof-card">
+              <h3>README 已经承认它是独立工作台</h3>
+              <p>
+                根目录 README 直说：这个目录用于集中留下 CAD 自动化相关的研究、脚本、配置、样本与运行产物，避免继续影响具体业务仓库。这个范围一旦成立，事情就从“临时脚本”变成了“长期工作台”。</p>
+            </article>
+
+            <article class="proof-card">
+              <h3>run 目录里有真实执行产物</h3>
+              <p>
+                这一类不是只停在 README。已经有 <code>progress_report.json</code>，也有真实输出的 <code>BMC10_51-SDFL-JZPE.png</code>。有 run root、有报告、有 PNG，说明它已经跑过且留下了东西。</p>
+            </article>
+
+            <article class="proof-card">
+              <h3>业务仓库只留最小入口和最终素材</h3>
+              <p>
+                README 还把原则写明了：研究 / 调试内容不再回流影响业务仓库，业务仓库只保留最小专用技能和最终输出素材。这种分工，比“脚本写在哪”更重要。
+              </p>
+            </article>
+
+            <article class="proof-card">
+              <h3>旧方案没有被直接删掉</h3>
+              <p>
+                <code>bmc10_batch_screenshot_best_scheme.py</code> 仍作为旧版逐窗截图脚本保留。这说明这次不是为了更新流程而砍掉旧材料，而是先让新流程稳定，再保留旧方案做单样验证。
+              </p>
+            </article>
+          </div>
+          <p class="proof-note">
+            这件事是否可靠，主要看输入、输出、run root 和业务仓库范围能否被别人重新识别。
+          </p>
+        </section>
+
+        <section class="entry-section" id="next">
+          <h2>跑图前的核查对象</h2>
+          <div class="proof-grid">
+            <article class="proof-card">
+              <h3>还没做完</h3>
+              <ul>
+                <li>当前最成熟的是 BMC10 这一类，通用 toolkit 还不是主入口。</li>
+                <li>caption 发布、局部裁切和样本锚点仍受当前文本 raw 质量影响。</li>
+                <li>工作台现在已经能稳定产图，但要继续泛化，先得补更多样本，而不是先抽象成统一框架。</li>
+              </ul>
+            </article>
+
+            <article class="proof-card">
+              <h3>后续对象</h3>
+              <ul>
+                <li>核查 <code>docs/best_scheme.md</code> 和最近一次 run 的 manifest。</li>
+                <li>核查业务仓库 pending 素材是否和运行清单一致。</li>
+                <li>通用 CAD toolkit 等更多样本后再抽象；BMC10 细节暂时保留。</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section class="entry-note">
+          <p>
+            BMC10 跑法已经留档：<code>full_extents.png</code>、文本 raw、局部裁切、caption 发布、manifest、最终 PNG。run root 负责复查，不靠回忆拖 CAD 窗口。
+          </p>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="/src/entry.ts"></script>
+  </body>
+</html>
+
+
+
+
+
+
+

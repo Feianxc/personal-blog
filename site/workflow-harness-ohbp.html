@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="description" content="OHBP / harnessbench：协议、结构定义、命令行、verifier和网页最小版本收成一套可复核记录。" />
+    <title>OHBP / harnessbench：先让材料先放齐，再谈榜单 - FEIAN</title>
+    <link rel="stylesheet" href="/src/entry.css" />
+    <style>
+      .entry-anchor-nav,.proof-badges{display:flex;flex-wrap:wrap;gap:.6rem}.entry-anchor-nav{margin:1rem 0 0;padding:0;list-style:none}.entry-anchor-nav a,.proof-badge{display:inline-flex;align-items:center;padding:.45rem .75rem;border:1px solid var(--line-strong);border-radius:999px;background:var(--panel-soft);color:var(--muted);font-family:var(--mono);font-size:.76rem;letter-spacing:.04em}.entry-section code,.proof-table code{font-family:var(--mono);font-size:.84em;color:var(--accent-strong)}.proof-grid{display:grid;gap:1rem;margin-top:1rem}.proof-card,.proof-note{padding:1rem 1.05rem;border:1px solid var(--line);background:var(--panel-soft)}.proof-card h3{margin:0;font-size:1rem;line-height:1.5}.proof-card p,.proof-note,.proof-card li{color:var(--muted);line-height:1.8}.proof-note{margin-top:1rem;border-style:dashed}.proof-table{width:100%;margin-top:1rem;border-collapse:collapse}.proof-table th,.proof-table td{padding:.8rem .9rem;border:1px solid var(--line);text-align:left;vertical-align:top}.proof-table th{color:var(--accent);font-family:var(--mono);font-size:.76rem;letter-spacing:.05em}.proof-table td{color:var(--muted);line-height:1.8}.proof-table strong{color:var(--text)}.proof-pre{margin:1rem 0 0;padding:1rem 1.05rem;overflow:auto;border:1px solid var(--line);background:#091019;color:var(--accent-strong);font-family:var(--mono);font-size:.8rem;line-height:1.75}@media (min-width:760px){.proof-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media (max-width:760px){.proof-table{display:block;overflow-x:auto}}
+    </style>
+    <style data-critical-reset>
+      html {
+        color-scheme: dark;
+        background: #070a0f;
+        scroll-behavior: smooth;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-width: 320px;
+        color: #edf1f5;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        line-height: 1.58;
+        background: #070a0f;
+      }
+      .rain-canvas,
+      .fx-layer {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .rain-canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      .fx-layer {
+        z-index: 48;
+      }
+
+      .page-shell {
+        position: relative;
+        z-index: 2;
+        overflow: clip;
+        visibility: hidden;
+      }
+
+      .entry-shell {
+        position: relative;
+        z-index: 2;
+        overflow: clip;
+      }
+
+    </style>
+  </head>
+  <body class="entry-page entry-page--workflow entry-page--enhanced">
+    <div class="entry-shell">
+      <header class="entry-topbar">
+        <a href="/index.html"><strong>FEIAN</strong><span>工作流档案 / 评测</span></a>
+        <nav class="entry-nav" aria-label="页面导航"><a href="/index.html">首页</a><a href="/workflow.html">工作流</a><a href="/archive.html">归档 / 时间线</a></nav>
+      </header>
+
+      <header class="entry-header entry-header-feature">
+        <div class="entry-filebar" aria-label="文章状态"><div class="entry-filebar-tag"><span>工作流案例 / 评测协议</span><strong>ohbp / harnessbench</strong></div><div class="entry-filebar-route"><span>项目 → 评测基准</span><span>更新 2026-04-23</span></div></div>
+        <div class="entry-header-grid">
+          <div class="entry-header-copy">
+            <p class="entry-kicker">协议 / 命令行 / verifier / 榜单</p>
+            <h1>OHBP / harnessbench：先让材料先放齐，再谈榜单</h1>
+            <p class="entry-subhead">这一轮只盯四个对象：OHBP v0.1、运行清单 manifest.json、最终材料包 final bundle、verification_record verification_record。</p>
+            <p class="entry-lede">这里不写空口的强弱判断。先让运行命令留下材料，打包命令生成规范材料包，校验命令限定检查说法，verifier再给出结论。没有材料包，就像没有原始文件的测试，名字再亮也无法定位。</p>
+            <div class="entry-meta"><span>2026-04-23 整理</span><span>TypeScript 单体仓</span><span>结构定义 / 规范化 / 校验器 / verifier</span></div>
+          </div>
+          <aside class="entry-filecard entry-signalcard" aria-label="项目速览"><p class="entry-filecard-label">四个固定范围</p><div class="entry-signalgrid"><div><span>协议</span><strong>OHBP v0.1 先冻结对象范围和文件约定</strong></div><div><span>来源</span><strong>协议定义不放网站，也不放命令行，而放共享包</strong></div><div><span>打包</span><strong>打包命令是“原始工作区”到“最终材料包”的唯一规范化范围</strong></div><div><span>结论</span><strong>verification_record只能由verifier侧生成</strong></div></div><p class="entry-filecard-note">价值不在网页上多几个榜，而在执行、打包、验证、结论四件事被分开。</p></aside>
+        </div>
+      </header>
+
+      <main class="entry-main">
+        <section class="entry-section">
+          <h2>清单先于榜单</h2>
+          <p>评测项目很容易变成一张只有结果分的表：谁跑的、怎么跑的、有没有多次挑最好、有没有人工修补、环境有没有影响，都会藏在摘要分背后。所以这一类先反过来做：不急着把榜单做满，先把协议对象、文件约定和verifier结论写清楚。</p>
+          
+        </section>
+
+        <section class="entry-section" id="objects">
+          <h2>这几个对象不能混在一起</h2>
+          <table class="proof-table"><thead><tr><th scope="col">对象</th><th scope="col">现在放在哪</th><th scope="col">为什么不能少</th></tr></thead><tbody>
+            <tr><td><strong>协议来源</strong></td><td><code>docs/ohbp-v0.1/ohbp-v0.1.md</code></td><td>它定义基准卡、任务包、运行清单、材料包、完整性证明和verification_record，不让产品页先替协议做主。</td></tr>
+            <tr><td><strong>实施蓝图</strong></td><td><code>docs/implementation/build-blueprint.md</code></td><td>它把执行顺序钉成 A 到 F 六个阶段，而不是一边做网页一边猜协议。</td></tr>
+            <tr><td><strong>共享包来源</strong></td><td><code>packages/schema</code> / <code>canonical</code> / <code>validator-core</code> / <code>verifier-core</code></td><td>协议定义不落在界面，也不落在命令行；这样不同入口消费的是同一组规则。</td></tr>
+            <tr><td><strong>应用入口</strong></td><td><code>apps/hb-cli</code> / <code>mock-intake</code> / <code>verifier-worker</code> / <code>web</code></td><td>命令行、上传、结论、展示各自负责一段，避免一个应用既当裁判又当选手。</td></tr>
+            <tr><td><strong>结论对象</strong></td><td><code>manifest.json</code> / <code>verification_record</code></td><td>运行清单是材料包侧的连接面；verification_record才是平台结论来源。</td></tr>
+          </tbody></table>
+        </section>
+
+        <section class="entry-section" id="chain">
+          <h2>原始工作区到榜单之前要过几道门</h2>
+          <div class="proof-badges" aria-label="流程节点"><span class="proof-badge">hb init</span><span class="proof-badge">hb run</span><span class="proof-badge">hb pack</span><span class="proof-badge">hb validate</span><span class="proof-badge">hb inspect</span><span class="proof-badge">hb upload --dry-run</span></div>
+          <pre class="proof-pre">hb run       只收集原始输出
+hb pack      把原始工作区收住成最终材料包
+hb validate  只做确定性检查
+hb upload    先走模拟接收入口
+verifier      生成上传记录 / 完整性证明 / verification_record
+web           只消费榜单 / 条目派生视图</pre>
+          <p>这里的关键不是命令多，而是每个命令被限制住了。运行命令不能越界当裁判，网页也不能替verifier下结论。</p>
+        </section>
+
+        <section class="entry-section" id="evidence">
+          <h2>材料：协议、材料包、校验记录</h2>
+          <div class="proof-grid">
+            <article class="proof-card"><h3>OHBP v0.1 已经冻结为协议稿</h3><p>协议文档明确写着“先保留原始材料，再看分数；先定协议，再做产品页”。这句话把项目从页面需求文档拉回到了可审计对象范围。</p></article>
+<article class="proof-card"><h3>单体仓结构先把来源拆开</h3><p><code>apps/</code> 和 <code>packages/</code> 的范围已经写进蓝图：结构定义、规范化、类型、校验器、verifier、页面视图都是单独职责，不允许网页直接持有全部定义。</p></article>
+            <article class="proof-card"><h3>运行清单被定义成唯一连接面</h3><p>注册信息、容差策略、可重复性、材料通道和摘要值都只能经 <code>manifest.json</code> 进入消费层。这个限制比“多做一个上传页”更重要。</p></article>
+            <article class="proof-card"><h3>榜单只是最后一层派生视图</h3><p>官方验证榜、可复现前沿、社区实验室都是网页最小版本的消费层。它们可以展示结论，但不能替代结论生成。</p></article>
+          </div>
+        </section>
+
+        <section class="entry-section" id="next">
+          <h2>范围：榜单先不急着扩展</h2>
+          <div class="proof-grid"><article class="proof-card"><h3>这次不做什么</h3><ul><li>不定义唯一全球总榜。</li><li>不把运营积分和奖励规则固定进协议。</li><li>不让命令行、网页或某个页面单独拥有协议定义。</li></ul></article><article class="proof-card"><h3>后续对象</h3><ul><li><code>packages/schema</code> 与 fixtures：goldens / mutants 回归。</li><li><code>hb pack</code>：规范化范围。</li><li>榜单视觉和条目页面放在协议、材料包、verifier稳定之后。</li></ul></article></div>
+        </section>
+
+        <section class="entry-note"><p>评测系统先问“这份材料能不能被别人复核”，再问“谁第一”。</p></section>
+      </main>
+    </div>
+    <script type="module" src="/src/entry.ts"></script>
+  </body>
+</html>
+
+
+
+
+
+
+

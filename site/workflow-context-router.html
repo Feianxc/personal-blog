@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="description" content="SkillOS Lite / Context Router：suggest、session attach 和明确日志优先于黑盒全自动。" />
+    <title>Context Router V1：只标出来路线，不替人接管方向盘 - FEIAN</title>
+    <link rel="stylesheet" href="/src/entry.css" />
+    <style>
+      .entry-anchor-nav,.proof-badges{display:flex;flex-wrap:wrap;gap:.6rem}.entry-anchor-nav{margin:1rem 0 0;padding:0;list-style:none}.entry-anchor-nav a,.proof-badge{display:inline-flex;align-items:center;padding:.45rem .75rem;border:1px solid var(--line-strong);border-radius:999px;background:var(--panel-soft);color:var(--muted);font-family:var(--mono);font-size:.76rem;letter-spacing:.04em}.entry-section code,.proof-table code{font-family:var(--mono);font-size:.84em;color:var(--accent-strong)}.proof-grid{display:grid;gap:1rem;margin-top:1rem}.proof-card,.proof-note{padding:1rem 1.05rem;border:1px solid var(--line);background:var(--panel-soft)}.proof-card h3{margin:0;font-size:1rem;line-height:1.5}.proof-card p,.proof-note,.proof-card li{color:var(--muted);line-height:1.8}.proof-note{margin-top:1rem;border-style:dashed}.proof-table{width:100%;margin-top:1rem;border-collapse:collapse}.proof-table th,.proof-table td{padding:.8rem .9rem;border:1px solid var(--line);text-align:left;vertical-align:top}.proof-table th{color:var(--accent);font-family:var(--mono);font-size:.76rem;letter-spacing:.05em}.proof-table td{color:var(--muted);line-height:1.8}.proof-table strong{color:var(--text)}.proof-pre{margin:1rem 0 0;padding:1rem 1.05rem;overflow:auto;border:1px solid var(--line);background:#091019;color:var(--accent-strong);font-family:var(--mono);font-size:.8rem;line-height:1.75}@media (min-width:760px){.proof-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media (max-width:760px){.proof-table{display:block;overflow-x:auto}}
+    </style>
+    <style data-critical-reset>
+      html {
+        color-scheme: dark;
+        background: #070a0f;
+        scroll-behavior: smooth;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-width: 320px;
+        color: #edf1f5;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        line-height: 1.58;
+        background: #070a0f;
+      }
+      .rain-canvas,
+      .fx-layer {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .rain-canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      .fx-layer {
+        z-index: 48;
+      }
+
+      .page-shell {
+        position: relative;
+        z-index: 2;
+        overflow: clip;
+        visibility: hidden;
+      }
+
+      .entry-shell {
+        position: relative;
+        z-index: 2;
+        overflow: clip;
+      }
+
+    </style>
+  </head>
+  <body class="entry-page entry-page--workflow entry-page--enhanced">
+    <div class="entry-shell">
+      <header class="entry-topbar"><a href="/index.html"><strong>FEIAN</strong><span>工作流档案 / router</span></a><nav class="entry-nav" aria-label="页面导航"><a href="/index.html">首页</a><a href="/workflow.html">工作流</a><a href="/archive.html">归档 / 时间线</a></nav></header>
+      <header class="entry-header entry-header-feature"><div class="entry-filebar" aria-label="文章状态"><div class="entry-filebar-tag"><span>工作流案例 / workflow</span><strong>skillos / context router</strong></div><div class="entry-filebar-route"><span>项目 → capability router</span><span>更新 2026-04-23</span></div></div><div class="entry-header-grid"><div class="entry-header-copy"><p class="entry-kicker">skill routing / context budget / governance</p><h1>Context Router V1：只标出来路线，不替人接管方向盘</h1><p class="entry-subhead">V1 的规矩很朴素：能力目录常驻，正文按需加载，attach 只对当前 session 生效。</p><p class="entry-lede">能力路由最怕变成新的黑箱。一句话切 skill、开 MCP、换插件，短期很炫，长期会污染上下文。Lite 版只做一件事：把能力为什么进场、什么时候退场说清楚，不装作替人决定方向。</p><div class="entry-meta"><span>2026-04-23 整理</span><span>router / bundle / governance</span><span>suggest + attach + route-log</span></div></div><aside class="entry-filecard entry-signalcard" aria-label="路由器速览"><p class="entry-filecard-label">V1 只保 4 件事</p><div class="entry-signalgrid"><div><span>Catalog</span><strong>统一登记 skill / MCP / plugin / CLI</strong></div><div><span>Router</span><strong>根据意图、项目指纹和上下文预算建议能力</strong></div><div><span>Loader</span><strong>metadata 常驻，正文按需加载</strong></div><div><span>Governance</span><strong>新增能力先入 inbox，不静默写全局</strong></div></div><p class="entry-filecard-note">不是把所有东西自动打开，而是让“启用原因”可见、可回退。</p></aside></div></header>
+      <main class="entry-main">
+        <section class="entry-section"><h2>路由器不擅自切能力</h2><p>如果路由器每轮都擅自切 skill、换 MCP、开插件，短期看起来很主动，长期会变成另一种污染：用户不知道能力为什么进来，也不知道什么时候该退出。V1 的判断很简单：suggest-only，不自动落状态；session attach，不跨项目继承；每次路由都要能解释。</p></section>
+        <section class="entry-section" id="objects"><h2>路由器要管住的几个对象</h2><table class="proof-table"><thead><tr><th scope="col">对象</th><th scope="col">建议位置</th><th scope="col">为什么不能少</th></tr></thead><tbody><tr><td><strong>能力目录</strong></td><td><code>.codex/router/catalog.json</code></td><td>每个 skill / MCP / plugin / CLI 都要有 scope、category、context_cost、risk_level 和 path，不能靠临场猜。</td></tr><tr><td><strong>能力包</strong></td><td><code>bundles.toml</code></td><td>frontend-deai、excel-automation 这类 bundle 手工维护，避免自动归类把能力乱塞。</td></tr><tr><td><strong>意图映射</strong></td><td><code>intent-map.toml</code></td><td>只做高置信规则，且默认 <code>suggest_only</code>，不让一句话直接改全局状态。</td></tr><tr><td><strong>会话状态</strong></td><td><code>.workspace/skillos/state.json</code></td><td>只记录当前 session attach / warm / penalties，不跨线程继承。</td></tr><tr><td><strong>路由日志</strong></td><td><code>route-log.jsonl</code> / <code>explain-last.json</code></td><td>每次建议为什么出现，都要能回看，不靠“系统觉得合适”。</td></tr><tr><td><strong>准入区</strong></td><td><code>inbox/</code> → <code>canonical/</code> → <code>bundles/</code></td><td>新能力先审计、分类、确认，再进入正式 catalog。</td></tr></tbody></table></section>
+        <section class="entry-section" id="principles"><h2>V1 只建议，不落全局状态</h2><div class="proof-badges" aria-label="原则"><span class="proof-badge">fast-path first</span><span class="proof-badge">suggest only</span><span class="proof-badge">session attach</span><span class="proof-badge">human approve</span></div><pre class="proof-pre">默认：通用能力足够 → 不触发 bundle
+高置信：只建议 attach → 不自动写状态
+attach：只对当前 session 有效
+detach：用户显式关闭 / 切 bundle / session reset
+新增能力：inbox → audit → classify suggestion → human approve → publish</pre><p>这套原则看起来保守，但它正好防住了能力系统常见的问题：为了省一次确认，把长期上下文污染变成默认状态。</p></section>
+<section class="entry-section" id="evidence"><h2>材料：catalog、bundle、route-log</h2><div class="proof-grid"><article class="proof-card"><h3>README 已经把结论写成“不完美但能做出来”</h3><p>当前目录的研究结论不是追求成熟 hooks 或插件热切换，而是先做可见、极简、项目内生效、会建议但不过度自动的 V1。</p></article><article class="proof-card"><h3>实施蓝图已经有完整目录结构</h3><p><code>.agents/skills/context-router/</code>、<code>.codex/router/</code>、<code>.workspace/skillos/</code>、<code>inbox/</code>、<code>canonical/</code>、<code>bundles/</code> 都被明确写出来了。</p></article><article class="proof-card"><h3>数据结构不是口号</h3><p><code>catalog.json</code>、<code>bundles.toml</code>、<code>state.json</code>、<code>intent-map.toml</code> 已经有字段示例，说明下一步不是讨论概念，而是生成控制面主数据。</p></article><article class="proof-card"><h3>非目标被明确写清</h3><p>不做跨项目全自动隐式继承、不做全局配置静默修改、不做插件按请求自动启停、不做黑盒自动卸载。这些“不做”，也属于工程判断。</p></article></div></section>
+        <section class="entry-section" id="next"><h2>暂不自动化的范围</h2><div class="proof-grid"><article class="proof-card"><h3>还没做完</h3><ul><li>当前仍是蓝图，不是已经有完整 router runtime。</li><li><code>catalog.json</code> 和 <code>bundles.toml</code> 还需要从真实本地能力里抽样初始化。</li><li>attach / detach 的交互范围还要通过实际 session 试跑验证。</li></ul></article><article class="proof-card"><h3>后续对象</h3><ul><li><code>.codex/router/catalog.json</code> 初版 schema。</li><li><code>intent-map.toml</code> 的少数高置信规则。</li><li><code>context-router/SKILL.md</code> 放在 catalog 和 intent-map 稳定之后。</li></ul></article></div></section>
+        <section class="entry-note"><p>重点不是“自动切能力”有多主动，而是能力什么时候用、什么时候停是否可见。</p></section>
+      </main>
+    </div><script type="module" src="/src/entry.ts"></script>
+  </body>
+</html>
+
+
+
+
+
+

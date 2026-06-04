@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta
+      name="description"
+      content="把母线铜排 Excel 计算流程做成可测试、可部署的平台：规则、导出、对照验证和启动流程怎么一起落进同一套仓库。"
+    />
+    <title>母线铜排平台：旧公式、对照快照和公网启动被固定下来 - FEIAN</title>
+    <link rel="stylesheet" href="/src/entry.css" />
+    <style>
+      .proof-badges,
+      .entry-anchor-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+      }
+
+      .entry-anchor-nav {
+        margin: 1rem 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .entry-anchor-nav a,
+      .proof-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.45rem 0.75rem;
+        border: 1px solid var(--line-strong);
+        border-radius: 999px;
+        background: var(--panel-soft);
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 0.76rem;
+        letter-spacing: 0.04em;
+      }
+
+      .entry-section code,
+      .proof-table code {
+        font-family: var(--mono);
+        font-size: 0.84em;
+        color: var(--accent-strong);
+      }
+
+      .proof-grid {
+        display: grid;
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+
+      .proof-card,
+      .proof-note {
+        padding: 1rem 1.05rem;
+        border: 1px solid var(--line);
+        background: var(--panel-soft);
+      }
+
+      .proof-card h3 {
+        margin: 0;
+        font-size: 1rem;
+        line-height: 1.5;
+      }
+
+      .proof-card p,
+      .proof-note {
+        color: var(--muted);
+        line-height: 1.8;
+      }
+
+      .proof-note {
+        margin-top: 1rem;
+        border-style: dashed;
+      }
+
+      .proof-pre {
+        margin: 1rem 0 0;
+        padding: 1rem 1.05rem;
+        overflow: auto;
+        border: 1px solid var(--line);
+        background: #091019;
+        color: var(--accent-strong);
+        font-family: var(--mono);
+        font-size: 0.8rem;
+        line-height: 1.75;
+      }
+
+      .proof-table {
+        width: 100%;
+        margin-top: 1rem;
+        border-collapse: collapse;
+      }
+
+      .proof-table th,
+      .proof-table td {
+        padding: 0.8rem 0.9rem;
+        border: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .proof-table th {
+        color: var(--accent);
+        font-family: var(--mono);
+        font-size: 0.76rem;
+        letter-spacing: 0.05em;
+      }
+
+      .proof-table td {
+        color: var(--muted);
+        line-height: 1.8;
+      }
+
+      body.entry-page--lab-build .entry-filebar {
+        background:
+          linear-gradient(90deg, rgb(151 173 240 / 9%), transparent 42%),
+          linear-gradient(180deg, rgb(255 255 255 / 3%), rgb(255 255 255 / 1%));
+      }
+
+      @media (min-width: 760px) {
+        .proof-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 760px) {
+        .proof-table {
+          display: block;
+          overflow-x: auto;
+        }
+      }
+    </style>
+    <style data-critical-reset>
+      html {
+        color-scheme: dark;
+        background: #070a0f;
+        scroll-behavior: smooth;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-width: 320px;
+        color: #edf1f5;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        line-height: 1.58;
+        background: #070a0f;
+      }
+      .rain-canvas,
+      .fx-layer {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .rain-canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      .fx-layer {
+        z-index: 48;
+      }
+
+      .page-shell {
+        position: relative;
+        z-index: 2;
+        overflow: clip;
+        visibility: hidden;
+      }
+
+      .entry-shell {
+        position: relative;
+        z-index: 2;
+        overflow: clip;
+      }
+
+    </style>
+  </head>
+  <body class="entry-page entry-page--lab entry-page--lab-build entry-page--enhanced">
+    <div class="entry-shell">
+      <header class="entry-topbar">
+        <a href="/index.html">
+          <strong>FEIAN</strong>
+          <span>项目实验 / build</span>
+        </a>
+        <nav class="entry-nav" aria-label="页面导航">
+          <a href="/index.html">首页</a>
+          <a href="/lab.html">项目实验</a>
+          <a href="/archive.html">归档</a>
+        </nav>
+      </header>
+
+      <header class="entry-header entry-header-feature">
+        <div class="entry-filebar" aria-label="文章状态">
+          <div class="entry-filebar-tag">
+            <span>项目构建 / lab</span>
+            <strong>busbar / calc / export</strong>
+          </div>
+          <div class="entry-filebar-route">
+            <span>项目 → busbar platform</span>
+            <span>更新 2026-04-23</span>
+          </div>
+        </div>
+
+        <div class="entry-header-grid">
+          <div class="entry-header-copy">
+            <p class="entry-kicker">构建记录 / excel → api → web</p>
+            <h1>母线铜排平台：旧公式、对照快照和公网启动被固定下来</h1>
+            <p class="entry-subhead">以前能算，但靠 Excel、脚本和记忆；这一轮先把事实源、对照快照和启动入口留下来。</p>
+            <p class="entry-lede">
+              这件事最开始不像平台，更像一堆 Excel、模板、规则和人工经验。难点不只是把结果算出来，而是把“始端 / 铜排 / U 型”的规则、导出模板、parity 对照和启动方式固定下来，让别人回来还能接着用。
+            </p>
+            <div class="entry-meta">
+              <span>2026-04-23 整理</span>
+              <span>FastAPI / Vite / React</span>
+              <span>冻结事实源 / parity / 公网启动</span>
+            </div>
+          </div>
+
+          <aside class="entry-filecard entry-signalcard" aria-label="平台速览">
+            <p class="entry-filecard-label">固定下来的对象</p>
+            <div class="entry-signalgrid">
+              <div>
+                <span>对象</span>
+                <strong>backend / frontend / tests / artifacts 不再散着放</strong>
+              </div>
+              <div>
+                <span>规则</span>
+                <strong>冻结事实源和导出模板被明确标成不可随意改名的资产</strong>
+              </div>
+              <div>
+                <span>验证</span>
+                <strong>pytest、前端构建、E2E 和 parity 流程都挂上了</strong>
+              </div>
+              <div>
+                <span>运行</span>
+                <strong>一键启动脚本会构建前端、拉起 uvicorn、启动 tunnel 并写日志</strong>
+              </div>
+            </div>
+            <p class="entry-filecard-note">
+              这一轮留下的重点是 <code>facts</code>、测试、parity 快照和启动脚本。以后换机器或换人，先查这些，不用先问公式藏在哪个 Excel 里。
+            </p>
+          </aside>
+        </div>
+      </header>
+
+      <main class="entry-main">
+        <section class="entry-section">
+          <h2>先保住旧公式，再谈平台</h2>
+          <p>
+            这种业务最容易卡在个人记忆里：公式在哪、模板在哪、哪个 Excel 该拿来对照，只有当时处理的人清楚；一旦换机器、换人、换线程，就重新掉回找文件、找规则、猜版本的状态。所以这次先把对象和范围固定下来。
+          </p>
+          
+        </section>
+
+        <section class="entry-section" id="objects">
+          <h2>这轮先点名保护的文件</h2>
+          <table class="proof-table">
+            <thead>
+              <tr>
+                <th scope="col">对象</th>
+                <th scope="col">现在放在哪</th>
+                <th scope="col">作用</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>计算与规则装载</strong></td>
+                <td><code>backend/</code></td>
+                <td>不再让计算逻辑只藏在零散脚本里，后端成了正式入口。</td>
+              </tr>
+              <tr>
+                <td><strong>前端工作台</strong></td>
+                <td><code>frontend/</code></td>
+                <td>Vite + React 负责把选择、计算、导出和后续验证放进一个可操作界面。</td>
+              </tr>
+              <tr>
+                <td><strong>冻结事实源</strong></td>
+                <td><code>analysis_outputs/quickcalc_v3/**</code></td>
+                <td>这些文件被明确标成“不应随意删除或改名”的资产，说明系统开始有了稳定地基。</td>
+              </tr>
+              <tr>
+                <td><strong>对照验证</strong></td>
+                <td><code>tests/</code> 与 <code>artifacts/parity_snapshots/</code></td>
+                <td>这让“算对没有”不再只靠肉眼和记忆。</td>
+              </tr>
+              <tr>
+                <td><strong>上线入口</strong></td>
+                <td><code>一键启动公网服务.cmd</code> / <code>tools/project-launcher.ps1</code></td>
+                <td>这次不是只跑本地 demo，而是把构建、后端、tunnel、健康检查一起接通。</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="proof-note">
+            最关键的一点是：现在仓库已经不只是“有代码”，而是连冻结事实源、导出模板和启动流程都被明确纳入结构了。
+          </p>
+        </section>
+
+        <section class="entry-section" id="chain">
+          <h2>从本地公式到可访问服务</h2>
+          <div class="proof-badges" aria-label="流程节点">
+            <span class="proof-badge">backend/requirements.txt</span>
+            <span class="proof-badge">frontend/vite.config.ts</span>
+            <span class="proof-badge">analysis_outputs/quickcalc_v3</span>
+            <span class="proof-badge">artifacts/export_templates</span>
+            <span class="proof-badge">tests/</span>
+            <span class="proof-badge">tools/project-launcher.ps1</span>
+          </div>
+          <pre class="proof-pre">1. Excel / 冻结事实源继续保留
+2. FastAPI 后端负责规则装载、计算、导出
+3. Vite + React 前端负责选择、计算和结果入口
+4. pytest / 构建 / E2E / parity 挂上验证链
+5. project-launcher.ps1 负责构建 dist、启动 uvicorn、拉起 tunnel、写入 pid 与日志
+6. 复查对象是 facts、tests、launcher，不再猜“上次到底怎么跑起来的”</pre>
+          <p>
+            这里最像平台的地方，不是技术栈名字，而是它已经把“规则在哪、怎么验证、怎么起服务、日志落哪”一起说清楚了。
+          </p>
+        </section>
+
+        <section class="entry-section" id="evidence">
+          <h2>材料：parity、构建和公网启动</h2>
+          <div class="proof-grid">
+            <article class="proof-card">
+              <h3>冻结事实源被正式点名</h3>
+              <p>
+                README 里直接列了 <code>start_sections.json</code>、<code>standard_blocks.json</code>、<code>u_sheet.json</code>、<code>formula_inventory.csv</code> 以及两份关键 Excel。
+                这说明系统已经承认：平台的地基不是个人记忆里的公式，而是可见、可指认、可保留的事实源。
+              </p>
+            </article>
+
+            <article class="proof-card">
+              <h3>模块化选择先做表达层，不急着硬造新内核</h3>
+              <p>
+                README 也把范围写得很清楚：当前模块化首先是一种新的选择表达方式，底层仍回落到已验证的 legacy <code>typeCode</code> /
+                block 公式体系。这个判断很重要，因为它说明这次没有为了“更先进”而打断稳定流程。
+              </p>
+            </article>
+
+            <article class="proof-card">
+              <h3>一键启动流程已经接到公网级别</h3>
+              <pre class="proof-pre">脚本默认会：
+1. 构建前端 dist
+2. 启动 uvicorn（127.0.0.1:8002）
+3. 启动 Cloudflare Tunnel
+4. 写入 pid / 日志到 .workspace/cloudflared/
+5. 做本地健康检查</pre>
+              <p>这说明这次不只是在本机“能跑”，而是已经开始考虑别人怎么稳定打开它。</p>
+            </article>
+
+            <article class="proof-card">
+              <h3>验证命令已经被收成固定动作</h3>
+              <p>
+                <code>python -m pytest tests -q</code>、<code>npm run build</code>、前端 E2E 都在 README 里被写成固定入口。它把“我知道怎么验”改成了“别人也能照着验”。</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="entry-section" id="next">
+          <h2>改规则前的核查对象</h2>
+          <div class="proof-grid">
+            <article class="proof-card">
+              <h3>还没做完</h3>
+              <ul>
+                <li>模块化 busbar 现在先是选择表达层，不是完全自由拼装的新计算内核。</li>
+                <li>后续新增始端类型或铜排类型，仍要优先基于 <code>analysis_outputs/quickcalc_v3/**</code> 扩展。</li>
+                <li>本地私有配置仍放在 <code>.workspace/cloudflared/runtime/launcher.settings.json</code>，说明运行环境还没完全产品化。</li>
+              </ul>
+            </article>
+
+            <article class="proof-card">
+              <h3>后续对象</h3>
+              <ul>
+                <li>核查冻结事实源和 parity 快照有没有被新需求冲坏。</li>
+                <li>核查 <code>project-launcher.ps1</code> 的启动流程是否还和当前运行方式一致。</li>
+                <li>更自由的模块化放在稳定 legacy 体系之后。</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section class="entry-note">
+          <p>
+            留下来的不是“做了个母线平台”这句话，而是 Excel、脚本和记录被收成一套别人回来还能接着跑的东西。
+          </p>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="/src/entry.ts"></script>
+  </body>
+</html>
+
+
+
+
+
+
+

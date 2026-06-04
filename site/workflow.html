@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta
+      name="description"
+      content="FEIAN 的工作流记录：把 AI 协作、脚本、页面、预览和记录接进以后还能查的个人方法。"
+    />
+    <title>一次个人站改版：把想法留下以后还能查的轨道 - FEIAN</title>
+    <link rel="stylesheet" href="/src/entry.css" />
+    <style>
+      .entry-anchor-nav,
+      .proof-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+      }
+
+      .entry-anchor-nav {
+        margin: 1rem 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .entry-anchor-nav a,
+      .proof-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.45rem 0.75rem;
+        border: 1px solid var(--line-strong);
+        border-radius: 999px;
+        background: var(--panel-soft);
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 0.76rem;
+        letter-spacing: 0.04em;
+      }
+
+      .entry-anchor-nav a:hover,
+      .entry-anchor-nav a:focus-visible {
+        color: var(--accent-strong);
+        border-color: rgb(155 188 209 / 32%);
+      }
+
+      .entry-section code,
+      .proof-table code {
+        font-family: var(--mono);
+        font-size: 0.84em;
+        color: var(--accent-strong);
+      }
+
+      .proof-grid {
+        display: grid;
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+
+      .proof-card,
+      .proof-note,
+      .timeline-item {
+        padding: 1rem 1.05rem;
+        border: 1px solid var(--line);
+        background: var(--panel-soft);
+      }
+
+      .proof-card h3,
+      .timeline-item h3 {
+        margin: 0;
+        font-size: 1rem;
+        line-height: 1.5;
+      }
+
+      .proof-card p,
+      .proof-note,
+      .timeline-item p,
+      .timeline-item li {
+        color: var(--muted);
+        line-height: 1.8;
+      }
+
+      .proof-note {
+        margin-top: 1rem;
+        border-style: dashed;
+      }
+
+      .proof-table {
+        width: 100%;
+        margin-top: 1rem;
+        border-collapse: collapse;
+      }
+
+      .proof-table th,
+      .proof-table td {
+        padding: 0.8rem 0.9rem;
+        border: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .proof-table th {
+        color: var(--accent);
+        font-family: var(--mono);
+        font-size: 0.76rem;
+        letter-spacing: 0.05em;
+      }
+
+      .proof-table td {
+        color: var(--muted);
+        line-height: 1.8;
+      }
+
+      .proof-table strong {
+        color: var(--text);
+      }
+
+      .proof-pre {
+        margin: 1rem 0 0;
+        padding: 1rem 1.05rem;
+        overflow: auto;
+        border: 1px solid var(--line);
+        background: #091019;
+        color: var(--accent-strong);
+        font-family: var(--mono);
+        font-size: 0.8rem;
+        line-height: 1.75;
+      }
+
+      .timeline {
+        display: grid;
+        gap: 0.9rem;
+        margin-top: 1rem;
+      }
+
+      .timeline-item time {
+        display: block;
+        margin-bottom: 0.4rem;
+        color: var(--accent);
+        font-family: var(--mono);
+        font-size: 0.76rem;
+        letter-spacing: 0.05em;
+      }
+
+      .timeline-item ul {
+        margin: 0.7rem 0 0;
+        padding-left: 1.1rem;
+      }
+
+      @media (min-width: 760px) {
+        .proof-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 760px) {
+        .proof-table {
+          display: block;
+          overflow-x: auto;
+        }
+      }
+    </style>
+    <style data-critical-reset>
+      html {
+        color-scheme: dark;
+        background: #070a0f;
+        scroll-behavior: smooth;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-width: 320px;
+        color: #edf1f5;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        line-height: 1.58;
+        background: #070a0f;
+      }
+      .rain-canvas,
+      .fx-layer {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .rain-canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      .fx-layer {
+        z-index: 48;
+      }
+
+      .page-shell {
+        position: relative;
+        z-index: 2;
+        overflow: clip;
+        visibility: hidden;
+      }
+
+      .entry-shell {
+        position: relative;
+        z-index: 2;
+        overflow: clip;
+      }
+
+    </style>
+  </head>
+  <body class="entry-page entry-page--workflow">
+    <div class="entry-shell">
+      <header class="entry-topbar">
+        <a href="/index.html">
+          <strong>FEIAN</strong>
+          <span>工作流档案 / workflow</span>
+        </a>
+        <nav class="entry-nav" aria-label="页面导航">
+          <a href="/index.html">首页</a>
+          <a href="/archive.html">归档</a>
+          <a href="/about.html">关于</a>
+        </nav>
+      </header>
+
+      <header class="entry-header entry-header-feature">
+          <div class="entry-filebar" aria-label="文章状态">
+            <div class="entry-filebar-tag">
+              <span>工作流札记 / workflow</span>
+              <strong>工作流记录</strong>
+            </div>
+            <div class="entry-filebar-route">
+              <span>个人站 → 工作流记录</span>
+              <span>更新 2026-04-20</span>
+            </div>
+          </div>
+
+        <div class="entry-header-grid">
+          <div class="entry-header-copy">
+            <p class="entry-kicker">工作流札记 / workflow / 2026.04</p>
+            <h1>一次个人站改版，怎样把想法留下以后还能查的轨道</h1>
+            <p class="entry-subhead">一段对话会过去，文件、预览、日志和下一步如果留下来，任务才没有飘散。</p>
+            <p class="entry-lede">
+              这篇写的不是“AI 有多聪明”，而是一个任务如何落进现实：想法要变成文件，文件要跑出页面，页面要留下记录。下次回来时，不必从聊天记录的尘埃里重新寻找方向。
+            </p>
+            <div class="entry-meta">
+              <span>2026-04-20</span>
+              <span>个人工作流</span>
+              <span>Codex / Claude / 页面 / 预览记录</span>
+            </div>
+          </div>
+
+          <aside class="entry-filecard entry-signalcard" aria-label="当前运行截面">
+            <p class="entry-filecard-label">这轮工作流</p>
+            <div class="entry-signalgrid">
+              <div>
+                <span>目标</span>
+                <strong>首页收口，内容页补材料，归档接住后续内容</strong>
+              </div>
+              <div>
+                <span>改动范围</span>
+                <strong>index / workflow / field / archive / css</strong>
+              </div>
+              <div>
+                <span>执行方式</span>
+                <strong>主控 + 内容修订 + 视觉检查</strong>
+              </div>
+              <div>
+                <span>验证方式</span>
+                <strong>preview / build / lint / screenshot</strong>
+              </div>
+            </div>
+            <p class="entry-filecard-note">
+  这里不聊榜单排名，只记一件事：下次回来能不能接着做。
+            </p>
+          </aside>
+        </div>
+      </header>
+
+      <main class="entry-main">
+        <section class="entry-section">
+          <h2>这轮实际留下了什么</h2>
+          <p>
+            以前很多想法都散在对话里：当时能推进，过两天再回来就要重新解释一遍。现在更需要一套能续上的记录——不只保留结论，也把任务、页面、日志和判断一起留下来。
+          </p>
+          <div class="entry-quicklook" aria-label="当前工作流截面">
+            <article class="entry-quicklook-card">
+              <span class="entry-quicklook-label">以前会卡住</span>
+              <strong>想法很多，但过程散在对话和脑子里</strong>
+              <p>当时能推进，隔几天再回来就容易断线，还得重新找上下文。</p>
+            </article>
+            <article class="entry-quicklook-card">
+              <span class="entry-quicklook-label">这轮补上的缺口</span>
+              <strong>页面、记录、进度和判断都能落到文件上</strong>
+              <p>这样下一轮回来，不用再靠记忆接手，而是能顺着材料接着做。</p>
+            </article>
+            <article class="entry-quicklook-card">
+              <span class="entry-quicklook-label">对我最有用的变化</span>
+              <strong>更大的任务也能慢慢接上，而不是只停在试试</strong>
+              <p>从个人站到现场记录，这套记录方式开始能接住更长一点的任务。</p>
+            </article>
+          </div>
+          
+        </section>
+
+        <section class="entry-section" id="chain">
+          <h2>从一句念头到页面记录</h2>
+          <p>
+          这套跑法已经能复查：<code>progress.md</code> 锁优先级，页面改动落文件，预览、构建日志和 QA 记录负责回收结果。
+          </p>
+          <div class="proof-badges" aria-label="流程节点">
+            <span class="proof-badge">design/*.md</span>
+            <span class="proof-badge">docs/planning/task_plan.md</span>
+            <span class="proof-badge">progress.md</span>
+            <span class="proof-badge">site/*.html</span>
+            <span class="proof-badge">site/logs/preview.log</span>
+            <span class="proof-badge">site/reports/lighthouse_clean.json</span>
+          </div>
+          <pre class="proof-pre">需求与方向确认
+├─ design/longterm_rebuild_masterplan_2026-04-20.md
+├─ design/agent_team_blueprint_2026-04-20.md
+└─ progress.md（锁定“先补正文页硬材料，再改归档结构”）
+
+↓ 拆成明确 ownership
+Content Worker
+└─ 只写：site/workflow.html / field.html / archive.html
+
+↓ 页面产出与验证
+├─ site/package.json（dev / build / lint / preview）
+├─ site/logs/preview.log（真实预览地址与端口回退）
+├─ site/logs/vite-review.log（页面热更新轨迹）
+└─ site/reports/lighthouse_clean.json（性能 / 可访问性 / SEO 指标）
+
+↓ 回收到长期记录
+├─ docs/research/findings.md
+└─ progress.md</pre>
+          <p class="proof-note">
+            这条流程里出现的每个文件或目录，当前仓库里都能直接找到；它不是“我希望以后有”，而是“现在就已经在用”。
+          </p>
+        </section>
+
+        <section class="entry-section" id="sources">
+          <h2>三条原始记录</h2>
+          <p>
+            决定下一轮往哪改的不是“感觉差不多了”，而是这几篇记录：预览是否在线、质量是否暴露问题、优先级是否锁死。
+          </p>
+          <div class="proof-grid">
+            <article class="proof-card">
+              <h3>preview.log</h3>
+              <pre class="proof-pre">Port 4173 is in use, trying another one...
+Port 4174 is in use, trying another one...
+Port 4175 is in use, trying another one...
+Local: http://127.0.0.1:4176/</pre>
+              <p>这条记录直接推翻了“预览地址会固定不变”的想当然。</p>
+            </article>
+
+            <article class="proof-card">
+              <h3>lighthouse_clean.json</h3>
+              <pre class="proof-pre">"finalUrl": "http://127.0.0.1:4176/"
+"performance": 0.55
+"accessibility": 1
+"displayValue(FCP)": "11.2 s"
+"displayValue(LCP)": "11.3 s"</pre>
+              <p>页面能打开不代表结束，指标会把问题摊出来。</p>
+            </article>
+
+            <article class="proof-card">
+              <h3>progress.md</h3>
+              <pre class="proof-pre">下一轮执行优先级正式锁定为：
+1. 正文页硬材料
+2. 字体人格
+3. 首页真实前景模块</pre>
+              <p>这条记录比“我记得我想改什么”更可靠，因为下一轮能直接顺着它接下去。</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="entry-section" id="decisions">
+          <h2>这轮我改了哪些判断</h2>
+          <p>
+            现在会少写“做了很多”这种模糊表达，更愿意把判断写清楚：保留了什么、推翻了什么、最后落到哪里。
+          </p>
+          <table class="proof-table">
+            <thead>
+              <tr>
+                <th scope="col">判断</th>
+                <th scope="col">保留 / 推翻依据</th>
+                <th scope="col">落点</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>固定端口预览</strong></td>
+                <td>推翻。真实预览日志已经显示 4173 / 4174 / 4175 全被占用，最后才落到 4176。</td>
+                <td><code>site/logs/preview.log</code></td>
+              </tr>
+              <tr>
+                <td><strong>页面能打开就算完成</strong></td>
+                <td>推翻。Lighthouse 直接把 <code>0.55</code>、<code>11.2 s</code>、<code>11.3 s</code> 摆出来。</td>
+                <td><code>site/reports/lighthouse_clean.json</code></td>
+              </tr>
+              <tr>
+                <td><strong>正文页先讲态度</strong></td>
+                <td>推翻。长期记录已经把优先级锁成“先补正文页硬材料，再改归档结构”。</td>
+                <td><code>progress.md</code></td>
+              </tr>
+              <tr>
+                <td><strong>继续补真实入口和材料</strong></td>
+                <td>保留。增益不在多会说，而在页面更像真站。</td>
+                <td><code>index.html</code> / <code>workflow.html</code> / <code>field.html</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="entry-section" id="next">
+          <h2>后续接手的位置</h2>
+          <p>
+            这套记录有用的地方不是把事情说圆，而是把没做完的地方留下来。
+          </p>
+          <div class="proof-grid">
+            <article class="proof-card">
+              <h3>这轮还没做完</h3>
+              <ul>
+                <li>首页的人物主语还要继续收，系统标签仍然偏多。</li>
+                <li><code>field.html</code> 还缺更强的 incident header、排除树和交接项。</li>
+                <li>动效现在主要集中在首页，内容页的反馈还不够强。</li>
+              </ul>
+            </article>
+
+            <article class="proof-card">
+              <h3>后续对象</h3>
+              <ul>
+                <li><code>site/field.html</code>：补现场物证带和假设排除树。</li>
+                <li><code>site/src/entry.css</code>：拉开 workflow / field 的行为差异。</li>
+                <li><code>site/index.html</code>：继续减少概念包装，把主页语气收得更自然。</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section class="entry-note">
+          <p>
+            后面更在意的是：想法能不能真的做出来，下次能不能接得上。
+          </p>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="/src/entry.ts"></script>
+  </body>
+</html>
+
+
+
+
+
+
+
+
+

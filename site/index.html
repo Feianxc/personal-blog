@@ -1,0 +1,580 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="FEIAN 的个人数字实验室，记录 AI 协作、工程现场、自造工具和可复用的构建物。"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <title>FEIAN 的个人数字实验室</title>
+    <style data-critical-reset>
+      html {
+        color-scheme: dark;
+        background: #080907;
+        scroll-behavior: smooth;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-width: 320px;
+        color: #f0e4d0;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        line-height: 1.62;
+        background: #080907;
+      }
+
+      .rain-canvas,
+      .fx-layer {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .rain-canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      .fx-layer {
+        z-index: 48;
+      }
+
+      .page-shell {
+        position: relative;
+        z-index: 2;
+        overflow: clip;
+        visibility: hidden;
+      }
+
+      .entry-shell {
+        position: relative;
+        z-index: 2;
+        overflow: clip;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="rain-canvas" class="rain-canvas" aria-hidden="true"></canvas>
+
+    <div class="fx-layer" aria-hidden="true">
+      <div class="pointer-shell" data-pointer-state="idle">
+        <span class="pointer-aura"></span>
+        <span class="pointer-ring"></span>
+        <span class="pointer-core"></span>
+        <span class="pointer-label">探针</span>
+      </div>
+      <div class="click-layer"></div>
+    </div>
+
+    <div class="page-shell">
+      <header class="topbar">
+        <a class="brand" href="#cover" data-interactive-lens data-pointer-label="top">
+          <strong>FEIAN</strong>
+          <span>个人数字实验室</span>
+        </a>
+
+        <nav class="topnav" aria-label="主导航">
+          <a href="#cover" data-interactive-lens data-pointer-label="top">首页</a>
+          <a href="#signals" data-interactive-lens data-pointer-label="axis">信号</a>
+          <a href="#feed" data-interactive-lens data-pointer-label="builds">构建物</a>
+          <a href="/workflow.html" data-interactive-lens data-pointer-label="logs">运行日志</a>
+          <a href="/archive.html" data-interactive-lens data-pointer-label="index">归档</a>
+          <a href="/about.html" data-interactive-lens data-pointer-label="about">关于</a>
+          <a href="https://github.com/Feianxc" target="_blank" rel="noopener noreferrer" data-interactive-lens data-pointer-label="open">GitHub</a>
+        </nav>
+      </header>
+
+      <div class="register-spine" aria-hidden="true">
+        <span data-register-item="cover" data-label="入口">00</span>
+        <span data-register-item="signals" data-label="信号">01</span>
+        <span data-register-item="feed" data-label="构建">02</span>
+        <span data-register-item="archive" data-label="索引">03</span>
+      </div>
+
+      <main>
+        <section id="cover" class="cover">
+          <div class="cover-grid">
+            <article class="cover-panel" data-reveal>
+              <div class="cover-heading-stack">
+                <p class="cover-kicker">AI-native geek builder / 运行中的个人实验站</p>
+
+                <h1 class="cover-title">
+                  <span>把 AI、工程现场</span>
+                  <span>与自造工具</span>
+                  <span>接成我的</span>
+                  <span>个人操作系统。</span>
+                </h1>
+
+                <p class="cover-subline">Digital Lab / field tooling / reusable systems</p>
+              </div>
+
+              <p class="cover-lede">
+                我把真实问题拉进工作台，快速造工具、跑验证、沉淀系统。这里收纳构建物、方法、运行日志，以及那些从现场和实验里长出来的结果。
+              </p>
+
+              <div class="cover-actions">
+                <a class="primary-link" href="#feed" data-interactive-lens data-pointer-label="builds">查看构建物</a>
+                <a class="secondary-link" href="/workflow.html" data-interactive-lens data-pointer-label="logs">阅读运行日志</a>
+              </div>
+
+              <div class="cover-diagnostics" aria-label="当前主轴">
+                <div>
+                  <strong>Agent 协作</strong>
+                  <span>把任务拆开、路由、验证，再留下可复用的协作方式。</span>
+                </div>
+                <div>
+                  <strong>工程现场</strong>
+                  <span>MCGS、MODBUS、设备通信和排障顺序，按证据写清楚。</span>
+                </div>
+                <div>
+                  <strong>自造工具</strong>
+                  <span>协议工作台、研究台、CAD 自动化，优先做成能再次运行的东西。</span>
+                </div>
+              </div>
+
+              <div class="cover-status-strip" aria-label="当前状态">
+                <span><i></i>系统状态：持续运行</span>
+                <span>信号强度：78%</span>
+                <span>连接节点：3</span>
+              </div>
+            </article>
+
+            <aside class="cover-side">
+              <section
+                class="cover-object"
+                data-reveal
+                data-interactive-lens
+                data-pointer-label="inspect"
+                aria-labelledby="cover-object-title"
+              >
+                <div class="cover-object-sheet reactor-stage">
+                  <div class="cover-object-meta">
+                    <time datetime="2026-06-03">2026-06-03</time>
+                    <span>Signal Reactor</span>
+                    <span>v2.0</span>
+                  </div>
+
+                  <p class="cover-object-label">主视觉 / signal map</p>
+                  <h2 id="cover-object-title">三条主轴正在互相供能</h2>
+                  <p class="cover-object-copy">
+                    工作流、现场、实验室不是栏目名，而是我长期推进问题的三个入口。
+                  </p>
+
+                  <div class="signal-reactor" data-signal-reactor aria-hidden="true">
+                    <canvas class="signal-reactor-canvas"></canvas>
+                    <div class="signal-reactor-shell">
+                      <span class="signal-reactor-core"></span>
+                      <span class="signal-reactor-ring signal-reactor-ring-a"></span>
+                      <span class="signal-reactor-ring signal-reactor-ring-b"></span>
+                      <span class="signal-reactor-ring signal-reactor-ring-c"></span>
+                      <span class="signal-reactor-beam signal-reactor-beam-a"></span>
+                      <span class="signal-reactor-beam signal-reactor-beam-b"></span>
+                      <span class="signal-reactor-beam signal-reactor-beam-c"></span>
+                    </div>
+                    <div class="reactor-nodes">
+                      <span style="--node-x: 50%; --node-y: 20%">工作流</span>
+                      <span style="--node-x: 23%; --node-y: 72%">现场</span>
+                      <span style="--node-x: 78%; --node-y: 72%">实验室</span>
+                    </div>
+                  </div>
+
+                  <div class="reactor-legend" aria-label="信号图例">
+                    <span>AI layer</span>
+                    <span>Field layer</span>
+                    <span>Lab layer</span>
+                  </div>
+                </div>
+              </section>
+
+              <div class="cover-log" data-reveal>
+                <p class="cover-log-label">Evidence / IDE</p>
+
+                <a class="cover-log-item" href="/workflow-stock-research-desk.html" data-interactive-lens data-pointer-label="pull">
+                  <time datetime="2026-04-23">04-23</time>
+                  <span>工作流项目</span>
+                  <strong>老板研究台 V1</strong>
+                </a>
+
+                <a class="cover-log-item" href="/workflow-context-router.html" data-interactive-lens data-pointer-label="pull">
+                  <time datetime="2026-04-23">04-23</time>
+                  <span>工作流项目</span>
+                  <strong>Context Router V1</strong>
+                </a>
+
+                <a class="cover-log-item" href="/lab-protocol-studio.html" data-interactive-lens data-pointer-label="pull">
+                  <time datetime="2026-04-23">04-23</time>
+                  <span>项目实验</span>
+                  <strong>动环协议工作台</strong>
+                </a>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section id="signals" class="section section-signals">
+          <div class="section-head signal-map-head" data-reveal>
+            <p class="section-label">Signals</p>
+            <h2>持续运行的几条主轴</h2>
+            <p>这些主轴并非项目分类，而是长期投入的方向。它们互相影响，共同塑造 FEIAN 的工作方式与产物。</p>
+          </div>
+
+          <div class="signal-map" data-reveal data-signal-map data-active-axis="agent">
+            <div class="signal-axis-stack" role="tablist" aria-label="信号主轴">
+              <button
+                class="signal-axis signal-axis--agent is-active"
+                type="button"
+                role="tab"
+                aria-selected="true"
+                aria-controls="signal-dashboard"
+                data-interactive-lens
+                data-pointer-label="axis"
+                data-signal-axis="agent"
+              >
+                <span class="signal-axis-index">01</span>
+                <span class="signal-axis-copy">
+                  <span class="signal-axis-kicker">Active channel</span>
+                  <strong>Agent 协作</strong>
+                  <span>让自主体在真实约束中协同完成有价值的工作。</span>
+                </span>
+                <i aria-hidden="true"></i>
+              </button>
+
+              <button
+                class="signal-axis signal-axis--field"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="signal-dashboard"
+                data-interactive-lens
+                data-pointer-label="field"
+                data-signal-axis="field"
+              >
+                <span class="signal-axis-index">02</span>
+                <span class="signal-axis-copy">
+                  <span class="signal-axis-kicker">Field channel</span>
+                  <strong>工程现场</strong>
+                  <span>在现场发现问题，用工程化方法把它解决。</span>
+                </span>
+                <i aria-hidden="true"></i>
+              </button>
+
+              <button
+                class="signal-axis signal-axis--tool"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="signal-dashboard"
+                data-interactive-lens
+                data-pointer-label="tool"
+                data-signal-axis="tool"
+              >
+                <span class="signal-axis-index">03</span>
+                <span class="signal-axis-copy">
+                  <span class="signal-axis-kicker">Tool channel</span>
+                  <strong>自造工具</strong>
+                  <span>打造趁手的工具，放大创造的可能性。</span>
+                </span>
+                <i aria-hidden="true"></i>
+              </button>
+            </div>
+
+            <div
+              id="signal-dashboard"
+              class="signal-dashboard"
+              role="tabpanel"
+              aria-live="polite"
+              data-signal-dashboard
+              data-interactive-lens
+              data-pointer-label="chart"
+            >
+              <div class="signal-dashboard-head">
+                <div>
+                  <p>Live signal</p>
+                  <strong data-signal-dashboard-title>协作拓扑</strong>
+                </div>
+                <span data-signal-dashboard-status>运行中</span>
+              </div>
+
+              <div class="signal-wave" aria-hidden="true">
+                <span style="--h: .34; --d: 0"></span>
+                <span style="--h: .58; --d: 1"></span>
+                <span style="--h: .46; --d: 2"></span>
+                <span style="--h: .78; --d: 3"></span>
+                <span style="--h: .38; --d: 4"></span>
+                <span style="--h: .88; --d: 5"></span>
+                <span style="--h: .52; --d: 6"></span>
+                <span style="--h: .72; --d: 7"></span>
+                <span style="--h: .42; --d: 8"></span>
+                <span style="--h: .66; --d: 9"></span>
+                <span style="--h: .36; --d: 10"></span>
+                <span style="--h: .82; --d: 11"></span>
+                <span style="--h: .5; --d: 12"></span>
+                <span style="--h: .74; --d: 13"></span>
+                <span style="--h: .4; --d: 14"></span>
+                <span style="--h: .62; --d: 15"></span>
+              </div>
+
+              <div class="signal-dashboard-grid">
+                <div class="signal-network" aria-hidden="true">
+                  <span class="signal-node signal-node--core"></span>
+                  <span class="signal-node signal-node--a"></span>
+                  <span class="signal-node signal-node--b"></span>
+                  <span class="signal-node signal-node--c"></span>
+                  <span class="signal-node signal-node--d"></span>
+                  <span class="signal-edge signal-edge--one"></span>
+                  <span class="signal-edge signal-edge--two"></span>
+                  <span class="signal-edge signal-edge--three"></span>
+                </div>
+                <div class="signal-metrics" aria-label="主轴指标">
+                  <span>
+                    <b data-signal-metric-a>127</b>
+                    <em data-signal-metric-a-label>协作会话</em>
+                  </span>
+                  <span>
+                    <b data-signal-metric-b>92.6%</b>
+                    <em data-signal-metric-b-label>闭环率</em>
+                  </span>
+                  <span>
+                    <b data-signal-metric-c>1.24s</b>
+                    <em data-signal-metric-c-label>响应延迟</em>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <aside class="signal-detail" aria-label="选中主轴说明">
+              <p data-signal-detail-kicker>Selected axis</p>
+              <strong data-signal-detail-title>01 / Agent 协作</strong>
+              <span data-signal-detail-copy>关注多智能体如何在真实约束下协同完成目标。从流程编排、记录与工具使用，到评估与迭代，构建可复用的协作范式。</span>
+              <a href="/workflow.html" data-signal-detail-link data-interactive-lens data-pointer-label="logs">查看工作流记录</a>
+            </aside>
+          </div>
+        </section>
+
+        <section id="feed" class="section section-feed">
+          <div class="section-head" data-reveal>
+            <p class="section-label">Selected Builds</p>
+            <h2>构建物，不是陈列品</h2>
+            <p>每一个入口都要能解释：它解决什么问题、留下什么证据、下一次还能不能继续运行。</p>
+          </div>
+
+          <div class="feed-list build-board">
+            <a class="feed-item feed-item--featured" href="/workflow-stock-research-desk.html" data-reveal data-interactive-lens data-pointer-label="pull" data-orbit-card="1">
+              <div class="feed-meta">
+                <time datetime="2026-04-23">2026-04-23</time>
+                <span>内部工具</span>
+                <strong class="feed-index">Featured</strong>
+              </div>
+              <div class="feed-copy">
+                <h3>老板研究台 V1</h3>
+                <p>把信息源、分析路径与决策痕迹连接在一起，形成可追溯的研究闭环。</p>
+                <div class="feed-proof">
+                  <span>Evidence</span>
+                  <p>研究入口、路线图、交付状态和可复跑说明。</p>
+                </div>
+                <div class="build-topology-mini" aria-hidden="true">
+                  <span class="build-node build-node--source"></span>
+                  <span class="build-node build-node--rules"></span>
+                  <span class="build-node build-node--core"></span>
+                  <span class="build-node build-node--ship"></span>
+                  <span class="build-node build-node--log"></span>
+                  <i class="build-line build-line--in"></i>
+                  <i class="build-line build-line--act"></i>
+                  <i class="build-line build-line--ledger"></i>
+                </div>
+              </div>
+              <div class="feed-action" aria-hidden="true">
+                <span>Status</span>
+                <strong>稳定运行</strong>
+              </div>
+            </a>
+
+            <a class="feed-item" href="/workflow-context-router.html" data-reveal data-interactive-lens data-pointer-label="pull" data-orbit-card="2">
+              <div class="feed-meta">
+                <time datetime="2026-04-23">2026-04-23</time>
+                <span>中间件</span>
+                <strong class="feed-index">Workflow</strong>
+              </div>
+              <div class="feed-copy">
+                <h3>Context Router V1</h3>
+                <p>面向任务的上下文路由与编排层，减少复杂场景下的重复切换。</p>
+                <div class="feed-proof">
+                  <span>Evidence</span>
+                  <p>路由规则、能力边界、测试结果与后续扩展。</p>
+                </div>
+              </div>
+              <div class="feed-action" aria-hidden="true">
+                <span>Status</span>
+                <strong>稳定运行</strong>
+              </div>
+            </a>
+
+            <a class="feed-item" href="/lab-protocol-studio.html" data-reveal data-interactive-lens data-pointer-label="pull" data-orbit-card="3">
+              <div class="feed-meta">
+                <time datetime="2026-04-23">2026-04-23</time>
+                <span>协议工具</span>
+                <strong class="feed-index">Lab</strong>
+              </div>
+              <div class="feed-copy">
+                <h3>动环协议工作台</h3>
+                <p>统一采集、解析与映射各类动环协议，降低接入与调试成本。</p>
+                <div class="feed-proof">
+                  <span>Evidence</span>
+                  <p>四种出表、校验、source compare 和分享包。</p>
+                </div>
+              </div>
+              <div class="feed-action" aria-hidden="true">
+                <span>Status</span>
+                <strong>稳定运行</strong>
+              </div>
+            </a>
+
+            <a class="feed-item" href="/lab-cad-automation.html" data-reveal data-interactive-lens data-pointer-label="pull" data-orbit-card="4">
+              <div class="feed-meta">
+                <time datetime="2026-04-23">2026-04-23</time>
+                <span>自动化</span>
+                <strong class="feed-index">Experiment</strong>
+              </div>
+              <div class="feed-copy">
+                <h3>CAD 自动化实验</h3>
+                <p>探索 CAD 批量处理与工程图生成的自动化路径，验证可行方案。</p>
+                <div class="feed-proof">
+                  <span>Evidence</span>
+                  <p>流程、截图、脚本边界和待继续验证项。</p>
+                </div>
+              </div>
+              <div class="feed-action" aria-hidden="true">
+                <span>Status</span>
+                <strong>实验中</strong>
+              </div>
+            </a>
+          </div>
+        </section>
+
+        <section id="archive" class="section section-archive">
+          <div class="channel-register" data-reveal>
+            <p class="section-label">Index</p>
+            <div class="channel-register-copy">
+              <strong>从四个入口继续下潜。</strong>
+              <p>想看怎么做，进工作流；想看现场问题，进现场；想看做出来的东西，进项目实验；只想找旧内容，就进归档。</p>
+            </div>
+            <div class="channel-register-note" aria-hidden="true">
+              <span>索引</span>
+              <p>工作流 / 现场 / 项目 / 时间线</p>
+            </div>
+          </div>
+
+          <div class="channel-list">
+            <a class="channel-link channel-link--primary" href="/workflow.html" data-route="workflow" data-reveal data-interactive-lens data-pointer-label="route">
+              <div class="channel-meta">
+                <span>01</span>
+                <strong>工作流 / workflow</strong>
+              </div>
+              <div class="channel-route">
+                <p class="channel-route-kicker">codex / scripts / preview / evidence</p>
+                <strong class="channel-route-title">工作流</strong>
+                <p class="channel-route-copy">这里放改站、脚本、预览和几篇工具项目记录。</p>
+              </div>
+              <div class="channel-signal">
+                <p class="channel-signal-label">内容</p>
+                <p class="channel-signal-copy">工具链、能力路由、评测协议和研究台。</p>
+              </div>
+              <div class="channel-port">
+                <span>01</span>
+                <em>workflow</em>
+              </div>
+            </a>
+
+            <a class="channel-link" href="/field.html" data-route="field" data-reveal data-interactive-lens data-pointer-label="field">
+              <div class="channel-meta">
+                <span>02</span>
+                <strong>现场 / field</strong>
+              </div>
+              <div class="channel-route">
+                <p class="channel-route-kicker">mcgs / modbus / polling / fault tree</p>
+                <strong class="channel-route-title">现场记录</strong>
+                <p class="channel-route-copy">设备、协议、轮询节奏和当时的处理顺序放在这里。</p>
+              </div>
+              <div class="channel-signal">
+                <p class="channel-signal-label">第二条线</p>
+                <p class="channel-signal-copy">很多问题只有站在现场、盯着通信状态时才会露出来。</p>
+              </div>
+              <div class="channel-port">
+                <span>入口</span>
+                <em>field</em>
+              </div>
+            </a>
+
+            <a class="channel-link" href="/lab.html" data-route="lab" data-reveal data-interactive-lens data-pointer-label="lab">
+              <div class="channel-meta">
+                <span>03</span>
+                <strong>项目实验 / lab</strong>
+              </div>
+              <div class="channel-route">
+                <p class="channel-route-kicker">project / delivery / experiment / tool</p>
+                <strong class="channel-route-title">项目和实验</strong>
+                <p class="channel-route-copy">这几个月做过的一些项目和小实验，按东西本身来放。</p>
+              </div>
+              <div class="channel-signal">
+                <p class="channel-signal-label">第三类</p>
+                <p class="channel-signal-copy">适合回看做了什么、文件在哪、还能不能继续用。</p>
+              </div>
+              <div class="channel-port">
+                <span>入口</span>
+                <em>lab</em>
+              </div>
+            </a>
+
+            <a class="channel-link channel-link--archive" href="/archive.html" data-route="archive" data-reveal data-interactive-lens data-pointer-label="index">
+              <div class="channel-meta">
+                <span>04</span>
+                <strong>归档 / archive</strong>
+              </div>
+              <div class="channel-route">
+                <p class="channel-route-kicker">timeline / all notes / long-running work</p>
+                <strong class="channel-route-title">归档索引</strong>
+                <p class="channel-route-copy">文章和零散记录按月份放，方便回头找。</p>
+              </div>
+              <div class="channel-signal">
+                <p class="channel-signal-label">索引</p>
+                <p class="channel-signal-copy">时间线负责回查，正文还是按 workflow / field / lab 分开。</p>
+              </div>
+              <div class="channel-port">
+                <span>入口</span>
+                <em>archive</em>
+              </div>
+            </a>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <div>
+          <p class="footer-mark">FEIAN</p>
+          <p class="footer-copy">持续更新构建物、方法记录和运行中的实验。写给别人看，也写给以后要回来找东西的自己。</p>
+        </div>
+
+        <div class="footer-links" aria-label="页脚导航">
+          <a href="/workflow-stock-research-desk.html" data-interactive-lens data-pointer-label="open">最新构建</a>
+          <a href="/archive.html" data-interactive-lens data-pointer-label="index">归档 / 时间线</a>
+          <a href="/about.html" data-interactive-lens data-pointer-label="about">关于</a>
+          <a href="https://github.com/Feianxc" target="_blank" rel="noopener noreferrer" data-interactive-lens data-pointer-label="open">GitHub</a>
+          <a href="#cover" data-interactive-lens data-pointer-label="top">回到顶部</a>
+        </div>
+      </footer>
+    </div>
+
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

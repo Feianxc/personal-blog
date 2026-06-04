@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta
+      name="description"
+      content="一次正式客户交付：把复杂安装流程封成一键安装包，不只交脚本，还交最新版本目录、ZIP、SHA256 和安装 / 卸载入口。"
+    />
+    <title>OPENCLAW 客户包 V0.31：目录、校验值和卸载入口一起交出去 - FEIAN</title>
+    <link rel="stylesheet" href="/src/entry.css" />
+    <style>
+      .proof-badges,
+      .entry-anchor-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+      }
+
+      .entry-anchor-nav {
+        margin: 1rem 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .entry-anchor-nav a,
+      .proof-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.45rem 0.75rem;
+        border: 1px solid var(--line-strong);
+        border-radius: 999px;
+        background: var(--panel-soft);
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 0.76rem;
+        letter-spacing: 0.04em;
+      }
+
+      .entry-section code,
+      .proof-table code {
+        font-family: var(--mono);
+        font-size: 0.84em;
+        color: var(--accent-strong);
+      }
+
+      .proof-grid {
+        display: grid;
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+
+      .proof-card,
+      .proof-note {
+        padding: 1rem 1.05rem;
+        border: 1px solid var(--line);
+        background: var(--panel-soft);
+      }
+
+      .proof-card h3 {
+        margin: 0;
+        font-size: 1rem;
+        line-height: 1.5;
+      }
+
+      .proof-card p,
+      .proof-note {
+        color: var(--muted);
+        line-height: 1.8;
+      }
+
+      .proof-note {
+        margin-top: 1rem;
+        border-style: dashed;
+      }
+
+      .proof-pre {
+        margin: 1rem 0 0;
+        padding: 1rem 1.05rem;
+        overflow: auto;
+        border: 1px solid var(--line);
+        background: #091019;
+        color: var(--accent-strong);
+        font-family: var(--mono);
+        font-size: 0.8rem;
+        line-height: 1.75;
+      }
+
+      .proof-table {
+        width: 100%;
+        margin-top: 1rem;
+        border-collapse: collapse;
+      }
+
+      .proof-table th,
+      .proof-table td {
+        padding: 0.8rem 0.9rem;
+        border: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .proof-table th {
+        color: var(--accent);
+        font-family: var(--mono);
+        font-size: 0.76rem;
+        letter-spacing: 0.05em;
+      }
+
+      .proof-table td {
+        color: var(--muted);
+        line-height: 1.8;
+      }
+
+      body.entry-page--lab-delivery .entry-filebar {
+        background:
+          linear-gradient(90deg, rgb(198 173 130 / 8%), transparent 42%),
+          linear-gradient(180deg, rgb(255 255 255 / 3%), rgb(255 255 255 / 1%));
+      }
+
+      @media (min-width: 760px) {
+        .proof-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 760px) {
+        .proof-table {
+          display: block;
+          overflow-x: auto;
+        }
+      }
+    </style>
+    <style data-critical-reset>
+      html {
+        color-scheme: dark;
+        background: #070a0f;
+        scroll-behavior: smooth;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-width: 320px;
+        color: #edf1f5;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        line-height: 1.58;
+        background: #070a0f;
+      }
+      .rain-canvas,
+      .fx-layer {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .rain-canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      .fx-layer {
+        z-index: 48;
+      }
+
+      .page-shell {
+        position: relative;
+        z-index: 2;
+        overflow: clip;
+        visibility: hidden;
+      }
+
+      .entry-shell {
+        position: relative;
+        z-index: 2;
+        overflow: clip;
+      }
+
+    </style>
+  </head>
+  <body class="entry-page entry-page--lab entry-page--lab-delivery entry-page--enhanced">
+    <div class="entry-shell">
+      <header class="entry-topbar">
+        <a href="/index.html">
+          <strong>FEIAN</strong>
+          <span>项目实验 / delivery</span>
+        </a>
+        <nav class="entry-nav" aria-label="页面导航">
+          <a href="/index.html">首页</a>
+          <a href="/lab.html">项目实验</a>
+          <a href="/archive.html">归档</a>
+        </nav>
+      </header>
+
+      <header class="entry-header entry-header-feature">
+        <div class="entry-filebar" aria-label="文章状态">
+          <div class="entry-filebar-tag">
+            <span>交付档案 / delivery</span>
+            <strong>installer / package / handoff</strong>
+          </div>
+          <div class="entry-filebar-route">
+            <span>项目 → OPENCLAW delivery</span>
+            <span>更新 2026-04-23</span>
+          </div>
+        </div>
+
+        <div class="entry-header-grid">
+          <div class="entry-header-copy">
+            <p class="entry-kicker">交付记录 / version folder → zip → sha256</p>
+            <h1>OPENCLAW 客户包 V0.31：目录、校验值和卸载入口一起交出去</h1>
+            <p class="entry-subhead">客户包的第一层信息是目录、脚本、SHA256 校验和完整卸载。</p>
+            <p class="entry-lede">
+              真到客户交付的时候，不能只看“我本机上能跑”。更重要的是：最新版目录在哪、ZIP 在哪、校验值在哪、安装向导和卸载入口是不是都摆清楚。OPENCLAW 这一类现在至少把这些东西收成了一套正式包。
+            </p>
+            <div class="entry-meta">
+              <span>2026-04-23 整理</span>
+              <span>Windows 安装包 / 交付目录</span>
+              <span>ZIP / SHA256 / install / uninstall</span>
+            </div>
+          </div>
+
+          <aside class="entry-filecard entry-signalcard" aria-label="交付速览">
+            <p class="entry-filecard-label">固定下来的交付对象</p>
+            <div class="entry-signalgrid">
+              <div>
+                <span>版本目录</span>
+                <strong><code>OPENCLAW一键安装脚本_V0.31</code> 已作为最新客户包固定下来</strong>
+              </div>
+              <div>
+                <span>打包</span>
+                <strong>ZIP 与 SHA256 并存，不再只给一个裸目录</strong>
+              </div>
+              <div>
+                <span>入口</span>
+                <strong>安装向导、完整卸载、Claude only 卸载都各有入口</strong>
+              </div>
+              <div>
+                <span>目标</span>
+                <strong>优先保证：能安装、能打开、能聊天、尽量稳定</strong>
+              </div>
+            </div>
+            <p class="entry-filecard-note">
+              这类事情难点不在写脚本本身，而在目录、版本、校验、安装和卸载路径是否清楚。
+            </p>
+          </aside>
+        </div>
+      </header>
+
+      <main class="entry-main">
+        <section class="entry-section">
+          <h2>先把客户第一步看什么排清楚</h2>
+          <p>
+          这类包最怕“我这边能跑，但客户打开目录不知道点哪个”。V0.31 把入口排清楚：项目说明、最新版本目录、分发 ZIP、SHA256、安装脚本和卸载脚本各就各位。
+          </p>
+          
+        </section>
+
+        <section class="entry-section" id="objects">
+          <h2>交付目录和入口</h2>
+          <table class="proof-table">
+            <thead>
+              <tr>
+                <th scope="col">对象</th>
+                <th scope="col">现在放在哪</th>
+                <th scope="col">这次为什么不能少</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>项目入口说明</strong></td>
+                <td><code>01_项目文档/11_项目入口说明.md</code></td>
+                <td>任何新线程 / 新接手都先从这里进，不再靠口头交代。</td>
+              </tr>
+              <tr>
+                <td><strong>最新版本目录</strong></td>
+                <td><code>.../06_输出成品/OPENCLAW一键安装脚本_V0.31</code></td>
+                <td>最新客户包要有明确主入口，不再让历史版本一起挤在最前面。</td>
+              </tr>
+              <tr>
+                <td><strong>ZIP</strong></td>
+                <td><code>OPENCLAW一键安装脚本_V0.31.zip</code></td>
+                <td>交付不只给目录，还要给可发、可存档、可回传的正式包。</td>
+              </tr>
+              <tr>
+                <td><strong>SHA256</strong></td>
+                <td><code>OPENCLAW一键安装脚本_V0.31_SHA256.txt</code></td>
+                <td>这让“是不是同一个包”不再靠猜。</td>
+              </tr>
+              <tr>
+                <td><strong>安装 / 卸载入口</strong></td>
+                <td><code>10_一键安装向导.ps1</code> / <code>20_一键卸载向导.ps1</code> / <code>21_claude_only_uninstall_launcher.ps1</code></td>
+                <td>交付回路不只包括怎么装，还包括怎么退。</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="entry-section" id="evidence">
+          <h2>材料：ZIP、SHA256、安装和卸载</h2>
+          <div class="proof-grid">
+            <article class="proof-card">
+              <h3>入口说明固定了目录顺序</h3>
+              <pre class="proof-pre">先读这些文件：
+1. AGENTS.md
+2. 10_工作区说明.md
+3. 11_项目入口说明.md
+4. 12_新线程接续说明.md
+...
+8. 包内说明文件
+9. 10_一键安装向导.ps1
+10. 20_一键卸载向导.ps1</pre>
+              <p>关键点在这里。能交付的不是一堆文件，而是目录顺序、版本、校验和安装 / 卸载路径都摆清楚。</p>
+            </article>
+
+            <article class="proof-card">
+              <h3>版本目录、ZIP、SHA256 同时存在</h3>
+              <p>
+                它已经不只是一个本地脚本项目。目录负责展开检查，ZIP 负责分发，SHA256 负责完整性确认，交付范围由这三个对象撑住。
+              </p>
+            </article>
+
+            <article class="proof-card">
+              <h3>目标被写得很实际</h3>
+              <p>
+                入口说明里没有写漂亮口号，只写了四件事：能安装、能打开、能聊天、尽量稳定。目标很朴素，也更接近客户真正会遇到的第一步。
+              </p>
+            </article>
+
+            <article class="proof-card">
+              <h3>旧路径被正式迁移并收口</h3>
+              <p>
+                这一类已经从旧路径迁移到新的标准化工作区，且明确要求后续正式输出默认只保留“最新版本目录 + 最新 ZIP + 最新 SHA256”。这说明这次不只是在改脚本，也在改交付秩序。
+              </p>
+            </article>
+
+            <article class="proof-card">
+              <h3>问题记录和版本文件把“还没稳定的地方”留了下来</h3>
+              <p>
+                这次不是只留下一个能发出去的包，还把 <code>20_进度记录.md</code>、<code>21_问题发现.md</code> 和
+                <code>VERSION.txt</code> 一起留在交付记录里。复查时直接沿着版本、遗留问题和进度记录收尾，不从“看起来能跑”重新猜。
+              </p>
+            </article>
+          </div>
+          <p class="proof-note">
+            如果只看代码，这件事并不显眼；但把目录、版本、校验、安装 / 卸载入口，再加上进度和问题记录一起看，它已经具备客户侧交付整理的基本形态。
+          </p>
+        </section>
+
+        <section class="entry-section" id="boundary">
+          <h2>范围：先保安装和回滚</h2>
+          <div class="proof-badges" aria-label="范围对象">
+            <span class="proof-badge">最新版本目录</span>
+            <span class="proof-badge">ZIP</span>
+            <span class="proof-badge">SHA256</span>
+            <span class="proof-badge">install / uninstall</span>
+          </div>
+          <p>
+            不把它写成“安装体验已经完美”。现有材料只说明：交付对象已经收整，入口和版本范围成立，安装 / 卸载各自有脚本，遗留问题继续挂在 <code>20_进度记录.md</code> 和
+            <code>21_问题发现.md</code> 里。更多能力留给后续版本，不提前夸大。
+          </p>
+        </section>
+
+        <section class="entry-section" id="next">
+          <h2>后续接手的文件范围</h2>
+          <div class="proof-grid">
+            <article class="proof-card">
+              <h3>还没做完</h3>
+              <ul>
+                <li>项目目标仍写着“继续调试优化 Windows 客户一键安装包”，说明它还在持续打磨，不是已经封箱。</li>
+                <li>当前材料集中在目录规范、交付物范围和问题留痕；安装摩擦细节还没有逐条展开成案例。</li>
+                <li>如果后面再出新版本，仍需要维持“最新目录 + 最新 ZIP + 最新 SHA256”的单入口习惯。</li>
+              </ul>
+            </article>
+
+            <article class="proof-card">
+              <h3>后续对象</h3>
+              <ul>
+                <li><code>20_进度记录.md</code> 和 <code>21_问题发现.md</code>：记录交付后的稳定性问题。</li>
+                <li><code>VERSION.txt</code> 与校验说明：确认版本范围。</li>
+                <li>安装逻辑：在目录规范和完整性校验稳定后再改。</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section class="entry-note">
+          <p>
+            重点不是“我写了个安装脚本”，而是版本、入口、校验和回滚路径已经按正式交付摆在台面上。
+          </p>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="/src/entry.ts"></script>
+  </body>
+</html>
+
+
+
+
+
+
+
+

@@ -1,0 +1,204 @@
+.entry-page--canvas-signal {
+  background:
+    radial-gradient(circle at 18% 8%, rgb(132 207 188 / 10%), transparent 26%),
+    radial-gradient(circle at 82% 22%, rgb(155 188 209 / 12%), transparent 24%),
+    linear-gradient(180deg, #070a0f 0%, #090d14 58%, #070a0f 100%);
+}
+
+.entry-page--canvas-signal .entry-shell {
+  width: min(100% - 1.5rem, 68rem);
+}
+
+.canvas-lab-hero {
+  position: relative;
+  min-height: min(46rem, calc(100svh - 4.6rem));
+  isolation: isolate;
+}
+
+.canvas-lab-stage {
+  position: absolute;
+  inset: 4.8rem 50% auto 50%;
+  z-index: -1;
+  width: min(100vw, 76rem);
+  height: min(58svh, 34rem);
+  min-height: 23rem;
+  transform: translateX(-50%);
+  overflow: hidden;
+  border: 1px solid rgb(155 188 209 / 12%);
+  background:
+    radial-gradient(circle at 50% 20%, rgb(132 207 188 / 10%), transparent 32%),
+    linear-gradient(180deg, rgb(5 9 14 / 78%), rgb(5 8 13 / 36%));
+  box-shadow:
+    0 42px 140px rgb(0 0 0 / 38%),
+    0 0 0 1px rgb(255 255 255 / 3%) inset;
+  contain: layout paint size;
+}
+
+.canvas-lab-stage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgb(7 10 15 / 0%) 0%, rgb(7 10 15 / 68%) 100%),
+    repeating-linear-gradient(90deg, rgb(213 231 242 / 4%) 0 1px, transparent 1px 56px);
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+.canvas-lab-stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.canvas-lab-fallback {
+  position: absolute;
+  inset: auto 1rem 1rem;
+  display: grid;
+  gap: 0.25rem;
+  color: rgb(213 231 242 / 74%);
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.canvas-lab-fallback strong {
+  color: rgb(237 246 252 / 90%);
+  font-family: var(--sans);
+  font-size: 0.98rem;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.canvas-lab-stage.is-mounted .canvas-lab-fallback {
+  opacity: 0;
+}
+
+.canvas-lab-header-grid {
+  align-items: end;
+  padding-top: min(28svh, 13rem);
+}
+
+.entry-page--canvas-signal .entry-header h1 {
+  max-width: 13ch;
+}
+
+.canvas-lab-control {
+  backdrop-filter: blur(18px);
+  background:
+    radial-gradient(circle at 20% 0%, rgb(132 207 188 / 14%), transparent 36%),
+    linear-gradient(180deg, rgb(11 17 25 / 82%), rgb(7 10 15 / 64%));
+}
+
+.canvas-mode-buttons {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.canvas-mode-buttons button {
+  appearance: none;
+  min-height: 42px;
+  color: rgb(237 246 252 / 86%);
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  font-weight: 700;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 5%), rgb(255 255 255 / 0%)),
+    rgb(7 12 18 / 58%);
+  border: 1px solid rgb(155 188 209 / 18%);
+  cursor: pointer;
+  transition:
+    transform 180ms var(--ease-fluid),
+    border-color 180ms var(--ease-fluid),
+    background 180ms var(--ease-fluid);
+}
+
+.canvas-mode-buttons button:hover,
+.canvas-mode-buttons button:focus-visible,
+.canvas-mode-buttons button.is-active {
+  color: #f6fbff;
+  border-color: rgb(132 207 188 / 48%);
+  background:
+    radial-gradient(circle at 50% 0%, rgb(132 207 188 / 18%), transparent 46%),
+    rgb(10 17 24 / 76%);
+  outline: 0;
+  transform: translateY(-1px);
+}
+
+.canvas-lab-readout {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.72rem 0.78rem;
+  border: 1px solid rgb(155 188 209 / 14%);
+  background: rgb(7 11 17 / 42%);
+}
+
+.canvas-lab-readout span,
+.canvas-lab-readout strong {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.canvas-lab-readout span {
+  color: var(--muted-soft);
+}
+
+.canvas-lab-readout strong {
+  color: rgb(132 207 188 / 92%);
+  font-weight: 600;
+}
+
+.canvas-boundary-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.canvas-lab-main pre {
+  overflow: auto;
+  margin: 1rem 0 0;
+  padding: 1rem;
+  color: rgb(221 235 244 / 88%);
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  line-height: 1.75;
+  border: 1px solid rgb(155 188 209 / 14%);
+  background:
+    linear-gradient(90deg, rgb(132 207 188 / 8%), transparent 38%),
+    rgb(5 9 14 / 58%);
+}
+
+@media (max-width: 860px) {
+  .canvas-lab-stage {
+    top: 5.2rem;
+    height: 25rem;
+    min-height: 21rem;
+  }
+
+  .canvas-lab-header-grid {
+    padding-top: 14rem;
+  }
+
+  .canvas-boundary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .canvas-lab-stage canvas {
+    opacity: 0.28;
+  }
+
+  .canvas-mode-buttons button {
+    transform: none !important;
+    transition:
+      color 160ms var(--ease-fluid),
+      border-color 160ms var(--ease-fluid),
+      background 160ms var(--ease-fluid);
+  }
+}

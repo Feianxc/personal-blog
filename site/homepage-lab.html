@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta
+      name="description"
+      content="FEIAN 的页面实验：把个人博客首页改成能继续长内容的前台。"
+    />
+    <title>首页实验：把个人站改成内容前台 - FEIAN</title>
+    <link rel="stylesheet" href="/src/entry.css" />
+    <style data-critical-reset>
+      html {
+        color-scheme: dark;
+        background: #070a0f;
+        scroll-behavior: smooth;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-width: 320px;
+        color: #edf1f5;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        line-height: 1.58;
+        background: #070a0f;
+      }
+      .rain-canvas,
+      .fx-layer {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .rain-canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      .fx-layer {
+        z-index: 48;
+      }
+
+      .page-shell {
+        position: relative;
+        z-index: 2;
+        overflow: clip;
+        visibility: hidden;
+      }
+
+      .entry-shell {
+        position: relative;
+        z-index: 2;
+        overflow: clip;
+      }
+
+    </style>
+  </head>
+  <body class="entry-page entry-page--lab entry-page--homepage-lab">
+    <div class="entry-shell">
+      <header class="entry-topbar">
+        <a href="/index.html">
+          <strong>FEIAN</strong>
+          <span>个人博客 / homepage lab</span>
+        </a>
+        <nav class="entry-nav" aria-label="页面导航">
+          <a href="/index.html">首页</a>
+          <a href="/lab.html">项目实验</a>
+          <a href="/archive.html">归档</a>
+          <a href="/about.html">关于</a>
+        </nav>
+      </header>
+
+      <header class="entry-header">
+        <p class="entry-kicker">页面实验</p>
+        <h1>首页实验：把个人站改成内容前台</h1>
+        <p class="entry-lede">
+          这页想保留冷、清、略带实验感的气质，也要让首页能承接文章、现场记录和项目档案。
+        </p>
+        <div class="entry-meta">
+          <span>2026-04-18</span>
+          <span>首页重构</span>
+          <span>动态背景 / 内容前台 / 真实项目</span>
+        </div>
+      </header>
+
+      <main class="entry-main">
+        <section class="entry-section">
+          <h2>先收掉包装腔</h2>
+          <p>
+            旧首页信息密度很满，却不像长期更新的个人站。改法是减少自我介绍，把最近文章和真实项目放到前面。
+          </p>
+        </section>
+
+        <section class="entry-section">
+          <h2>雨幕保留，但要像这个站自己的记录场</h2>
+          <p>
+            雨幕保留，是因为它有一点游戏感，也有一点实验室的冷气质。但它不该变成主角，所以现在更多只负责气氛，阅读区和内容入口要更稳、更安静。
+          </p>
+        </section>
+
+        <section class="entry-section">
+          <h2>这页最重要的一件事</h2>
+          <p>
+            首页要能接住新文章、现场记录和小工具，而不是每次都重新做一张封面。
+          </p>
+        </section>
+
+        <section class="entry-note">
+          <p>
+            这个实验还会改；现在它已经从样板页转成内容前台。
+          </p>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="/src/entry.ts"></script>
+  </body>
+</html>
+
+
+
+
+
+

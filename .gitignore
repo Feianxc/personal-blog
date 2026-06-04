@@ -1,0 +1,11 @@
+node_modules/
+dist/
+logs/
+reports/
+*.local
+*.log
+.env
+.env.*
+.workspace/
+.tmp/
+.DS_Store

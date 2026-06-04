@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta
+      name="description"
+      content="FEIAN 的Canvas 视觉实验：用 PixiJS + GSAP 测试高能视觉层，只把 Canvas 当背景和特效，不替代博客正文。"
+    />
+    <title>Canvas 视觉实验：高能视觉层与可阅读正文 - FEIAN</title>
+    <link rel="stylesheet" href="/src/entry.css" />
+    <link rel="stylesheet" href="/src/html-canvas-signal-lab.css" />
+    <style data-critical-reset>
+      html {
+        color-scheme: dark;
+        background: #070a0f;
+        scroll-behavior: smooth;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-width: 320px;
+        color: #edf1f5;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        line-height: 1.58;
+        background: #070a0f;
+      }
+
+      .rain-canvas,
+      .fx-layer {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .rain-canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      .fx-layer {
+        z-index: 48;
+      }
+
+      .page-shell {
+        position: relative;
+        z-index: 2;
+        overflow: clip;
+        visibility: hidden;
+      }
+
+      .entry-shell {
+        position: relative;
+        z-index: 2;
+        overflow: clip;
+      }
+    </style>
+  </head>
+  <body class="entry-page entry-page--lab entry-page--canvas-signal">
+    <div class="entry-shell">
+      <header class="entry-topbar">
+        <a href="/index.html">
+          <strong>FEIAN</strong>
+          <span>Canvas 视觉实验</span>
+        </a>
+        <nav class="entry-nav" aria-label="页面导航">
+          <a href="/index.html">首页</a>
+          <a href="/lab.html">项目实验</a>
+          <a href="/homepage-lab.html">首页实验</a>
+          <a href="/archive.html">归档</a>
+          <a href="/about.html">关于</a>
+        </nav>
+      </header>
+
+      <header class="entry-header entry-header-feature canvas-lab-hero">
+        <div class="entry-filebar" aria-label="实验状态">
+          <div class="entry-filebar-tag">
+            <span>项目札记 / lab</span>
+            <strong>Canvas 视觉实验</strong>
+          </div>
+          <div class="entry-filebar-route">
+            <span>PixiJS + GSAP → 独立实验页</span>
+            <span>创建 2026-04-25</span>
+          </div>
+        </div>
+
+        <div class="canvas-lab-stage" id="signal-canvas-root" aria-hidden="true">
+          <div class="canvas-lab-fallback">
+            <span>画布视觉层加载中</span>
+            <strong>PixiJS / GSAP 画布层实验</strong>
+          </div>
+        </div>
+
+        <div class="entry-header-grid canvas-lab-header-grid">
+          <div class="entry-header-copy">
+            <p class="entry-kicker">可阅读 HTML + 高能 Canvas 背景 / WebGL 优先</p>
+            <h1>高能视觉层可以进入 Canvas，但正文必须留在可阅读的 HTML 里。</h1>
+            <p class="entry-lede">
+              这个页面用 PixiJS 画画布层、粒子和 Canvas 内标签，用 GSAP 控制状态切换。它只测试视觉层，不把博客正文、导航和链接画进 Canvas。
+            </p>
+            <div class="entry-meta">
+              <span>PixiJS 8.18.1</span>
+              <span>GSAP 3.15.0</span>
+              <span>WebGL 默认 / WebGPU 手动探针</span>
+            </div>
+          </div>
+
+          <aside class="entry-filecard canvas-lab-control" aria-label="Canvas 实验控制">
+            <p class="entry-filecard-label">实验控制</p>
+            <div class="canvas-mode-buttons" aria-label="Canvas 模式切换">
+              <button type="button" data-canvas-mode="calm">安静</button>
+              <button type="button" data-canvas-mode="storm">风暴</button>
+              <button type="button" data-canvas-mode="hyper">终局</button>
+            </div>
+            <div class="canvas-lab-readout" aria-live="polite">
+              <span>渲染器</span>
+              <strong data-canvas-renderer>检测中…</strong>
+            </div>
+            <p class="entry-filecard-note">
+              默认不启用 WebGPU。只有 URL 带 <code>?webgpu=1</code> 且浏览器支持时，才会尝试 WebGPU；失败会回退。
+            </p>
+          </aside>
+        </div>
+      </header>
+
+      <main class="entry-main canvas-lab-main">
+        <section class="entry-section">
+          <h2>这个实验放在这里，不放在首页默认首屏</h2>
+          <p>
+            独立 lab 页只保存 PixiJS、GSAP、模式切换、降级和测试记录；首页默认首屏仍保持轻量。
+          </p>
+        </section>
+
+        <section class="entry-section">
+          <h2>范围：Canvas 只负责气氛，不接管正文</h2>
+          <div class="entry-quicklook canvas-boundary-grid">
+            <article class="entry-quicklook-card">
+              <span class="entry-quicklook-label">保留 HTML</span>
+              <strong>标题、段落、链接、导航都还是 DOM</strong>
+              <p>这样 SEO、复制、阅读器、键盘访问和后续写文章不会被牺牲。</p>
+            </article>
+            <article class="entry-quicklook-card">
+              <span class="entry-quicklook-label">Canvas 专职</span>
+              <strong>背景、粒子、记录线和高能模式交给 Pixi</strong>
+              <p>把“好看但不该挡内容”的部分放进一个可卸载的视觉层。</p>
+            </article>
+            <article class="entry-quicklook-card">
+              <span class="entry-quicklook-label">GSAP 只管节奏</span>
+              <strong>状态切换、爆发、回落，不接管全站滚动</strong>
+              <p>这和现有“安静 / 风暴 / 高能”的控制台逻辑可以自然合并。</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="entry-section">
+          <h2>接入方式</h2>
+          <p>
+            它不替换首页雨幕，也不默认加载；轻量雨幕保留为默认态，PixiJS / GSAP 版本只在高能模式下懒加载。
+          </p>
+          <pre><code>点击“高能”
+  → 按需加载 PixiJS + GSAP
+  → 挂载 Canvas 视觉层
+  → 安静模式 / 减少动态效果 / 页面隐藏时停止并清理</code></pre>
+        </section>
+
+        <section class="entry-note">
+          <p>
+            这页的结论不是“以后整站都用 Canvas”，而是视觉层可以继续往前试，但正文仍然要有真实 HTML 骨架。
+          </p>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="/src/entry.ts"></script>
+    <script type="module" src="/src/html-canvas-signal-lab.ts"></script>
+  </body>
+</html>
+
+
+

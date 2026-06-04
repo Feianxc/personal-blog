@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta
+      name="description"
+      content="FEIAN 的现场档案：一次 MCGS / MODBUS 轮询冻结事件，按交接说法保留现象、材料和判断。"
+    />
+    <title>IR-485-0419：一次 MCGS 轮询冻结现场记录 - FEIAN</title>
+    <link rel="stylesheet" href="/src/entry.css" />
+    <style>
+      .entry-anchor-nav,
+      .proof-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+      }
+
+      .entry-anchor-nav {
+        margin: 1rem 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .entry-anchor-nav a,
+      .proof-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.45rem 0.75rem;
+        border: 1px solid var(--line-strong);
+        border-radius: 999px;
+        background: var(--panel-soft);
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 0.76rem;
+        letter-spacing: 0.04em;
+      }
+
+      .entry-anchor-nav a:hover,
+      .entry-anchor-nav a:focus-visible {
+        color: var(--accent-strong);
+        border-color: rgb(155 188 209 / 32%);
+      }
+
+      .entry-section code,
+      .proof-table code {
+        font-family: var(--mono);
+        font-size: 0.84em;
+        color: var(--accent-strong);
+      }
+
+      .proof-grid {
+        display: grid;
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+
+      .proof-card,
+      .proof-note,
+      .timeline-item {
+        padding: 1rem 1.05rem;
+        border: 1px solid var(--line);
+        background: var(--panel-soft);
+      }
+
+      .proof-card h3,
+      .timeline-item h3 {
+        margin: 0;
+        font-size: 1rem;
+        line-height: 1.5;
+      }
+
+      .proof-card p,
+      .proof-note,
+      .timeline-item p,
+      .timeline-item li {
+        color: var(--muted);
+        line-height: 1.8;
+      }
+
+      .proof-note {
+        margin-top: 1rem;
+        border-style: dashed;
+      }
+
+      .proof-table {
+        width: 100%;
+        margin-top: 1rem;
+        border-collapse: collapse;
+      }
+
+      .proof-table th,
+      .proof-table td {
+        padding: 0.8rem 0.9rem;
+        border: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .proof-table th {
+        color: var(--accent);
+        font-family: var(--mono);
+        font-size: 0.76rem;
+        letter-spacing: 0.05em;
+      }
+
+      .proof-table td {
+        color: var(--muted);
+        line-height: 1.8;
+      }
+
+      .proof-table strong {
+        color: var(--text);
+      }
+
+      .proof-pre {
+        margin: 1rem 0 0;
+        padding: 1rem 1.05rem;
+        overflow: auto;
+        border: 1px solid var(--line);
+        background: #091019;
+        color: var(--accent-strong);
+        font-family: var(--mono);
+        font-size: 0.8rem;
+        line-height: 1.75;
+      }
+
+      .timeline {
+        display: grid;
+        gap: 0.9rem;
+        margin-top: 1rem;
+      }
+
+      .timeline-item time {
+        display: block;
+        margin-bottom: 0.4rem;
+        color: var(--accent);
+        font-family: var(--mono);
+        font-size: 0.76rem;
+        letter-spacing: 0.05em;
+      }
+
+      .timeline-item ul {
+        margin: 0.7rem 0 0;
+        padding-left: 1.1rem;
+      }
+
+      .proof-card-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: var(--accent);
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .proof-card ul {
+        margin: 0.8rem 0 0;
+        padding-left: 1.1rem;
+      }
+
+      .proof-card li {
+        color: var(--muted);
+        line-height: 1.8;
+      }
+
+      .delta-strip {
+        display: grid;
+        gap: 0.85rem;
+        margin-top: 1rem;
+      }
+
+      .delta-row {
+        padding: 0.95rem 1rem;
+        border: 1px solid var(--line);
+        background: var(--panel-soft);
+      }
+
+      .delta-row strong {
+        display: block;
+        margin-bottom: 0.32rem;
+        color: var(--text);
+      }
+
+      .delta-row span {
+        display: block;
+        color: var(--muted);
+        line-height: 1.8;
+      }
+
+      @media (min-width: 760px) {
+        .proof-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 760px) {
+        .proof-table {
+          display: block;
+          overflow-x: auto;
+        }
+      }
+    </style>
+    <style data-critical-reset>
+      html {
+        color-scheme: dark;
+        background: #070a0f;
+        scroll-behavior: smooth;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-width: 320px;
+        color: #edf1f5;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        line-height: 1.58;
+        background: #070a0f;
+      }
+      .rain-canvas,
+      .fx-layer {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .rain-canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      .fx-layer {
+        z-index: 48;
+      }
+
+      .page-shell {
+        position: relative;
+        z-index: 2;
+        overflow: clip;
+        visibility: hidden;
+      }
+
+      .entry-shell {
+        position: relative;
+        z-index: 2;
+        overflow: clip;
+      }
+
+    </style>
+  </head>
+  <body class="entry-page entry-page--field">
+    <div class="entry-shell">
+      <header class="entry-topbar">
+        <a href="/index.html">
+          <strong>FEIAN</strong>
+          <span>现场档案 / field</span>
+        </a>
+        <nav class="entry-nav" aria-label="页面导航">
+          <a href="/index.html">首页</a>
+          <a href="/archive.html">归档</a>
+          <a href="/about.html">关于</a>
+        </nav>
+      </header>
+
+      <header class="entry-header entry-header-feature">
+        <div class="entry-filebar" aria-label="文章状态">
+          <div class="entry-filebar-tag">
+            <span>现场档案 / field</span>
+            <strong>现场 / active</strong>
+          </div>
+          <div class="entry-filebar-route">
+            <span>个人站 → incident dossier</span>
+            <span>更新 2026-04-21</span>
+          </div>
+        </div>
+
+        <div class="entry-header-grid">
+          <div class="entry-header-copy">
+            <p class="entry-kicker">现场记录 / modbus rtu / rs-485</p>
+            <h1>IR-485-0419：一次 MCGS 轮询冻结，现场记录怎样从杂音里显出来</h1>
+            <p class="entry-subhead">现场不像演示页，先留报障原话、禁做项、变量组、串口记录和轮询前后差异。</p>
+            <p class="entry-lede">
+              这页按现场交接单写。站号、组名、地址已脱敏，但处理顺序保留：先听原话，再看影响范围，再把串口、寄存器段和轮询节奏摆出来。有些问题不在一句“通讯不稳定”里，而在几次读数的先后顺序里。
+            </p>
+            <div class="entry-meta">
+              <span>事件日期 2026-04-19</span>
+              <span>MCGS / MODBUS / RS-485</span>
+              <span>交接单 / 串口记录 / 轮询差异</span>
+            </div>
+            <div class="proof-badges" aria-label="档案标签">
+              <span class="proof-badge">IR-485-0419</span>
+              <span class="proof-badge">脱敏摘录</span>
+              <span class="proof-badge">不停机窗口</span>
+              <span class="proof-badge">多从站共线</span>
+            </div>
+          </div>
+
+          <aside class="entry-filecard entry-signalcard" aria-label="现场速览">
+            <p class="entry-filecard-label">现场抬头</p>
+            <div class="entry-signalgrid">
+              <div>
+                <span>流程</span>
+                <strong>RS-485 共线 / 4 从站 / FC03 为主</strong>
+              </div>
+              <div>
+                <span>受理现象</span>
+                <strong>同屏部分点位停旧值，切屏返回仍保持</strong>
+              </div>
+              <div>
+                <span>现场窗口</span>
+                <strong>不停机排障，单次可操作窗口 &lt; 8 min</strong>
+              </div>
+              <div>
+                <span>禁做项</span>
+                <strong>不改站号，不整包下载，不长时间拆线</strong>
+              </div>
+            </div>
+            <p class="entry-filecard-note">
+              这页不写成复盘文章，按交接单写：先记原始现象和范围，再写看到的材料，最后写怎么处理。
+            </p>
+          </aside>
+        </div>
+      </header>
+
+      <main class="entry-main">
+        <section class="entry-section">
+          <h2>到场先记三件事：谁报的、哪里卡、哪些动作不能碰</h2>
+          <p>
+            现场第一步没写“结论”，先写受理抬头。因为这次不是整站断通讯，而是同屏里有组继续跳、有组卡旧值。先把原话、影响范围、操作范围写清楚，后面每一步才知道哪些动作不能碰。
+          </p>
+          <div class="entry-quicklook" aria-label="现场抬头">
+            <article class="entry-quicklook-card">
+              <span class="entry-quicklook-label">报障原话</span>
+              <strong>“压力一直在跳，温度卡在旧值；切走再回来还是旧的。”</strong>
+              <p>原话先记下来，后面好对照是不是“完全不通”还是“旧值保持”。</p>
+            </article>
+            <article class="entry-quicklook-card">
+              <span class="entry-quicklook-label">受影响范围</span>
+              <strong>同一画面内 04 / 05 段变量组异常，03 段持续刷新</strong>
+              <p>结论指向特定组和特定负载组合，不是上位机整体失效。</p>
+            </article>
+            <article class="entry-quicklook-card">
+              <span class="entry-quicklook-label">现场范围</span>
+              <strong>只允许单站短读、拆批、拉间隔；不允许整包下载和长时间停机</strong>
+              <p>这次处理空间很小，能动的主要是轮询组织，不是把工程整包重做。</p>
+            </article>
+          </div>
+          <table class="proof-table">
+            <thead>
+              <tr>
+                <th scope="col">字段</th>
+                <th scope="col">记录</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>受理时间</strong></td>
+                <td>2026-04-19 14:06，操作员反馈“温度组卡旧值”，未出现整站通讯断开弹窗。</td>
+              </tr>
+              <tr>
+                <td><strong>初见状态</strong></td>
+                <td>压力组仍有跳变；温度组停在上一轮有效值；切画面返回后旧值保持未消失。</td>
+              </tr>
+              <tr>
+                <td><strong>操作范围</strong></td>
+                <td>单次可操作窗口不足 8 分钟；设备不可长停；不允许先做整包工程下载。</td>
+              </tr>
+              <tr>
+                <td><strong>本页说法</strong></td>
+                <td>保留站号关系、轮询结构、记录形态；组名和寄存器地址做偏移脱敏。</td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <p class="proof-note">
+            设备名、组名、寄存器段已脱敏；判断顺序、记录形态和交接说法保留。
+          </p>
+        </section>
+
+        <section class="entry-section" id="objects">
+          <h2>材料 01：变量组、站号、寄存器段先落表</h2>
+          <p>
+            先落对象表，再动手。组名虽然匿名，但拆组方式、站号关系、功能码和段长度按现场原结构保留；问题往往不在某一个点，而在某一组的轮询位置。
+          </p>
+          <table class="proof-table">
+            <thead>
+              <tr>
+                <th scope="col">变量组</th>
+                <th scope="col">从站 / 功能码</th>
+                <th scope="col">寄存器段</th>
+                <th scope="col">轮询设置</th>
+                <th scope="col">现场表现</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>G-PRS-A</strong></td>
+                <td>03 / FC03</td>
+                <td><code>40001 ~ 40006</code></td>
+                <td>300 ms / 高频组</td>
+                <td>持续刷新，作为对照组保留，不参与本次改动。</td>
+              </tr>
+              <tr>
+                <td><strong>G-TMP-B</strong></td>
+                <td>04 / FC03</td>
+                <td><code>40112 ~ 40119</code></td>
+                <td>300 ms / 同屏并读</td>
+                <td>单站短读可回；并入全量轮询后旧值保持 2~4 周期。</td>
+              </tr>
+              <tr>
+                <td><strong>G-STAT-C</strong></td>
+                <td>05 / FC03</td>
+                <td><code>40240 ~ 40247</code></td>
+                <td>300 ms / 紧随 04 组</td>
+                <td>负载加回后先出现首包超时，重试后偶尔记录。</td>
+              </tr>
+              <tr>
+                <td><strong>G-ACK-D</strong></td>
+                <td>06 / FC04</td>
+                <td><code>30010 ~ 30017</code></td>
+                <td>1000 ms / 低优先组</td>
+                <td>本身稳定，但并回主轮询后会把全周期拉长。</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="proof-note">
+            现场不是每组都坏。03 组一直稳，04 / 05 组在真实扫描量下先掉，06 组主要影响总周期。这种分层比一句“通讯不稳定”更有用。
+          </p>
+        </section>
+
+        <section class="entry-section" id="slices">
+          <h2>现场物证切片 / 变量组、寄存器段、串口记录分开记</h2>
+          <p>
+            以下切片来自现场手记，保留原始格式；关键在记录和时间顺序。
+          </p>
+          <div class="proof-grid">
+            <article class="proof-card">
+              <span class="proof-card-label">evidence slice / A</span>
+              <h3>变量组切片</h3>
+              <pre class="proof-pre">14:11 / group snapshot
+grp      = G-TMP-B
+slave    = 04
+fc       = 03
+map      = 40112 ~ 40119
+len      = 8 word
+scan     = 300 ms
+cache    = last_good_value
+symptom  = 进入画面后保持旧值 2~4 周期
+remark   = 同屏 G-PRS-A 仍正常跳变</pre>
+              <p>
+                关键点是 <code>cache = last_good_value</code> 的现场表现：不是空值，不是报警满屏，而是保留上一个有效值。
+              </p>
+            </article>
+
+            <article class="proof-card">
+              <span class="proof-card-label">evidence slice / B</span>
+              <h3>寄存器段 / 串口记录</h3>
+              <pre class="proof-pre">14:18 / single read
+TX&gt; 04 03 00 70 00 08 CRC
+RX&lt; 04 03 10 00 FA 00 FB 00 F9 00 F8 ...
+
+14:23 / restore 05 segment
+TX&gt; 05 03 01 20 00 04 CRC
+RX&lt; timeout (&gt; 180 ms)
+retry1
+RX&lt; 05 03 08 00 00 00 01 00 01 00 00 CRC
+
+result&gt; 不是完全无记录
+      是全量轮询下首包先漂，重试后偶回</pre>
+              <p>
+                记录切片要保留“首包超时、重试后回”的形态。因为这和“线断了”是两回事，后续结论全靠这个区分。
+              </p>
+            </article>
+
+            <article class="proof-card">
+              <span class="proof-card-label">evidence slice / C</span>
+              <h3>轮询前后差异</h3>
+              <pre class="proof-pre">14:31 / before
+poll set = 03 + 04
+cycle    = 420 ~ 480 ms
+timeout  = 0 ~ 1 / 10 min
+stale    = 0 ~ 1 point
+
+14:46 / after restore full load
+poll set = 03 + 04 + 05 + 06
+cycle    = 1.4 ~ 1.8 s
+timeout  = 6 / 10 min
+stale    = 5 ~ 7 points
+window   = 旧值保持 2~4 周期</pre>
+              <p>
+                定位问题的是这张前后差异。单站短读能过不算过，必须把现场真实扫描量加回来。
+              </p>
+            </article>
+
+            <article class="proof-card">
+              <span class="proof-card-label">evidence slice / D</span>
+              <h3>操作限制 / 禁做项</h3>
+              <ul>
+                <li>允许：按站号拆批、拉大组间隔、做单站短读复测。</li>
+                <li>允许：保留原组名映射，只改轮询组织，不改数据解释。</li>
+                <li>禁止：整包下载 MCGS 工程，现场不具备完整回退窗口。</li>
+                <li>禁止：修改从站地址、波特率、校验位；单站可通信时先不动底层参数。</li>
+                <li>禁止：为验证方便临时改变量名，避免后续交接对表失真。</li>
+              </ul>
+            </article>
+          </div>
+          <p class="proof-note">
+            串口记录为现场手抄摘录，做了地址偏移和 CRC 简写，但保留了是否超时、是否重试、是否二次回包这些关键形态。
+          </p>
+        </section>
+
+        <section class="entry-section" id="hypothesis">
+          <h2>verification_record / 这轮退掉了哪些错误动作</h2>
+          <p>
+            现场里耗时的地方，往往是太早动了错误对象。表里记录本次没有采用的动作和理由。
+          </p>
+          <table class="proof-table">
+            <thead>
+              <tr>
+                <th scope="col">怀疑项</th>
+                <th scope="col">对应物证</th>
+                <th scope="col">结论</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>寄存器整体映射错了</strong></td>
+                <td>04 组最小短读可稳定回，且值有随工况变化，不符合整段错位特征。</td>
+                <td>本次不改映射表，先保留原解释。</td>
+              </tr>
+              <tr>
+                <td><strong>485 流程完全断线</strong></td>
+                <td>03、04 单站短读成立；05 组是全量轮询下首包超时，重试后偶回。</td>
+                <td>按轮询窗口和组顺序判断，不按“断线”处理。</td>
+              </tr>
+              <tr>
+                <td><strong>整批轮询过密 / 顺序不合理</strong></td>
+                <td>恢复全量后周期从 <code>420~480 ms</code> 拉到 <code>1.4~1.8 s</code>，旧值窗口明显放大。</td>
+                <td>保留为主故障方向；本次只动拆批和间隔。</td>
+              </tr>
+              <tr>
+                <td><strong>整包下载 / 重录变量</strong></td>
+                <td>现场无完整回退窗口，且当前物证已能解释现象，不需要通过重录来试错。</td>
+                <td>推迟。只有对象表失真或变量库损坏时再提到前面。</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="delta-strip" aria-label="本次实际动作">
+            <div class="delta-row">
+              <strong>本次实际调整</strong>
+              <span>只调整轮询组织：高频组拆成两批，组间隔由 300 ms 拉到 600 ms，保留原变量映射不动。</span>
+            </div>
+            <div class="delta-row">
+              <strong>动作范围</strong>
+              <span>没碰站号、波特率、校验位，没做整包下载。理由不是“保守”，而是当前材料还不支持动这些地方。</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="entry-section" id="handoff">
+          <h2>交接和残留风险</h2>
+          <table class="proof-table">
+            <thead>
+              <tr>
+                <th scope="col">交接项</th>
+                <th scope="col">本次动作</th>
+                <th scope="col">不动原因 / 当前范围</th>
+                <th scope="col">后续优先核查</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>变量映射表</strong></td>
+                <td>未改</td>
+                <td>04 组短读可达，暂无整段错位材料；现象更像旧值保持，不像地址解释错误。</td>
+                <td>核查 <code>G-TMP-B / 04 段</code> 是否再次出现 2~4 周期旧值窗口。</td>
+              </tr>
+              <tr>
+                <td><strong>从站参数</strong></td>
+                <td>未改站号、波特率、校验位</td>
+                <td>单站可通信时不先动底层参数，避免把“负载问题”改成“配置问题”。</td>
+                <td>若再次掉线，先截 <code>04 / 05</code> 段记录，再决定要不要碰串口参数。</td>
+              </tr>
+              <tr>
+                <td><strong>轮询组织</strong></td>
+                <td>已拆批，组间隔 <code>300 ms → 600 ms</code></td>
+                <td>这是本次唯一有直接材料支撑的调整项，改动小，可回退。</td>
+                <td>后续新增点位前，先做一次全量回放，不要直接塞回原队列。</td>
+              </tr>
+              <tr>
+                <td><strong>工程整包下载</strong></td>
+                <td>未做</td>
+                <td>现场回退窗口不足，而且当前现象已经能通过轮询差异解释，不需要靠整包下载试错。</td>
+                <td>只有对象表与现场设备表对不上，或变量库明显损坏时，再排到前面。</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="proof-grid">
+            <article class="proof-card">
+              <span class="proof-card-label">handoff / residual risk</span>
+              <h3>残留风险</h3>
+              <ul>
+                <li>当前稳定建立在“拆批 + 拉间隔”上，后续如果恢复原扫描密度，问题可能原样回来。</li>
+                <li>05 段仍有“首包先漂、重试后回”的形态，说明流程余量不宽，不能当成完全消失。</li>
+                <li>若再加同屏高频组，总周期会先被拉长，再表现成旧值保持，不一定先报通讯断开。</li>
+              </ul>
+            </article>
+
+            <article class="proof-card">
+              <span class="proof-card-label">handoff / next entry</span>
+              <h3>后续到场核查</h3>
+              <ul>
+                <li>核查 <code>04 / 05</code> 段串口记录，确认是“无回”还是“首包漂”。</li>
+                <li>核查全量轮询周期和超时计数，避免只盯某一个画面点位。</li>
+                <li>必要时翻协议表和变量映射；没有新材料前，不动整包工程。</li>
+              </ul>
+            </article>
+          </div>
+          <p class="proof-note">
+            交接说法：核查 04 / 05 段记录和全量周期，再决定是否碰映射和整包工程；不靠“重新下载试试”来试错。
+          </p>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="/src/entry.ts"></script>
+  </body>
+</html>
+
+
+
+
+
+
+
+
+

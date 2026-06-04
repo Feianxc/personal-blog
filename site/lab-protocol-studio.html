@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta
+      name="description"
+      content="从历史 Excel 到客户工作台：动环协议自动生成系统是怎么把模板族、校验、对比和交付状态放进同一条流程的。"
+    />
+    <title>动环协议工作台：把四种出表场景放进同一个入口 - FEIAN</title>
+    <link rel="stylesheet" href="/src/entry.css" />
+    <style>
+      .proof-badges,
+      .entry-anchor-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+      }
+
+      .entry-anchor-nav {
+        margin: 1rem 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .entry-anchor-nav a,
+      .proof-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.45rem 0.75rem;
+        border: 1px solid var(--line-strong);
+        border-radius: 999px;
+        background: var(--panel-soft);
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 0.76rem;
+        letter-spacing: 0.04em;
+      }
+
+      .entry-section code,
+      .proof-table code {
+        font-family: var(--mono);
+        font-size: 0.84em;
+        color: var(--accent-strong);
+      }
+
+      .proof-grid {
+        display: grid;
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+
+      .proof-card,
+      .proof-note {
+        padding: 1rem 1.05rem;
+        border: 1px solid var(--line);
+        background: var(--panel-soft);
+      }
+
+      .proof-card h3 {
+        margin: 0;
+        font-size: 1rem;
+        line-height: 1.5;
+      }
+
+      .proof-card p,
+      .proof-note {
+        color: var(--muted);
+        line-height: 1.8;
+      }
+
+      .proof-note {
+        margin-top: 1rem;
+        border-style: dashed;
+      }
+
+      .proof-pre {
+        margin: 1rem 0 0;
+        padding: 1rem 1.05rem;
+        overflow: auto;
+        border: 1px solid var(--line);
+        background: #091019;
+        color: var(--accent-strong);
+        font-family: var(--mono);
+        font-size: 0.8rem;
+        line-height: 1.75;
+      }
+
+      .proof-table {
+        width: 100%;
+        margin-top: 1rem;
+        border-collapse: collapse;
+      }
+
+      .proof-table th,
+      .proof-table td {
+        padding: 0.8rem 0.9rem;
+        border: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .proof-table th {
+        color: var(--accent);
+        font-family: var(--mono);
+        font-size: 0.76rem;
+        letter-spacing: 0.05em;
+      }
+
+      .proof-table td {
+        color: var(--muted);
+        line-height: 1.8;
+      }
+
+      body.entry-page--lab-protocol .entry-filebar {
+        background:
+          linear-gradient(90deg, rgb(140 182 220 / 8%), transparent 42%),
+          linear-gradient(180deg, rgb(255 255 255 / 3%), rgb(255 255 255 / 1%));
+      }
+
+      @media (min-width: 760px) {
+        .proof-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 760px) {
+        .proof-table {
+          display: block;
+          overflow-x: auto;
+        }
+      }
+    </style>
+    <style data-critical-reset>
+      html {
+        color-scheme: dark;
+        background: #070a0f;
+        scroll-behavior: smooth;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-width: 320px;
+        color: #edf1f5;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        line-height: 1.58;
+        background: #070a0f;
+      }
+      .rain-canvas,
+      .fx-layer {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .rain-canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      .fx-layer {
+        z-index: 48;
+      }
+
+      .page-shell {
+        position: relative;
+        z-index: 2;
+        overflow: clip;
+        visibility: hidden;
+      }
+
+      .entry-shell {
+        position: relative;
+        z-index: 2;
+        overflow: clip;
+      }
+
+    </style>
+  </head>
+  <body class="entry-page entry-page--lab entry-page--lab-protocol entry-page--enhanced">
+    <div class="entry-shell">
+      <header class="entry-topbar">
+        <a href="/index.html">
+          <strong>FEIAN</strong>
+          <span>项目实验 / protocol</span>
+        </a>
+        <nav class="entry-nav" aria-label="页面导航">
+          <a href="/index.html">首页</a>
+          <a href="/lab.html">项目实验</a>
+          <a href="/archive.html">归档</a>
+        </nav>
+      </header>
+
+      <header class="entry-header entry-header-feature">
+        <div class="entry-filebar" aria-label="文章状态">
+          <div class="entry-filebar-tag">
+            <span>项目构建 / lab</span>
+            <strong>protocol / studio / delivery</strong>
+          </div>
+          <div class="entry-filebar-route">
+            <span>项目 → protocol studio</span>
+            <span>更新 2026-04-23</span>
+          </div>
+        </div>
+
+        <div class="entry-header-grid">
+          <div class="entry-header-copy">
+            <p class="entry-kicker">构建记录 / historical excel → customer workbench</p>
+            <h1>动环协议工作台：把四种出表场景放进同一个入口</h1>
+            <p class="entry-subhead">客户填完参数后，Excel、校验结果、源模板对比 和 交付状态 要从同一个入口返回。</p>
+            <p class="entry-lede">
+              这种事情最容易停在半手工：模板很多、规则很多、场景很多，最后每次都像重新翻一次历史项目。现在这套仓库至少把四个一线出表场景、单页客户工作台、smoke test 和交付包一起收住了。
+            </p>
+            <div class="entry-meta">
+              <span>2026-04-23 整理</span>
+              <span>FastAPI / Web 工作台</span>
+              <span>校验结果 / 源模板对比 / 交付状态</span>
+            </div>
+          </div>
+
+          <aside class="entry-filecard entry-signalcard" aria-label="工作台速览">
+            <p class="entry-filecard-label">四个关键对象</p>
+            <div class="entry-signalgrid">
+              <div>
+                <span>场景</span>
+                <strong>标准单列 / 单屏双列 / 扩展版 / AB 分屏版 已被正式暴露</strong>
+              </div>
+              <div>
+                <span>工作台</span>
+                <strong>前端已收敛成单页客户工作台，不再走 basic / advanced 双模式分裂</strong>
+              </div>
+              <div>
+                <span>接口</span>
+                <strong><code>/api/generate</code> 同时返回 校验结果、对比、质量摘要和交付状态</strong>
+              </div>
+              <div>
+                <span>交付</span>
+                <strong>根目录已有 deployment bundle，share bundle 还能直接给别人解压运行</strong>
+              </div>
+            </div>
+            <p class="entry-filecard-note">
+              现在客户填完参数后，同一个入口会返回 Excel、校验结果、源模板对比 和 交付状态。以前要分开确认的几件事，这轮先收到一个工作台里。
+            </p>
+          </aside>
+        </div>
+      </header>
+
+      <main class="entry-main">
+        <section class="entry-section">
+          <h2>旧模板不再靠人工翻找</h2>
+          <p>
+            过去每来一个新项目，都要重新猜模板、表头和 A/B 路默认值。现在四个主场景、关键默认值和交付判断被放到同一张台面上。
+          </p>
+          
+        </section>
+
+        <section class="entry-section" id="scenarios">
+          <h2>四个出表场景先摆到同一页</h2>
+          <table class="proof-table">
+            <thead>
+              <tr>
+                <th scope="col">场景</th>
+                <th scope="col">family / topology</th>
+                <th scope="col">作用</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>标准单列</strong></td>
+                <td><code>classic_combined / single_screen_one_column</code></td>
+                <td>这是最常规的一线说法，先把它钉住，后面的比较才有基准。</td>
+              </tr>
+              <tr>
+                <td><strong>单屏双列</strong></td>
+                <td><code>classic_combined / single_screen_two_columns</code></td>
+                <td>它直接接入浙江农商行双列源模板，是这次“不是玩具”的关键材料之一。</td>
+              </tr>
+              <tr>
+                <td><strong>扩展版</strong></td>
+                <td><code>extended_split / single_screen_half_channel</code></td>
+                <td>说明系统不是只会出一种最简表，而是已经开始覆盖复杂工作表结构。</td>
+              </tr>
+              <tr>
+                <td><strong>A / B 分屏版</strong></td>
+                <td><code>ab_screen_split / dual_screens_ab_separated</code></td>
+                <td>A/B 路别和地址摘要能按真实场景输出，不再靠人手后处理。</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="entry-section" id="workbench">
+          <h2>客户打开的是这个工作台</h2>
+          <div class="proof-grid">
+            <article class="proof-card">
+              <h3>单工作台，而不是 basic / advanced 分裂</h3>
+              <p>
+                README 里直接写明：当前前端已经调整成单工作台 + 结果后置的客户填写页。这说明这轮开始处理“给客户怎么填、怎么看结果”，而不是继续加后台选项。
+              </p>
+            </article>
+
+            <article class="proof-card">
+              <h3>B 路默认值被写成了可复核的事实</h3>
+              <p>
+                <code>S2</code>、<code>201</code>、单屏双列下的默认始端箱序列，都被明确写进了 README 和 smoke test。
+                它把“按记忆处理”改成了“仓库承认当前说法”。
+              </p>
+            </article>
+
+            <article class="proof-card">
+              <h3>结果区优先显示的是能不能交付</h3>
+              <pre class="proof-pre">/api/generate 会同时返回：
+校验结果
+source_compare
+quality_summary
+delivery_status
+
+delivery_status:
+- deliverable
+- deliverable_with_review
+- not_recommended</pre>
+              <p>检查说法前移：生成成功只是第一步，页面还要回答这份东西能不能直接发给客户。</p>
+            </article>
+
+            <article class="proof-card">
+              <h3>分享包已经能让别人解压就跑</h3>
+              <p>
+                share bundle 的说明很清楚：先解压、双击 <code>start_studio.bat</code>、首次会自动建 <code>.venv</code> 并安装依赖、浏览器自动打开 <code>127.0.0.1:8123</code>。
+                它不再只依赖开发机里的研究脚本。
+              </p>
+            </article>
+          </div>
+          <p class="proof-note">
+            前端价值不在更花，而在按“客户会怎么填、怎么判、怎么拿走 Excel”组织界面。
+          </p>
+        </section>
+
+        <section class="entry-section" id="evidence">
+          <h2>材料：一次请求带回四类结果</h2>
+          <div class="proof-badges" aria-label="材料对象">
+            <span class="proof-badge">mvp_generator/generator.py</span>
+            <span class="proof-badge">protocol_studio/app.py</span>
+            <span class="proof-badge">protocol_studio_smoke_test.py</span>
+            <span class="proof-badge">deployment_bundle.zip</span>
+            <span class="proof-badge">share_bundle/README_start_here.txt</span>
+          </div>
+          <pre class="proof-pre">README 已明确写出的主干：
+- 板卡级建模
+- 配置前置校验
+- Excel 渲染
+- 单工作台 Web 前端
+- Studio 冒烟
+- API / 生成器相关 smoke test
+- deployment bundle / share bundle</pre>
+          <p>
+            这些对象一旦同时出现，事情的性质就变了。它不再只是“有人写了个生成脚本”，而是“已经有一条从模板族规则到客户可运行交付包的流程”。
+          </p>
+        </section>
+
+        <section class="entry-section" id="next">
+          <h2>加模板前的核查对象</h2>
+          <div class="proof-grid">
+            <article class="proof-card">
+              <h3>还没做完</h3>
+              <ul>
+                <li>当 A / B 路设备很多时，单页仍会变长，信息密度还得继续压。</li>
+                <li><code>source_compare</code> 已足够做工程回归，但 README 也明确承认它不是司法鉴定式逐格证明。</li>
+                <li>核心资产目前还压在 <code>.workspace/codex-swarm/...</code> 里，后续最好迁进正式 <code>assets/</code> 目录。</li>
+              </ul>
+            </article>
+
+            <article class="proof-card">
+              <h3>后续对象</h3>
+              <ul>
+                <li>核查四个场景的说法是否被新需求冲乱。</li>
+                <li>核查 smoke test 是否仍覆盖关键默认值和双列场景。</li>
+                <li>新增模板族放在后面；没有新材料前，不把工作台拆回多模式。</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section class="entry-note">
+          <p>
+            这件事能成立，不靠“它能生成 Excel”这句话，而靠填参、校验、交付状态和启动方式一起说清楚。
+          </p>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="/src/entry.ts"></script>
+  </body>
+</html>
+
+
+
+
+
+
+

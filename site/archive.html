@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="description" content="FEIAN 的归档页：按方向看，也按月份找旧记录。" />
+    <title>归档 - FEIAN</title>
+    <link rel="stylesheet" href="/src/entry.css" />
+    <style>
+      .archive-jumps {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.65rem;
+        margin-top: 1rem;
+      }
+
+      .archive-jumps a,
+      .archive-month-label {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.45rem 0.75rem;
+        border: 1px solid var(--line-strong);
+        background: var(--panel-soft);
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 0.76rem;
+        letter-spacing: 0.04em;
+      }
+
+      .archive-month {
+        display: grid;
+        gap: 1rem;
+      }
+
+      .archive-lineup {
+        display: grid;
+        gap: 1rem;
+      }
+
+      .archive-lineup-card {
+        display: grid;
+        gap: 0.35rem;
+        padding: 1rem 1.05rem;
+        border: 1px solid var(--line);
+        background:
+          linear-gradient(180deg, rgb(255 255 255 / 4%), rgb(255 255 255 / 0%)),
+          rgb(14 18 28 / 52%);
+      }
+
+      .archive-lineup-card time {
+        color: var(--accent);
+        font-family: var(--mono);
+        font-size: 0.74rem;
+        letter-spacing: 0.08em;
+      }
+
+      .archive-lineup-card strong {
+        color: var(--text);
+        font-size: 1.02rem;
+        line-height: 1.45;
+      }
+
+      .archive-lineup-card p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.8;
+      }
+
+      @media (min-width: 760px) {
+        .archive-lineup {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+    </style>
+    <style data-critical-reset>
+      html {
+        color-scheme: dark;
+        background: #070a0f;
+        scroll-behavior: smooth;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-width: 320px;
+        color: #edf1f5;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        line-height: 1.58;
+        background: #070a0f;
+      }
+      .rain-canvas,
+      .fx-layer {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .rain-canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      .fx-layer {
+        z-index: 48;
+      }
+
+      .page-shell {
+        position: relative;
+        z-index: 2;
+        overflow: clip;
+        visibility: hidden;
+      }
+
+      .entry-shell {
+        position: relative;
+        z-index: 2;
+        overflow: clip;
+      }
+
+    </style>
+  </head>
+  <body class="entry-page entry-page--archive">
+    <div class="entry-shell">
+      <header class="entry-topbar">
+        <a href="/index.html">
+          <strong>FEIAN</strong>
+          <span>个人博客 / archive</span>
+        </a>
+        <nav class="entry-nav" aria-label="页面导航">
+          <a href="/index.html">首页</a>
+          <a href="/lab.html">项目实验</a>
+          <a href="#timeline">按月时间线</a>
+          <a href="/about.html">关于</a>
+        </nav>
+      </header>
+
+      <header class="entry-header">
+        <p class="entry-kicker">归档</p>
+        <h1>这页就是一个目录。以后想找旧记录时，不用翻半天。</h1>
+        <p class="entry-lede">
+              第一次来可以按方向看；回来找旧内容，就按月份查。标题、日期和入口尽量放清楚。
+            </p>
+        <div class="archive-jumps" aria-label="归档跳转">
+          <a href="#lines">按方向看</a>
+          <a href="#timeline">按时间看</a>
+          <a href="#extras">补充记录</a>
+        </div>
+      </header>
+
+      <main class="entry-main">
+        <section class="entry-section" id="lines">
+          <h2>三条方向</h2>
+          <div class="entry-grid">
+            <a class="entry-card" href="/workflow.html">
+              <time datetime="2026-04-20">2026-04-20 / workflow</time>
+              <strong>把 Codex 和 Claude 接进同一套个人工作流</strong>
+              <p>终端、脚本、页面和子 agent 放到同一套记录里，方便下次接着做。</p>
+            </a>
+
+            <a class="entry-card" href="/field.html">
+              <time datetime="2026-04-19">2026-04-19 / field</time>
+              <strong>一次 MCGS / MODBUS 现场排障记录</strong>
+              <p>报障原话、串口片段和后续处理项按顺序放好，方便回来继续查。</p>
+            </a>
+
+            <a class="entry-card" href="/lab.html">
+              <time datetime="2026-04-23">2026-04-23 / lab</time>
+              <strong>项目和实验</strong>
+              <p>项目、交付和小实验按东西本身整理成文章。</p>
+            </a>
+          </div>
+        </section>
+
+        <section class="entry-section" id="timeline">
+          <h2>按月时间线</h2>
+          <div class="archive-month">
+            <div class="archive-month-label" id="month-2026-04">2026-04 / 当前已发布内容</div>
+            <div class="archive-lineup">
+              <a class="archive-lineup-card" href="/homepage-lab.html">
+                <time datetime="2026-04-18">2026-04-18 / lab / site</time>
+                <strong>把个人博客首页改成能继续长内容的前台</strong>
+                <p>首页不只放自我介绍，也开始承接 workflow / field / lab 的内容。</p>
+              </a>
+
+              <a class="archive-lineup-card" href="/field.html">
+                <time datetime="2026-04-19">2026-04-19 / field / incident</time>
+                <strong>一次 MCGS / MODBUS 现场排障记录</strong>
+                <p>串口片段、处理判断和交接项按现场顺序摆出来，不写成泛泛说明。</p>
+              </a>
+
+              <a class="archive-lineup-card" href="/workflow.html">
+                <time datetime="2026-04-20">2026-04-20 / workflow / automation</time>
+                <strong>把 Codex 和 Claude 接进同一套个人工作流</strong>
+                <p>progress.md、预览、构建日志和 QA 记录放在一起，方便续上。</p>
+              </a>
+
+              <a class="archive-lineup-card" href="/lab-protocol-studio.html">
+                <time datetime="2026-04-23">2026-04-23 / lab / workbench / order 1</time>
+                <strong>动环协议工作台：四种出表场景、校验和交付状态</strong>
+                <p>模板、校验、源模板对比、交付状态和分享包放进同一个工作台。</p>
+              </a>
+
+              <a class="archive-lineup-card" href="/lab-busbar-platform.html">
+                <time datetime="2026-04-23">2026-04-23 / lab / platform / order 2</time>
+                <strong>母线铜排平台这一轮：旧公式、parity 和公网启动</strong>
+                <p>旧公式、导出模板、验证脚本和启动方式已经写进仓库，不再只靠手边那张 Excel。</p>
+              </a>
+
+              <a class="archive-lineup-card" href="/lab-cad-automation.html">
+                <time datetime="2026-04-23">2026-04-23 / lab / automation / order 3</time>
+                <strong>CAD 白框截图自动化：从手拖窗口到 run manifest</strong>
+                <p>输入、run root、manifest 和最终 PNG 放在一起后，手工截图变成了能重重跑的脚本。</p>
+              </a>
+
+              <a class="archive-lineup-card" href="/lab-openclaw-delivery.html">
+                <time datetime="2026-04-23">2026-04-23 / lab / delivery / order 4</time>
+                <strong>OPENCLAW 客户包 V0.31：目录、ZIP、SHA256 和卸载入口</strong>
+                <p>最新版本目录、ZIP、SHA256、安装和卸载脚本、问题记录、VERSION 文件都放齐。</p>
+              </a>
+
+              <a class="archive-lineup-card" href="/lab-html-canvas-signal.html">
+                <time datetime="2026-04-25">2026-04-25 / lab / canvas / order 8</time>
+                <strong>Canvas 视觉实验：PixiJS + GSAP 的博客视觉层实验</strong>
+                <p>Canvas 只负责视觉层，正文、导航和链接继续留在 HTML。</p>
+              </a>
+
+              <a class="archive-lineup-card" href="/workflow-harness-ohbp.html">
+                <time datetime="2026-04-23">2026-04-23 / workflow / benchmark / order 5</time>
+                <strong>OHBP / harnessbench：协议真源、bundle 和 verifier 记录</strong>
+                <p>把 raw workspace、final bundle、schema 校验和 verifier 结果拆开，避免让榜单替代原始材料。</p>
+              </a>
+
+              <a class="archive-lineup-card" href="/workflow-context-router.html">
+                <time datetime="2026-04-23">2026-04-23 / workflow / router / order 6</time>
+                <strong>Context Router V1：只建议，不擅自接管会话</strong>
+                <p>能力目录、bundle、intent map、session attach 和 route-log 先放清楚，再谈自动化。</p>
+              </a>
+
+              <a class="archive-lineup-card" href="/workflow-stock-research-desk.html">
+                <time datetime="2026-04-23">2026-04-23 / workflow / research desk / order 7</time>
+                <strong>老板研究台 V1：先压股票池，不碰自动下单</strong>
+                <p>研究压缩、资料整理、老板反馈和 OpenClaw 上层代理的范围。</p>
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <section class="entry-section">
+          <h2>Workflow 项目记录</h2>
+          <div class="entry-grid">
+            <a class="entry-card" href="/workflow-harness-ohbp.html">
+              <time datetime="2026-04-23">2026-04-23 / workflow</time>
+              <strong>OHBP / harnessbench：先把材料留好，再谈榜单</strong>
+              <p>从协议文档、CLI、mock intake、verifier worker 到 verification_record，重点是别让页面自己当裁判。</p>
+            </a>
+
+            <a class="entry-card" href="/workflow-context-router.html">
+              <time datetime="2026-04-23">2026-04-23 / workflow</time>
+              <strong>Context Router V1：只建议，不擅自接管会话</strong>
+              <p>catalog、bundle、intent-map、route-log 记录能力什么时候用、什么时候停，避免黑盒式自动切换。</p>
+            </a>
+
+            <a class="entry-card" href="/workflow-stock-research-desk.html">
+              <time datetime="2026-04-23">2026-04-23 / workflow</time>
+              <strong>老板研究台 V1：先压股票池，不碰自动下单</strong>
+              <p>研究台先把股票池压成 dailyQueue、focusBriefs 和 styleMemorySummary。</p>
+            </a>
+          </div>
+        </section>
+
+        <section class="entry-section">
+          <h2>项目 / 实验文章</h2>
+          <div class="entry-grid">
+            <a class="entry-card" href="/lab-protocol-studio.html">
+              <time datetime="2026-04-23">2026-04-23 / lab</time>
+              <strong>从历史 Excel 到客户工作台：动环协议生成系统这一轮</strong>
+              <p>模板、校验、源模板对比、交付状态和分享包放进同一个工作台。</p>
+            </a>
+
+            <a class="entry-card" href="/lab-busbar-platform.html">
+              <time datetime="2026-04-23">2026-04-23 / lab</time>
+              <strong>母线铜排平台这一轮：旧公式、parity 和公网启动</strong>
+              <p>规则、导出、对照验证和公网启动方式放进同一套仓库，算料过程有了入口。</p>
+            </a>
+
+            <a class="entry-card" href="/lab-cad-automation.html">
+              <time datetime="2026-04-23">2026-04-23 / lab</time>
+              <strong>CAD 白框截图自动化：从手拖窗口到 run manifest</strong>
+              <p>把研究资产从业务仓库里拆出来后，批量截图、manifest、PNG 输出开始稳定。</p>
+            </a>
+
+            <a class="entry-card" href="/lab-openclaw-delivery.html">
+              <time datetime="2026-04-23">2026-04-23 / lab</time>
+              <strong>OPENCLAW 客户包 V0.31：目录、ZIP、SHA256 和卸载入口</strong>
+              <p>最新版本目录、ZIP、SHA256、安装向导和卸载入口放齐，客户拿到包能先走第一步。</p>
+            </a>
+
+            <a class="entry-card" href="/lab-html-canvas-signal.html">
+              <time datetime="2026-04-25">2026-04-25 / lab</time>
+              <strong>Canvas 视觉实验：PixiJS + GSAP 的博客视觉层实验</strong>
+              <p>PixiJS 和 GSAP 只接管视觉层，博客正文不画进 Canvas。</p>
+            </a>
+
+            <a class="entry-card" href="/homepage-lab.html">
+              <time datetime="2026-04-18">2026-04-18 / lab</time>
+              <strong>把个人博客首页改成能继续长内容的前台</strong>
+              <p>lab 线早期记录：把首页改成后续内容能接入的前台。</p>
+            </a>
+          </div>
+        </section>
+
+        <section class="entry-section" id="extras">
+          <h2>补充记录</h2>
+          <div class="entry-grid">
+            <a class="entry-card" href="/about.html">
+              <time datetime="2026-04">meta / about</time>
+              <strong>关于我</strong>
+              <p>AI 工具、现场、游戏和一些长期兴趣，以及我为什么反复记录这些系统问题。</p>
+            </a>
+          </div>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="/src/entry.ts"></script>
+  </body>
+</html>
+
+
+
+
+
+
+
+
+

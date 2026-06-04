@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="description" content="关于 FEIAN：工具、现场、游戏和一些长期保持的兴趣。" />
+    <title>关于 - FEIAN</title>
+    <link rel="stylesheet" href="/src/entry.css" />
+    <style>
+      .about-grid {
+        display: grid;
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+
+      .about-card {
+        display: grid;
+        gap: 0.5rem;
+        padding: 1rem 1.05rem;
+        border: 1px solid var(--line);
+        background:
+          linear-gradient(180deg, rgb(255 255 255 / 4%), rgb(255 255 255 / 0%)),
+          rgb(14 20 30 / 52%);
+        box-shadow: 0 14px 34px rgb(0 0 0 / 10%);
+      }
+
+      .about-card-label {
+        color: var(--accent);
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .about-card strong {
+        color: var(--text);
+        font-family: var(--sans);
+        font-size: 1rem;
+        line-height: 1.42;
+        letter-spacing: -0.02em;
+      }
+
+      .about-card p,
+      .about-card li {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.8;
+      }
+
+      .about-card ul {
+        margin: 0.1rem 0 0;
+        padding-left: 1.1rem;
+        display: grid;
+        gap: 0.45rem;
+      }
+
+      .about-links {
+        display: grid;
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+
+      .about-link {
+        display: grid;
+        gap: 0.45rem;
+        padding: 1rem 1.05rem;
+        border: 1px solid var(--line);
+        background:
+          linear-gradient(180deg, rgb(255 255 255 / 4%), rgb(255 255 255 / 0%)),
+          rgb(14 20 30 / 52%);
+        transition:
+          transform 180ms ease,
+          border-color 180ms ease,
+          background-color 180ms ease;
+      }
+
+      .about-link:hover,
+      .about-link:focus-visible {
+        transform: translateY(-2px);
+        border-color: rgb(201 176 142 / 28%);
+      }
+
+      .about-link time {
+        color: var(--accent);
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+      }
+
+      .about-link strong {
+        color: var(--text);
+        font-family: var(--sans);
+        font-size: 1.04rem;
+        line-height: 1.34;
+        letter-spacing: -0.02em;
+      }
+
+      .about-link p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.8;
+      }
+
+      @media (min-width: 760px) {
+        .about-grid,
+        .about-links {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+    </style>
+    <style data-critical-reset>
+      html {
+        color-scheme: dark;
+        background: #070a0f;
+        scroll-behavior: smooth;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-width: 320px;
+        color: #edf1f5;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        line-height: 1.58;
+        background: #070a0f;
+      }
+      .rain-canvas,
+      .fx-layer {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .rain-canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      .fx-layer {
+        z-index: 48;
+      }
+
+      .page-shell {
+        position: relative;
+        z-index: 2;
+        overflow: clip;
+        visibility: hidden;
+      }
+
+      .entry-shell {
+        position: relative;
+        z-index: 2;
+        overflow: clip;
+      }
+
+    </style>
+  </head>
+  <body class="entry-page entry-page--about">
+    <div class="entry-shell">
+      <header class="entry-topbar">
+        <a href="/index.html">
+          <strong>FEIAN</strong>
+          <span>个人博客 / about</span>
+        </a>
+        <nav class="entry-nav" aria-label="页面导航">
+          <a href="/index.html">首页</a>
+          <a href="/archive.html">归档</a>
+          <a href="https://github.com/Feianxc" target="_blank" rel="noopener noreferrer">GitHub</a>
+        </nav>
+      </header>
+
+      <header class="entry-header entry-header-feature">
+        <div class="entry-filebar" aria-label="文章状态">
+          <div class="entry-filebar-tag">
+            <span>about note</span>
+            <strong>人物 / ongoing</strong>
+          </div>
+          <div class="entry-filebar-route">
+            <span>个人站 → about</span>
+            <span>更新 2026-04-21</span>
+          </div>
+        </div>
+
+        <div class="entry-header-grid">
+          <div class="entry-header-copy">
+            <p class="entry-kicker">about / profile / working notes</p>
+            <h1>我平时做的东西比较杂。</h1>
+            <p class="entry-subhead">现场问题、网页、小工具、游戏和动画，都会顺手记一点。</p>
+            <p class="entry-lede">
+              工作上会碰到 MCGS / MODBUS 和一些现场问题；空下来会折腾网页、脚本、小工具，也看游戏和动画。这个站不写成履历，先放一些最近常回头看的东西。
+            </p>
+            <div class="entry-meta">
+              <span>AI 工作流</span>
+              <span>MCGS / MODBUS</span>
+              <span>游戏 / 动画 / 技术探索</span>
+            </div>
+          </div>
+
+          <aside class="entry-filecard entry-signalcard" aria-label="人物切面">
+            <p class="entry-filecard-label">现在常占用我时间的几件事</p>
+            <div class="entry-signalgrid">
+              <div>
+                <span>近期关注</span>
+                <strong>Codex / Claude / 能直接拿来做事的工具</strong>
+              </div>
+              <div>
+                <span>工作方向</span>
+                <strong>MCGS、MODBUS RTU、现场排障和制作</strong>
+              </div>
+              <div>
+                <span>长期兴趣</span>
+                <strong>游戏、动画，以及偶尔想细看的新领域</strong>
+              </div>
+              <div>
+                <span>公开代码</span>
+                <strong>GitHub / Feianxc</strong>
+              </div>
+            </div>
+            <p class="entry-filecard-note">
+              这一页只留一些近年的方向和习惯，不写成履历，也不把话说满。
+            </p>
+          </aside>
+        </div>
+      </header>
+
+      <main class="entry-main">
+        <section class="entry-section" id="lines">
+          <h2>目前比较稳定的几条线</h2>
+          <p>
+            做过的东西有点散，反复会回到这几类：AI 工具、现场问题、项目工具、游戏和动画。
+          </p>
+          <div class="about-grid">
+            <article class="about-card">
+              <span class="about-card-label">line 01</span>
+              <strong>AI：能进入具体任务的工具</strong>
+              <p>我更关心它能不能真的帮我写脚本、改页面、查问题。</p>
+            </article>
+            <article class="about-card">
+              <span class="about-card-label">line 02</span>
+              <strong>现场：MCGS、MODBUS RTU、排障和制作</strong>
+              <p>现场问题很少给人慢慢想的时间，所以处理顺序值得记下来。</p>
+            </article>
+            <article class="about-card">
+              <span class="about-card-label">line 03</span>
+              <strong>游戏、动画和有沉浸感的内容</strong>
+              <p>这些内容能让人长时间停留，我也会顺手观察它们怎样建立节奏和反馈。</p>
+            </article>
+            <article class="about-card">
+              <span class="about-card-label">line 04</span>
+              <strong>页面和工具：把想法落到可见的界面里</strong>
+              <p>东西真的打开过、跑过，才知道哪里顺、哪里卡。</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="entry-section" id="temper">
+          <h2>一些需要慢慢校准的习惯</h2>
+          <p>
+            我做事不算一直匀速。遇到感兴趣的东西会一头扎进去，所以更需要把过程记下来，免得过几天又要从头找。
+          </p>
+          <div class="about-grid">
+            <article class="about-card">
+              <span class="about-card-label">inside</span>
+              <strong>容易投入得很深</strong>
+              <p>遇到真能解决问题的工具，我会试得比较久，也会顺手拆一下它到底哪里好用。</p>
+            </article>
+            <article class="about-card">
+              <span class="about-card-label">friction</span>
+              <strong>需要用记录把节奏托住</strong>
+              <p>所以这里会多放一些文件、页面和实际跑过的东西，少放空泛感想。</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="entry-section" id="ideal">
+          <h2>我更希望靠近的状态</h2>
+          <p>
+            比起会说很多名词，我更希望自己能把事情拆小，先试出来。
+          </p>
+          <div class="about-grid">
+            <article class="about-card">
+              <span class="about-card-label">from</span>
+              <strong>小时候喜欢科学家和侦探那种观察方式</strong>
+              <p>那时候喜欢的是发现问题、顺着线索把事情理清楚的感觉。</p>
+            </article>
+            <article class="about-card">
+              <span class="about-card-label">to</span>
+              <strong>后来转向了对工具和系统的兴趣</strong>
+              <p>吸引我的不是标签，而是工具真的能把一件麻烦事变简单一点。</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="entry-section" id="public">
+          <h2>公开代码</h2>
+          <p>
+            GitHub 放公开代码、实验和整理出来的东西。
+          </p>
+          <div class="about-links">
+            <a class="about-link" href="https://github.com/Feianxc" target="_blank" rel="noopener noreferrer">
+              <time datetime="2026-04-21">GitHub</time>
+              <strong>github.com/Feianxc</strong>
+              <p>公开代码、实验和逐渐成型的东西会收在 GitHub。</p>
+            </a>
+            <a class="about-link" href="/workflow.html">
+              <time datetime="2026-04-20">Workflow</time>
+              <strong>工作流记录</strong>
+              <p>工作流页记录工具、脚本、页面和记录如何接在一起。</p>
+            </a>
+          </div>
+        </section>
+
+        <section class="entry-note">
+          <p>
+            这个博客以后大概还会继续放这些东西：我最近在学什么，做了什么，哪些东西最后真的留下来了。公开代码和实验会同步放到 GitHub。
+          </p>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="/src/entry.ts"></script>
+  </body>
+</html>
+
+
+
+
+
+
+
+
