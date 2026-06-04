@@ -43,6 +43,7 @@
   --type-panel-h2: clamp(1.72rem, 2.2vw, 2.4rem);
   --type-section-h2: clamp(2.08rem, 3.8vw, 3.38rem);
   --type-card-h3: clamp(1.32rem, 1.5vw + 0.96rem, 1.82rem);
+  --feian-cursor: url('/cursors/feian-signal-probe-cursor-48.png') 5 5, crosshair;
 }
 
 *,
@@ -59,6 +60,7 @@ body {
   margin: 0;
   min-width: 320px;
   color: var(--text);
+  cursor: var(--feian-cursor);
   font-family: var(--sans);
   line-height: 1.58;
   font-kerning: normal;
@@ -96,7 +98,14 @@ a {
 
 a,
 button {
+  cursor: var(--feian-cursor);
   -webkit-tap-highlight-color: transparent;
+}
+
+input,
+textarea,
+[contenteditable='true'] {
+  cursor: text;
 }
 
 .rain-canvas {
@@ -1319,10 +1328,34 @@ main {
   left: 0;
   width: 0;
   height: 0;
+  overflow: visible;
   opacity: 0;
   transform: translate3d(0, 0, 0);
   transition: opacity 160ms var(--ease-snappy);
-  mix-blend-mode: screen;
+  mix-blend-mode: normal;
+}
+
+.pointer-probe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  display: block;
+  width: 78px;
+  max-width: none;
+  height: 78px;
+  opacity: 0.92;
+  pointer-events: none;
+  user-select: none;
+  transform: translate3d(-2px, -2px, 0) rotate(-1deg);
+  transform-origin: 5px 5px;
+  filter:
+    drop-shadow(0 0 9px rgb(0 229 255 / 56%))
+    drop-shadow(0 12px 22px rgb(0 0 0 / 34%));
+  transition:
+    opacity 180ms var(--ease-snappy),
+    transform 220ms var(--ease-fluid),
+    filter 220ms var(--ease-fluid);
 }
 
 .pointer-aura,
@@ -1349,6 +1382,7 @@ main {
 }
 
 .pointer-aura {
+  z-index: 3;
   width: 42px;
   height: 42px;
   border-radius: 999px;
@@ -1358,6 +1392,7 @@ main {
 }
 
 .pointer-ring {
+  z-index: 4;
   width: 34px;
   height: 34px;
   border: 1px solid rgb(191 232 255 / 44%);
@@ -1368,6 +1403,7 @@ main {
 }
 
 .pointer-core {
+  z-index: 5;
   width: 5px;
   height: 5px;
   border-radius: 999px;
@@ -1376,6 +1412,7 @@ main {
 }
 
 .pointer-label {
+  z-index: 6;
   transform: translate3d(8px, -50%, 0);
   padding: 0.24rem 0.45rem;
   color: rgb(225 236 245 / 94%);
@@ -1409,6 +1446,19 @@ main {
 
 .pointer-shell[data-pointer-state='pressed'] .pointer-ring {
   transform: translate(-50%, -50%) scale(0.88);
+}
+
+.pointer-shell[data-pointer-state='armed'] .pointer-probe,
+.pointer-shell[data-pointer-state='pressed'] .pointer-probe {
+  transform: translate3d(-2px, -2px, 0) rotate(-4deg) scale(1.06);
+  filter:
+    drop-shadow(0 0 14px rgb(0 229 255 / 70%))
+    drop-shadow(0 0 18px rgb(255 168 54 / 24%))
+    drop-shadow(0 14px 26px rgb(0 0 0 / 38%));
+}
+
+.pointer-shell[data-pointer-state='hidden'] .pointer-probe {
+  opacity: 0;
 }
 
 .pointer-shell[data-pointer-state='armed'] .pointer-label,
@@ -1533,7 +1583,7 @@ main {
 body.has-pointer-fx,
 body.has-pointer-fx a,
 body.has-pointer-fx button {
-  cursor: none;
+  cursor: var(--feian-cursor);
 }
 
 .brand,
@@ -8540,7 +8590,7 @@ main,
   box-shadow:
     0 16px 48px rgb(0 0 0 / 16%),
     0 0 0 1px rgb(255 255 255 / 3%) inset;
-  cursor: pointer;
+  cursor: var(--feian-cursor);
   overflow: hidden;
   transition:
     transform 220ms cubic-bezier(0.22, 1, 0.36, 1),

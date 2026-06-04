@@ -1,0 +1,90 @@
+{
+  "source": "site/public/cursors/feian-signal-probe-cursor-alpha-full.png",
+  "source_size": [
+    1254,
+    1254
+  ],
+  "alpha_bbox": [
+    201,
+    153,
+    1018,
+    1075
+  ],
+  "crop_size": [
+    817,
+    922
+  ],
+  "outputs": [
+    {
+      "path": "site/public/cursors/feian-signal-probe-cursor-128.png",
+      "size": [
+        128,
+        128
+      ],
+      "nontransparent_pixels": 4784,
+      "transparent_corners": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "path": "site/public/cursors/feian-signal-probe-cursor-96.png",
+      "size": [
+        96,
+        96
+      ],
+      "nontransparent_pixels": 2810,
+      "transparent_corners": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "path": "site/public/cursors/feian-signal-probe-cursor-64.png",
+      "size": [
+        64,
+        64
+      ],
+      "nontransparent_pixels": 1351,
+      "transparent_corners": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "path": "site/public/cursors/feian-signal-probe-cursor-48.png",
+      "size": [
+        48,
+        48
+      ],
+      "nontransparent_pixels": 822,
+      "transparent_corners": [
+        6,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "path": "site/public/cursors/feian-signal-probe-cursor-32.png",
+      "size": [
+        32,
+        32
+      ],
+      "nontransparent_pixels": 402,
+      "transparent_corners": [
+        28,
+        0,
+        0,
+        0
+      ]
+    }
+  ],
+  "crop_output": "site/public/cursors/feian-signal-probe-cursor-alpha-crop.png"
+}

@@ -255,6 +255,7 @@ async function auditRoute(route, viewport) {
     signalDashboard: page.signalDashboard,
     reactor: page.reactor,
     orbitCards: page.orbitCards,
+    cursor: page.cursor,
     forbiddenCopyHits: page.forbiddenCopyHits,
     navLinks: page.navLinks,
     navDurationMs: Math.round(page.navDurationMs),
@@ -809,6 +810,9 @@ async function evaluatePage() {
     const signalDashboard = document.querySelector('[data-signal-dashboard]')
     const signalDashboardRect = signalDashboard?.getBoundingClientRect()
     const signalAxes = Array.from(document.querySelectorAll('button[data-signal-axis]'))
+    const pointerProbe = document.querySelector('.pointer-probe')
+    const pointerProbeRect = pointerProbe?.getBoundingClientRect()
+    const bodyCursor = window.getComputedStyle(document.body).cursor
     return {
       title: document.title,
       h1: document.querySelector('h1')?.textContent?.trim() || '',
@@ -838,6 +842,14 @@ async function evaluatePage() {
         canvasVisible: Boolean(reactorCanvasRect && reactorCanvasRect.width > 0 && reactorCanvasRect.height > 0),
       },
       orbitCards: Array.from(document.querySelectorAll('[data-orbit-card]')).length,
+      cursor: {
+        bodyCursor,
+        hasNativeImageCursor: bodyCursor.includes('feian-signal-probe-cursor-48.png'),
+        pointerProbeExists: Boolean(pointerProbe),
+        pointerProbeSrc: pointerProbe?.getAttribute('src') || '',
+        pointerProbeWidth: Math.round(pointerProbeRect?.width || 0),
+        pointerProbeHeight: Math.round(pointerProbeRect?.height || 0),
+      },
       forbiddenCopyHits: forbiddenPublicCopy.filter((term) => text.includes(term)),
       navLinks: Array.from(document.querySelectorAll('a[href]')).length,
       navDurationMs: nav?.duration || 0,
@@ -917,6 +929,15 @@ function collectFindings(result, failureList, warningList) {
     }
     if (result.viewport === 'desktop' && result.signalDashboard?.height < 220) {
       failureList.push(`${label}: signal dashboard is too small (${result.signalDashboard.height}px)`)
+    }
+    if (result.viewport === 'desktop' && !result.cursor?.hasNativeImageCursor) {
+      failureList.push(`${label}: native IMAGE2 cursor fallback is not active (${result.cursor?.bodyCursor || 'empty'})`)
+    }
+    if (result.viewport === 'desktop' && !result.cursor?.pointerProbeExists) {
+      failureList.push(`${label}: IMAGE2 pointer probe element is missing`)
+    }
+    if (result.viewport === 'desktop' && result.cursor?.pointerProbeExists && result.cursor.pointerProbeWidth < 48) {
+      failureList.push(`${label}: IMAGE2 pointer probe is too small (${result.cursor.pointerProbeWidth}px)`)
     }
   }
 }

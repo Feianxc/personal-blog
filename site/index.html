@@ -64,6 +64,10 @@
         opacity: 0;
       }
 
+      .pointer-probe {
+        display: none;
+      }
+
       .page-shell {
         position: relative;
         z-index: 2;
@@ -83,6 +87,14 @@
 
     <div class="fx-layer" aria-hidden="true">
       <div class="pointer-shell" data-pointer-state="idle">
+        <img
+          class="pointer-probe"
+          src="/cursors/feian-signal-probe-cursor-96.png"
+          width="96"
+          height="96"
+          alt=""
+          decoding="async"
+        />
         <span class="pointer-aura"></span>
         <span class="pointer-ring"></span>
         <span class="pointer-core"></span>
@@ -213,6 +225,12 @@
 
               <div class="cover-log" data-reveal>
                 <p class="cover-log-label">Evidence / IDE</p>
+
+                <a class="cover-log-item" href="https://blog.feian.online/eldritch/" target="_blank" rel="noopener noreferrer" data-interactive-lens data-pointer-label="open">
+                  <time datetime="2026-06-04">06-04</time>
+                  <span>文学档案馆</span>
+                  <strong>不可名状作品编年史</strong>
+                </a>
 
                 <a class="cover-log-item" href="/workflow-stock-research-desk.html" data-interactive-lens data-pointer-label="pull">
                   <time datetime="2026-04-23">04-23</time>
@@ -384,6 +402,36 @@
           </div>
 
           <div class="feed-list build-board">
+            <a class="feed-item feed-item--featured" href="https://blog.feian.online/eldritch/" target="_blank" rel="noopener noreferrer" data-reveal data-interactive-lens data-pointer-label="open" data-orbit-card="5">
+              <div class="feed-meta">
+                <time datetime="2026-06-04">2026-06-04</time>
+                <span>文学档案馆</span>
+                <strong class="feed-index">New</strong>
+              </div>
+              <div class="feed-copy">
+                <h3>不可名状作品编年史</h3>
+                <p>把洛夫克拉夫特式怪奇作品做成一个可浏览、可检索、可扩展的暗金文学档案馆。</p>
+                <div class="feed-proof">
+                  <span>Evidence</span>
+                  <p>35 篇作品、首次发表刊物、全文入口、译名对照、合作署名和作品关系网络。</p>
+                </div>
+                <div class="build-topology-mini" aria-hidden="true">
+                  <span class="build-node build-node--source"></span>
+                  <span class="build-node build-node--rules"></span>
+                  <span class="build-node build-node--core"></span>
+                  <span class="build-node build-node--ship"></span>
+                  <span class="build-node build-node--log"></span>
+                  <i class="build-line build-line--in"></i>
+                  <i class="build-line build-line--act"></i>
+                  <i class="build-line build-line--ledger"></i>
+                </div>
+              </div>
+              <div class="feed-action" aria-hidden="true">
+                <span>Open</span>
+                <strong>进入档案馆</strong>
+              </div>
+            </a>
+
             <a class="feed-item feed-item--featured" href="/workflow-stock-research-desk.html" data-reveal data-interactive-lens data-pointer-label="pull" data-orbit-card="1">
               <div class="feed-meta">
                 <time datetime="2026-04-23">2026-04-23</time>
@@ -581,6 +629,7 @@
 
         <div class="footer-links" aria-label="页脚导航">
           <a href="/workflow-stock-research-desk.html" data-interactive-lens data-pointer-label="open">最新构建</a>
+          <a href="https://blog.feian.online/eldritch/" target="_blank" rel="noopener noreferrer" data-interactive-lens data-pointer-label="open">怪奇文献馆</a>
           <a href="/archive.html" data-interactive-lens data-pointer-label="index">归档 / 时间线</a>
           <a href="/about.html" data-interactive-lens data-pointer-label="about">关于</a>
           <a href="https://github.com/Feianxc" target="_blank" rel="noopener noreferrer" data-interactive-lens data-pointer-label="open">GitHub</a>
