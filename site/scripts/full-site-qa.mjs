@@ -91,6 +91,7 @@ const cdpRetryableMethods = new Set([
 async function main() {
   const staticCheck = runStaticLinkCheck(htmlFiles)
   const assetCheck = runNoStaleAssetCheck()
+  const criticalFallbackCheck = runCriticalFallbackCheck()
   const server = await startStaticServer(distRoot)
   baseUrl = `http://127.0.0.1:${server.port}`
   const chrome = await launchChrome()
@@ -161,6 +162,8 @@ async function main() {
   staticCheck.warnings.forEach((item) => warnings.push(item))
   assetCheck.failures.forEach((item) => failures.push(item))
   assetCheck.warnings.forEach((item) => warnings.push(item))
+  criticalFallbackCheck.failures.forEach((item) => failures.push(item))
+  criticalFallbackCheck.warnings.forEach((item) => warnings.push(item))
 
   const report = {
     status: failures.length === 0 ? 'PASS' : 'FAIL',
@@ -172,6 +175,7 @@ async function main() {
     checks: results.length,
     staticLinkCheck: staticCheck,
     noStaleAssetCheck: assetCheck,
+    criticalFallbackCheck,
     results,
     interactionResults,
     screenshots: {
@@ -974,6 +978,43 @@ function runStaticLinkCheck(files) {
   return { checkedFiles: files.length, failures, warnings }
 }
 
+function runCriticalFallbackCheck() {
+  const failures = []
+  const warnings = []
+  const indexPath = join(distRoot, 'index.html')
+
+  if (!existsSync(indexPath)) {
+    return { checked: false, failures: ['dist/index.html is missing'], warnings }
+  }
+
+  const html = readFileSync(indexPath, 'utf8')
+  const criticalStyle = html.match(/<style[^>]*data-critical-reset[^>]*>([\s\S]*?)<\/style>/i)?.[1] || ''
+  const normalizedCriticalStyle = criticalStyle.replace(/\s+/g, ' ')
+
+  if (!criticalStyle) {
+    failures.push('index.html is missing data-critical-reset fallback style')
+  }
+  if (!/\.page-shell\s*\{[^}]*visibility:\s*visible\b/i.test(criticalStyle)) {
+    failures.push('critical fallback must keep .page-shell visible before JS/CSS assets load')
+  }
+  if (!/\.pointer-shell\s*\{[^}]*width:\s*0\b[^}]*height:\s*0\b[^}]*overflow:\s*hidden\b[^}]*opacity:\s*0\b/i.test(normalizedCriticalStyle)) {
+    failures.push('critical fallback must hide pointer-shell chrome before enhanced CSS loads')
+  }
+  if (!/\.pointer-label\s*\{[^}]*opacity:\s*0\b/i.test(criticalStyle)) {
+    failures.push('critical fallback must suppress pointer-label text before enhanced CSS loads')
+  }
+  if (!html.includes('把 AI、工程现场') || !html.includes('个人操作系统。')) {
+    warnings.push('homepage critical fallback copy may no longer expose the expected hero content')
+  }
+
+  return {
+    checked: true,
+    criticalStyleBytes: Buffer.byteLength(criticalStyle, 'utf8'),
+    failures,
+    warnings,
+  }
+}
+
 function runNoStaleAssetCheck() {
   const assetsRoot = join(distRoot, 'assets')
   const failures = []
@@ -1281,6 +1322,7 @@ function renderMarkdownReport(report) {
     `- Routes: ${report.routes}`,
     `- Browser checks: ${report.checks}`,
     `- No-stale asset check: ${report.noStaleAssetCheck.checkedAssets} assets; spread ${report.noStaleAssetCheck.maxAgeSpreadMinutes} min`,
+    `- Critical fallback check: ${report.criticalFallbackCheck.checked ? 'checked' : 'missing'}; failures ${report.criticalFallbackCheck.failures.length}`,
     `- Warnings: ${report.warnings.length}`,
     `- Failures: ${report.failures.length}`,
     `- Desktop screenshot: ${report.screenshots.desktop}`,
@@ -1302,6 +1344,12 @@ function renderMarkdownReport(report) {
     ``,
     '```json',
     JSON.stringify(report.noStaleAssetCheck, null, 2),
+    '```',
+    ``,
+    `## Critical fallback`,
+    ``,
+    '```json',
+    JSON.stringify(report.criticalFallbackCheck, null, 2),
     '```',
     ``,
     `## Failures`,

@@ -50,11 +50,25 @@
         z-index: 48;
       }
 
+      .pointer-shell {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 0;
+        height: 0;
+        overflow: hidden;
+        opacity: 0;
+      }
+
+      .pointer-label {
+        opacity: 0;
+      }
+
       .page-shell {
         position: relative;
         z-index: 2;
         overflow: clip;
-        visibility: hidden;
+        visibility: visible;
       }
 
       .entry-shell {
