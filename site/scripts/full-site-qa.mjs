@@ -145,6 +145,8 @@ async function main() {
     }
 
     interactionResults.push(await auditHomeInteractions())
+    interactionResults.push(await auditPointerPersonaStates())
+    interactionResults.push(await auditTouchProbeFeedback())
     interactionResults.push(await auditSignalDashboardTabs())
     interactionResults.push(await auditCommandPaletteKeyboard())
     interactionResults.push(await auditRouteTransitionSmoke())
@@ -256,6 +258,7 @@ async function auditRoute(route, viewport) {
     reactor: page.reactor,
     orbitCards: page.orbitCards,
     cursor: page.cursor,
+    clarity: page.clarity,
     forbiddenCopyHits: page.forbiddenCopyHits,
     navLinks: page.navLinks,
     navDurationMs: Math.round(page.navDurationMs),
@@ -301,6 +304,203 @@ async function auditHomeInteractions() {
     name: 'homepage visual controls',
     before,
     after,
+    runtimeEvents: runtimeEvents.slice(0, 8),
+  }
+}
+
+async function auditPointerPersonaStates() {
+  runtimeEvents.length = 0
+  networkEvents.length = 0
+  await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: false })
+  await cdp.send('Emulation.setDeviceMetricsOverride', {
+    width: 1440,
+    height: 960,
+    deviceScaleFactor: 1,
+    mobile: false,
+  })
+  await cdp.send('Page.navigate', { url: `${baseUrl}/` })
+  await cdp.waitForEvent('Page.loadEventFired', () => true, 15_000).catch(() => {})
+  await delay(550)
+
+  const result = await evalValue(`(async () => {
+    const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms))
+    const failures = []
+    const states = []
+    const targets = [
+      ['scan', '[data-clarity-map] [data-pointer-mode="scan"]'],
+      ['terminal', '[data-clarity-map] [data-pointer-mode="terminal"]'],
+      ['index', '[data-clarity-map] [data-pointer-mode="index"]'],
+      ['launch', 'a[href*="github.com"][data-pointer-mode="launch"]'],
+    ]
+
+    if (typeof PointerEvent !== 'function') {
+      failures.push('PointerEvent constructor is unavailable')
+      return { states, failures }
+    }
+
+    for (const [mode, selector] of targets) {
+      const target = document.querySelector(selector)
+      if (!target) {
+        failures.push('missing pointer persona target ' + mode + ' at ' + selector)
+        continue
+      }
+
+      target.scrollIntoView({ block: 'center', inline: 'nearest' })
+      await wait(80)
+      const rect = target.getBoundingClientRect()
+      const point = {
+        clientX: rect.left + Math.min(Math.max(rect.width / 2, 12), rect.width - 4),
+        clientY: rect.top + Math.min(Math.max(rect.height / 2, 12), rect.height - 4),
+      }
+      const options = { bubbles: true, cancelable: true, button: 0, buttons: 1, pointerId: 7, pointerType: 'mouse', ...point }
+      target.dispatchEvent(new PointerEvent('pointerenter', options))
+      target.dispatchEvent(new PointerEvent('pointermove', options))
+      await wait(90)
+
+      const shell = document.querySelector('.pointer-shell')
+      const hoverState = {
+        expected: mode,
+        shellMode: shell?.dataset.pointerMode || '',
+        shellKind: shell?.dataset.pointerKind || '',
+        shellState: shell?.dataset.pointerState || '',
+        bodyMode: document.body.dataset.pointerMode || '',
+        label: shell?.dataset.pointerLabel || '',
+      }
+      if (hoverState.shellMode !== mode) failures.push(mode + ' hover shell mode is ' + (hoverState.shellMode || 'empty'))
+      if (hoverState.bodyMode !== mode) failures.push(mode + ' body mode is ' + (hoverState.bodyMode || 'empty'))
+
+      target.dispatchEvent(new PointerEvent('pointerdown', options))
+      await wait(90)
+      const clickStamp = document.querySelector('.click-stamp[data-mode="' + mode + '"]')
+      if (!clickStamp) failures.push(mode + ' click scan wave was not stamped')
+
+      let chargingState = null
+      if (mode === 'scan') {
+        await wait(310)
+        chargingState = {
+          shellState: shell?.dataset.pointerState || '',
+          shellMode: shell?.dataset.pointerMode || '',
+          label: shell?.dataset.pointerLabel || '',
+          targetCharging: target.classList.contains('is-charging'),
+        }
+        if (chargingState.shellState !== 'charging') failures.push('long press did not enter charging state')
+        if (chargingState.shellMode !== 'scan') failures.push('charging state lost scan mode')
+        if (!chargingState.targetCharging) failures.push('long press target did not receive is-charging')
+        if (!chargingState.label.endsWith('+')) failures.push('charging label did not expose plus marker')
+      }
+
+      target.dispatchEvent(new PointerEvent('pointerup', options))
+      target.dispatchEvent(new PointerEvent('pointerleave', options))
+      await wait(110)
+      states.push({
+        selector,
+        hoverState,
+        clickStamped: Boolean(clickStamp),
+        chargingState,
+        releasedState: shell?.dataset.pointerState || '',
+      })
+    }
+
+    return {
+      states,
+      hasPointerFx: document.body.classList.contains('has-pointer-fx'),
+      failures,
+      overflow: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - window.innerWidth,
+    }
+  })()`)
+
+  if (result.overflow > 2) {
+    result.failures.push(`pointer persona overflow ${result.overflow}px`)
+  }
+  if (!result.hasPointerFx) {
+    result.failures.push('desktop pointer FX class is missing')
+  }
+
+  return {
+    name: 'pointer persona states',
+    ...result,
+    runtimeEvents: runtimeEvents.slice(0, 8),
+  }
+}
+
+async function auditTouchProbeFeedback() {
+  runtimeEvents.length = 0
+  networkEvents.length = 0
+  await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 })
+  await cdp.send('Emulation.setDeviceMetricsOverride', {
+    width: 390,
+    height: 844,
+    deviceScaleFactor: 2,
+    mobile: true,
+  })
+  await cdp.send('Page.navigate', { url: `${baseUrl}/` })
+  await cdp.waitForEvent('Page.loadEventFired', () => true, 15_000).catch(() => {})
+  await delay(650)
+
+  const result = await evalValue(`(async () => {
+    const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms))
+    const failures = []
+    const target = document.querySelector('[data-clarity-map] [data-pointer-mode="scan"]') || document.querySelector('.feed-item[data-pointer-mode="scan"]')
+
+    if (typeof PointerEvent !== 'function') {
+      failures.push('PointerEvent constructor is unavailable for touch audit')
+      return { failures }
+    }
+    if (!target) {
+      failures.push('touch probe target is missing')
+      return { failures }
+    }
+
+    target.scrollIntoView({ block: 'center', inline: 'nearest' })
+    await wait(90)
+    const rect = target.getBoundingClientRect()
+    const options = {
+      bubbles: true,
+      cancelable: true,
+      button: 0,
+      buttons: 1,
+      pointerId: 11,
+      pointerType: 'touch',
+      clientX: rect.left + Math.min(Math.max(rect.width / 2, 16), rect.width - 6),
+      clientY: rect.top + Math.min(Math.max(rect.height / 2, 16), rect.height - 6),
+    }
+    target.dispatchEvent(new PointerEvent('pointerdown', options))
+    await wait(120)
+
+    const ripple = document.querySelector('.touch-probe-ripple')
+    const rippleStyle = ripple ? window.getComputedStyle(ripple) : null
+    const feedBadge = document.querySelector('.feed-item[data-pointer-mode="scan"]')
+    const feedBadgeStyle = feedBadge ? window.getComputedStyle(feedBadge, '::before') : null
+    const feedBadgeContent = feedBadgeStyle?.content || ''
+
+    if (!document.body.classList.contains('has-touch-probe')) failures.push('mobile touch probe body class is missing')
+    if (!ripple) failures.push('touch pointerdown did not create probe ripple')
+    if (ripple && ripple.dataset.mode !== 'scan') failures.push('touch ripple mode is ' + (ripple.dataset.mode || 'empty'))
+    if (rippleStyle && rippleStyle.animationName === 'none') failures.push('touch ripple animation is not active')
+    if (!feedBadgeContent || feedBadgeContent === 'none' || feedBadgeContent === 'normal') failures.push('mobile feed card probe badge is not visible')
+
+    target.dispatchEvent(new PointerEvent('pointerup', options))
+    await wait(80)
+
+    return {
+      hasTouchProbe: document.body.classList.contains('has-touch-probe'),
+      rippleMode: ripple?.dataset.mode || '',
+      rippleAnimation: rippleStyle?.animationName || '',
+      feedBadgeContent,
+      failures,
+      overflow: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - window.innerWidth,
+    }
+  })()`)
+
+  if (result.overflow > 2) {
+    result.failures.push(`touch probe overflow ${result.overflow}px`)
+  }
+
+  await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: false }).catch(() => {})
+
+  return {
+    name: 'touch probe feedback',
+    ...result,
     runtimeEvents: runtimeEvents.slice(0, 8),
   }
 }
@@ -813,6 +1013,26 @@ async function evaluatePage() {
     const pointerProbe = document.querySelector('.pointer-probe')
     const pointerProbeRect = pointerProbe?.getBoundingClientRect()
     const bodyCursor = window.getComputedStyle(document.body).cursor
+    const clarityMap = document.querySelector('[data-clarity-map]')
+    const personaTargets = Array.from(document.querySelectorAll('[data-pointer-mode]')).map((element) => ({
+      tag: element.tagName.toLowerCase(),
+      mode: element.getAttribute('data-pointer-mode') || '',
+      label: element.getAttribute('data-pointer-label') || '',
+      href: element.getAttribute('href') || '',
+      text: (element.textContent || '').trim().replace(/\\s+/g, ' ').slice(0, 80),
+    }))
+    const pointerModes = Array.from(new Set(personaTargets.map((item) => item.mode).filter(Boolean))).sort()
+    const touchBadgeSamples = Array.from(document.querySelectorAll('.feed-item[data-pointer-mode]'))
+      .slice(0, 4)
+      .map((element) => {
+        const style = window.getComputedStyle(element, '::before')
+        return {
+          mode: element.getAttribute('data-pointer-mode') || '',
+          label: element.getAttribute('data-pointer-label') || '',
+          content: style.content || '',
+          display: style.display || '',
+        }
+      })
     return {
       title: document.title,
       h1: document.querySelector('h1')?.textContent?.trim() || '',
@@ -849,6 +1069,15 @@ async function evaluatePage() {
         pointerProbeSrc: pointerProbe?.getAttribute('src') || '',
         pointerProbeWidth: Math.round(pointerProbeRect?.width || 0),
         pointerProbeHeight: Math.round(pointerProbeRect?.height || 0),
+        pointerModes,
+        modeTargets: personaTargets.length,
+        touchProbeClass: document.body.classList.contains('has-touch-probe'),
+        touchBadgeSamples,
+      },
+      clarity: {
+        hasClarityMap: Boolean(clarityMap),
+        text: clarityMap?.textContent?.trim().replace(/\\s+/g, ' ') || '',
+        firstRunLinks: clarityMap?.querySelectorAll('a[href]').length || 0,
       },
       forbiddenCopyHits: forbiddenPublicCopy.filter((term) => text.includes(term)),
       navLinks: Array.from(document.querySelectorAll('a[href]')).length,
@@ -938,6 +1167,22 @@ function collectFindings(result, failureList, warningList) {
     }
     if (result.viewport === 'desktop' && result.cursor?.pointerProbeExists && result.cursor.pointerProbeWidth < 48) {
       failureList.push(`${label}: IMAGE2 pointer probe is too small (${result.cursor.pointerProbeWidth}px)`)
+    }
+    if (!result.clarity?.hasClarityMap) {
+      failureList.push(`${label}: first-visit clarity map is missing`)
+    }
+    if ((result.clarity?.firstRunLinks || 0) < 3) {
+      failureList.push(`${label}: first-visit clarity map has only ${result.clarity?.firstRunLinks || 0} links`)
+    }
+    if (result.viewport === 'desktop') {
+      const requiredPointerModes = ['scan', 'terminal', 'index', 'launch']
+      const missingModes = requiredPointerModes.filter((mode) => !result.cursor?.pointerModes?.includes(mode))
+      if (missingModes.length > 0) {
+        failureList.push(`${label}: pointer persona modes missing ${missingModes.join(', ')}`)
+      }
+      if ((result.cursor?.modeTargets || 0) < 12) {
+        failureList.push(`${label}: pointer persona target coverage is low (${result.cursor?.modeTargets || 0})`)
+      }
     }
   }
 }

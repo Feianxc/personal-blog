@@ -1,0 +1,11 @@
+{
+  "cspChecked": true,
+  "files": [
+    "site/*.html"
+  ],
+  "exclude": [
+    "site/dist/**"
+  ],
+  "insertBefore": "</body>",
+  "commentSyntax": "html"
+}

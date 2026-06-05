@@ -112,12 +112,12 @@
 
         <nav class="topnav" aria-label="主导航">
           <a href="#cover" data-interactive-lens data-pointer-label="top">首页</a>
-          <a href="#signals" data-interactive-lens data-pointer-label="axis">信号</a>
-          <a href="#feed" data-interactive-lens data-pointer-label="builds">构建物</a>
-          <a href="/workflow.html" data-interactive-lens data-pointer-label="logs">运行日志</a>
-          <a href="/archive.html" data-interactive-lens data-pointer-label="index">归档</a>
+          <a href="#signals" data-interactive-lens data-pointer-label="axis" data-pointer-mode="scan">信号</a>
+          <a href="#feed" data-interactive-lens data-pointer-label="scan" data-pointer-mode="scan">构建物</a>
+          <a href="/workflow.html" data-interactive-lens data-pointer-label="term" data-pointer-mode="terminal">运行日志</a>
+          <a href="/archive.html" data-interactive-lens data-pointer-label="index" data-pointer-mode="index">归档</a>
           <a href="/about.html" data-interactive-lens data-pointer-label="about">关于</a>
-          <a href="https://github.com/Feianxc" target="_blank" rel="noopener noreferrer" data-interactive-lens data-pointer-label="open">GitHub</a>
+          <a href="https://github.com/Feianxc" target="_blank" rel="noopener noreferrer" data-interactive-lens data-pointer-label="jump" data-pointer-mode="launch">GitHub</a>
         </nav>
       </header>
 
@@ -150,8 +150,17 @@
               </p>
 
               <div class="cover-actions">
-                <a class="primary-link" href="#feed" data-interactive-lens data-pointer-label="builds">查看构建物</a>
-                <a class="secondary-link" href="/workflow.html" data-interactive-lens data-pointer-label="logs">阅读运行日志</a>
+                <a class="primary-link" href="#feed" data-interactive-lens data-pointer-label="scan" data-pointer-mode="scan">查看构建物</a>
+                <a class="secondary-link" href="/workflow.html" data-interactive-lens data-pointer-label="term" data-pointer-mode="terminal">阅读运行日志</a>
+              </div>
+
+              <div class="cover-orientation" data-clarity-map aria-label="首次来访路径">
+                <p>如果你刚来，先按这条路看：</p>
+                <ol>
+                  <li><a href="#feed" data-interactive-lens data-pointer-label="scan" data-pointer-mode="scan">看做出来的东西</a></li>
+                  <li><a href="/workflow.html" data-interactive-lens data-pointer-label="term" data-pointer-mode="terminal">看它怎么被做出来</a></li>
+                  <li><a href="/archive.html" data-interactive-lens data-pointer-label="index" data-pointer-mode="index">回头查旧记录</a></li>
+                </ol>
               </div>
 
               <div class="cover-diagnostics" aria-label="当前主轴">
@@ -170,9 +179,9 @@
               </div>
 
               <div class="cover-status-strip" aria-label="当前状态">
-                <span><i></i>系统状态：持续运行</span>
-                <span>信号强度：78%</span>
-                <span>连接节点：3</span>
+                <span><i></i>这是 FEIAN 的个人实验站</span>
+                <span>主要入口：构建物 / 运行日志 / 归档</span>
+                <span>鼠标探针会提示当前动作</span>
               </div>
             </article>
 
@@ -182,6 +191,7 @@
                 data-reveal
                 data-interactive-lens
                 data-pointer-label="inspect"
+                data-pointer-mode="scan"
                 aria-labelledby="cover-object-title"
               >
                 <div class="cover-object-sheet reactor-stage">
@@ -226,25 +236,25 @@
               <div class="cover-log" data-reveal>
                 <p class="cover-log-label">Evidence / IDE</p>
 
-                <a class="cover-log-item" href="https://blog.feian.online/eldritch/" target="_blank" rel="noopener noreferrer" data-interactive-lens data-pointer-label="open">
+                <a class="cover-log-item" href="https://blog.feian.online/eldritch/" target="_blank" rel="noopener noreferrer" data-interactive-lens data-pointer-label="jump" data-pointer-mode="launch">
                   <time datetime="2026-06-04">06-04</time>
                   <span>文学档案馆</span>
                   <strong>不可名状作品编年史</strong>
                 </a>
 
-                <a class="cover-log-item" href="/workflow-stock-research-desk.html" data-interactive-lens data-pointer-label="pull">
+                <a class="cover-log-item" href="/workflow-stock-research-desk.html" data-interactive-lens data-pointer-label="term" data-pointer-mode="terminal">
                   <time datetime="2026-04-23">04-23</time>
                   <span>工作流项目</span>
                   <strong>老板研究台 V1</strong>
                 </a>
 
-                <a class="cover-log-item" href="/workflow-context-router.html" data-interactive-lens data-pointer-label="pull">
+                <a class="cover-log-item" href="/workflow-context-router.html" data-interactive-lens data-pointer-label="term" data-pointer-mode="terminal">
                   <time datetime="2026-04-23">04-23</time>
                   <span>工作流项目</span>
                   <strong>Context Router V1</strong>
                 </a>
 
-                <a class="cover-log-item" href="/lab-protocol-studio.html" data-interactive-lens data-pointer-label="pull">
+                <a class="cover-log-item" href="/lab-protocol-studio.html" data-interactive-lens data-pointer-label="scan" data-pointer-mode="scan">
                   <time datetime="2026-04-23">04-23</time>
                   <span>项目实验</span>
                   <strong>动环协议工作台</strong>
@@ -271,6 +281,7 @@
                 aria-controls="signal-dashboard"
                 data-interactive-lens
                 data-pointer-label="axis"
+                data-pointer-mode="scan"
                 data-signal-axis="agent"
               >
                 <span class="signal-axis-index">01</span>
@@ -290,6 +301,7 @@
                 aria-controls="signal-dashboard"
                 data-interactive-lens
                 data-pointer-label="field"
+                data-pointer-mode="scan"
                 data-signal-axis="field"
               >
                 <span class="signal-axis-index">02</span>
@@ -309,6 +321,7 @@
                 aria-controls="signal-dashboard"
                 data-interactive-lens
                 data-pointer-label="tool"
+                data-pointer-mode="scan"
                 data-signal-axis="tool"
               >
                 <span class="signal-axis-index">03</span>
@@ -329,6 +342,7 @@
               data-signal-dashboard
               data-interactive-lens
               data-pointer-label="chart"
+              data-pointer-mode="scan"
             >
               <div class="signal-dashboard-head">
                 <div>
@@ -389,7 +403,7 @@
               <p data-signal-detail-kicker>Selected axis</p>
               <strong data-signal-detail-title>01 / Agent 协作</strong>
               <span data-signal-detail-copy>关注多智能体如何在真实约束下协同完成目标。从流程编排、记录与工具使用，到评估与迭代，构建可复用的协作范式。</span>
-              <a href="/workflow.html" data-signal-detail-link data-interactive-lens data-pointer-label="logs">查看工作流记录</a>
+              <a href="/workflow.html" data-signal-detail-link data-interactive-lens data-pointer-label="term" data-pointer-mode="terminal">查看工作流记录</a>
             </aside>
           </div>
         </section>
@@ -402,7 +416,7 @@
           </div>
 
           <div class="feed-list build-board">
-            <a class="feed-item feed-item--featured" href="https://blog.feian.online/eldritch/" target="_blank" rel="noopener noreferrer" data-reveal data-interactive-lens data-pointer-label="open" data-orbit-card="5">
+            <a class="feed-item feed-item--featured" href="https://blog.feian.online/eldritch/" target="_blank" rel="noopener noreferrer" data-reveal data-interactive-lens data-pointer-label="scan" data-pointer-mode="scan" data-orbit-card="5">
               <div class="feed-meta">
                 <time datetime="2026-06-04">2026-06-04</time>
                 <span>文学档案馆</span>
@@ -432,7 +446,7 @@
               </div>
             </a>
 
-            <a class="feed-item feed-item--featured" href="/workflow-stock-research-desk.html" data-reveal data-interactive-lens data-pointer-label="pull" data-orbit-card="1">
+            <a class="feed-item feed-item--featured" href="/workflow-stock-research-desk.html" data-reveal data-interactive-lens data-pointer-label="scan" data-pointer-mode="scan" data-orbit-card="1">
               <div class="feed-meta">
                 <time datetime="2026-04-23">2026-04-23</time>
                 <span>内部工具</span>
@@ -462,7 +476,7 @@
               </div>
             </a>
 
-            <a class="feed-item" href="/workflow-context-router.html" data-reveal data-interactive-lens data-pointer-label="pull" data-orbit-card="2">
+            <a class="feed-item" href="/workflow-context-router.html" data-reveal data-interactive-lens data-pointer-label="scan" data-pointer-mode="scan" data-orbit-card="2">
               <div class="feed-meta">
                 <time datetime="2026-04-23">2026-04-23</time>
                 <span>中间件</span>
@@ -482,7 +496,7 @@
               </div>
             </a>
 
-            <a class="feed-item" href="/lab-protocol-studio.html" data-reveal data-interactive-lens data-pointer-label="pull" data-orbit-card="3">
+            <a class="feed-item" href="/lab-protocol-studio.html" data-reveal data-interactive-lens data-pointer-label="scan" data-pointer-mode="scan" data-orbit-card="3">
               <div class="feed-meta">
                 <time datetime="2026-04-23">2026-04-23</time>
                 <span>协议工具</span>
@@ -502,7 +516,7 @@
               </div>
             </a>
 
-            <a class="feed-item" href="/lab-cad-automation.html" data-reveal data-interactive-lens data-pointer-label="pull" data-orbit-card="4">
+            <a class="feed-item" href="/lab-cad-automation.html" data-reveal data-interactive-lens data-pointer-label="scan" data-pointer-mode="scan" data-orbit-card="4">
               <div class="feed-meta">
                 <time datetime="2026-04-23">2026-04-23</time>
                 <span>自动化</span>
@@ -538,7 +552,7 @@
           </div>
 
           <div class="channel-list">
-            <a class="channel-link channel-link--primary" href="/workflow.html" data-route="workflow" data-reveal data-interactive-lens data-pointer-label="route">
+            <a class="channel-link channel-link--primary" href="/workflow.html" data-route="workflow" data-reveal data-interactive-lens data-pointer-label="term" data-pointer-mode="terminal">
               <div class="channel-meta">
                 <span>01</span>
                 <strong>工作流 / workflow</strong>
@@ -558,7 +572,7 @@
               </div>
             </a>
 
-            <a class="channel-link" href="/field.html" data-route="field" data-reveal data-interactive-lens data-pointer-label="field">
+            <a class="channel-link" href="/field.html" data-route="field" data-reveal data-interactive-lens data-pointer-label="scan" data-pointer-mode="scan">
               <div class="channel-meta">
                 <span>02</span>
                 <strong>现场 / field</strong>
@@ -578,7 +592,7 @@
               </div>
             </a>
 
-            <a class="channel-link" href="/lab.html" data-route="lab" data-reveal data-interactive-lens data-pointer-label="lab">
+            <a class="channel-link" href="/lab.html" data-route="lab" data-reveal data-interactive-lens data-pointer-label="scan" data-pointer-mode="scan">
               <div class="channel-meta">
                 <span>03</span>
                 <strong>项目实验 / lab</strong>
@@ -598,7 +612,7 @@
               </div>
             </a>
 
-            <a class="channel-link channel-link--archive" href="/archive.html" data-route="archive" data-reveal data-interactive-lens data-pointer-label="index">
+            <a class="channel-link channel-link--archive" href="/archive.html" data-route="archive" data-reveal data-interactive-lens data-pointer-label="index" data-pointer-mode="index">
               <div class="channel-meta">
                 <span>04</span>
                 <strong>归档 / archive</strong>
@@ -628,11 +642,11 @@
         </div>
 
         <div class="footer-links" aria-label="页脚导航">
-          <a href="/workflow-stock-research-desk.html" data-interactive-lens data-pointer-label="open">最新构建</a>
-          <a href="https://blog.feian.online/eldritch/" target="_blank" rel="noopener noreferrer" data-interactive-lens data-pointer-label="open">怪奇文献馆</a>
-          <a href="/archive.html" data-interactive-lens data-pointer-label="index">归档 / 时间线</a>
+          <a href="/workflow-stock-research-desk.html" data-interactive-lens data-pointer-label="scan" data-pointer-mode="scan">最新构建</a>
+          <a href="https://blog.feian.online/eldritch/" target="_blank" rel="noopener noreferrer" data-interactive-lens data-pointer-label="jump" data-pointer-mode="launch">怪奇文献馆</a>
+          <a href="/archive.html" data-interactive-lens data-pointer-label="index" data-pointer-mode="index">归档 / 时间线</a>
           <a href="/about.html" data-interactive-lens data-pointer-label="about">关于</a>
-          <a href="https://github.com/Feianxc" target="_blank" rel="noopener noreferrer" data-interactive-lens data-pointer-label="open">GitHub</a>
+          <a href="https://github.com/Feianxc" target="_blank" rel="noopener noreferrer" data-interactive-lens data-pointer-label="jump" data-pointer-mode="launch">GitHub</a>
           <a href="#cover" data-interactive-lens data-pointer-label="top">回到顶部</a>
         </div>
       </footer>

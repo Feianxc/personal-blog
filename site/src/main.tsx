@@ -12,6 +12,7 @@ type PointerPoint = Pick<PointerEvent, 'clientX' | 'clientY'>
 type MotionState = 'active' | 'idle' | 'hidden'
 type ScrollDirection = 'down' | 'up' | 'still'
 type SignalAxisKey = 'agent' | 'field' | 'tool'
+type PointerMode = 'default' | 'scan' | 'terminal' | 'index' | 'launch'
 type SignalAxisProfile = {
   axis: SignalAxisKey
   detailKicker: string
@@ -78,7 +79,8 @@ const pointerWakeLayer =
 const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
 const prefersReducedMotion = reducedMotionQuery.matches
 const supportsFinePointer = window.matchMedia('(pointer: fine)').matches
-const enhancedPointerEnabled = supportsFinePointer && !prefersReducedMotion
+const supportsHoverPointer = window.matchMedia('(hover: hover)').matches
+const enhancedPointerEnabled = supportsFinePointer && supportsHoverPointer && !prefersReducedMotion
 
 document.documentElement.classList.toggle('motion-reduce', prefersReducedMotion)
 reducedMotionQuery.addEventListener('change', (event) => {
@@ -171,6 +173,7 @@ const pointerState = {
 
 let pointerRaf = 0
 let pointerPressTimer = 0
+let pointerChargeTimer = 0
 let pointerSyncRaf = 0
 let scrollRestTimer = 0
 let scrollAmbientRaf = 0
@@ -301,6 +304,10 @@ primeScrollMotionState()
 
 if (enhancedPointerEnabled) {
   document.body.classList.add('has-pointer-fx')
+}
+
+if (!supportsFinePointer || !supportsHoverPointer) {
+  document.body.classList.add('has-touch-probe')
 }
 
 revealTargets.forEach((element, index) => {
@@ -466,6 +473,7 @@ interactiveTargets.forEach((element) => {
   }
 
   const clearTarget = () => {
+    endPointerCharge(element)
     if (queuedInteractiveElement === element) {
       queuedInteractiveElement = null
     }
@@ -497,6 +505,9 @@ interactiveTargets.forEach((element) => {
     if (enhancedPointerEnabled) {
       pulsePointerShell()
       spawnClickStamp(event, element)
+      beginPointerCharge(element)
+    } else {
+      spawnTouchProbeRipple(event, element)
     }
 
     rainBackground?.pushImpulse({
@@ -508,6 +519,7 @@ interactiveTargets.forEach((element) => {
   }
 
   const releaseTarget = () => {
+    endPointerCharge(element)
     window.setTimeout(() => element.classList.remove('is-pressed'), 160)
   }
 
@@ -692,7 +704,8 @@ function animatePointerShell() {
     const shellState = pointerShell.dataset.pointerState
     const shouldContinue =
       drift > 0.24 ||
-      shellState === 'pressed'
+      shellState === 'pressed' ||
+      shellState === 'charging'
 
     if (shouldContinue) {
       pointerRaf = window.requestAnimationFrame(frame)
@@ -805,9 +818,12 @@ function setInteractiveFocus(
   if (pointerShell) {
     pointerShell.dataset.pointerState = 'armed'
     pointerShell.dataset.pointerLabel = label
+    pointerShell.dataset.pointerMode = getPointerMode(element)
     writePointerTargetGeometry(pointerShell, element)
     animatePointerShell()
   }
+
+  document.body.dataset.pointerMode = getPointerMode(element)
 
   rainBackground?.setInteractionMode(getInteractionMode(element))
 
@@ -843,11 +859,14 @@ function clearInteractiveFocus(element: HTMLElement) {
     pointerShell.dataset.pointerState = pointerState.visible ? 'idle' : 'hidden'
     pointerShell.dataset.pointerLabel = 'probe'
     pointerShell.dataset.pointerKind = 'idle'
+    pointerShell.dataset.pointerMode = 'default'
     pointerShell.style.removeProperty('--pointer-target-w')
     pointerShell.style.removeProperty('--pointer-target-h')
     pointerShell.style.removeProperty('--pointer-target-r')
     animatePointerShell()
   }
+
+  document.body.dataset.pointerMode = 'default'
 
   rainBackground?.setInteractionMode('idle')
   rainBackground?.clearInteraction()
@@ -965,7 +984,7 @@ function getPointerLabel(element: HTMLElement) {
   return (
     element.dataset.pointerLabel ??
     (element.classList.contains('feed-item')
-      ? 'pull'
+      ? 'scan'
       : element.classList.contains('channel-link')
         ? 'index'
         : element.classList.contains('evidence-card')
@@ -974,20 +993,65 @@ function getPointerLabel(element: HTMLElement) {
   )
 }
 
+function getPointerMode(element: HTMLElement): PointerMode {
+  const explicitMode = element.dataset.pointerMode
+  if (
+    explicitMode === 'scan' ||
+    explicitMode === 'terminal' ||
+    explicitMode === 'index' ||
+    explicitMode === 'launch'
+  ) {
+    return explicitMode
+  }
+
+  const label = getPointerLabel(element)
+  const href = element instanceof HTMLAnchorElement ? element.href : ''
+  const route = element.dataset.route || ''
+
+  if (label === 'scan' || label === 'builds' || label === 'pull' || element.classList.contains('feed-item')) {
+    return 'scan'
+  }
+
+  if (label === 'term' || label === 'logs' || route === 'workflow' || href.includes('/workflow')) {
+    return 'terminal'
+  }
+
+  if (label === 'index' || route === 'archive' || href.includes('/archive')) {
+    return 'index'
+  }
+
+  if (label === 'jump' || label === 'open' || href.includes('github.com')) {
+    return 'launch'
+  }
+
+  return 'default'
+}
+
 function writePointerTargetGeometry(pointerShellElement: HTMLElement, element: HTMLElement) {
   const { rect } = getInteractionSnapshot(element)
-  const kind = element.classList.contains('channel-link')
-    ? 'route'
-    : element.classList.contains('feed-item')
-      ? 'feed'
-      : element.classList.contains('cover-object')
-        ? 'inspect'
-        : element.matches('.primary-link, .secondary-link, .cover-object-link')
-          ? 'action'
-          : 'link'
+  const mode = getPointerMode(element)
+  const kind = mode === 'terminal'
+    ? 'terminal'
+    : mode === 'index'
+      ? 'index'
+      : mode === 'launch'
+        ? 'launch'
+        : element.classList.contains('channel-link')
+          ? 'route'
+          : element.classList.contains('feed-item')
+            ? 'feed'
+            : element.classList.contains('cover-object')
+              ? 'inspect'
+              : element.matches('.primary-link, .secondary-link, .cover-object-link')
+                ? 'action'
+                : 'link'
   const targetWidth =
-    kind === 'route' || kind === 'feed'
+    kind === 'route' || kind === 'feed' || kind === 'terminal'
       ? clamp(rect.width * 0.22, 78, 168)
+      : kind === 'index'
+        ? clamp(rect.width * 0.18, 54, 118)
+        : kind === 'launch'
+          ? clamp(rect.width * 0.3, 64, 138)
       : kind === 'inspect'
         ? clamp(Math.min(rect.width, rect.height) * 0.4, 68, 122)
         : kind === 'action'
@@ -996,6 +1060,12 @@ function writePointerTargetGeometry(pointerShellElement: HTMLElement, element: H
   const targetHeight =
     kind === 'route' || kind === 'feed'
       ? clamp(rect.height * 0.68, 42, 76)
+      : kind === 'terminal'
+        ? clamp(rect.height * 0.86, 46, 86)
+        : kind === 'index'
+          ? clamp(rect.height * 0.52, 38, 68)
+          : kind === 'launch'
+            ? clamp(rect.height * 0.72, 42, 74)
       : kind === 'inspect'
         ? clamp(Math.min(rect.width, rect.height) * 0.34, 60, 104)
         : kind === 'action'
@@ -1003,11 +1073,12 @@ function writePointerTargetGeometry(pointerShellElement: HTMLElement, element: H
           : 54
 
   pointerShellElement.dataset.pointerKind = kind
+  pointerShellElement.dataset.pointerMode = mode
   pointerShellElement.style.setProperty('--pointer-target-w', `${targetWidth.toFixed(1)}px`)
   pointerShellElement.style.setProperty('--pointer-target-h', `${targetHeight.toFixed(1)}px`)
   pointerShellElement.style.setProperty(
     '--pointer-target-r',
-    kind === 'link' ? '999px' : kind === 'action' ? '10px' : '16px',
+    kind === 'link' || kind === 'index' ? '999px' : kind === 'action' ? '10px' : '16px',
   )
 }
 
@@ -1095,16 +1166,71 @@ function pulsePointerShell() {
   }, 170)
 }
 
+function beginPointerCharge(element: HTMLElement) {
+  if (!pointerShell) return
+
+  window.clearTimeout(pointerChargeTimer)
+  pointerChargeTimer = window.setTimeout(() => {
+    if (activeInteractiveTarget && activeInteractiveTarget !== element) return
+
+    element.classList.add('is-charging')
+    pointerShell.dataset.pointerState = 'charging'
+    pointerShell.dataset.pointerMode = getPointerMode(element)
+    pointerShell.dataset.pointerLabel = `${getPointerLabel(element)}+`
+    animatePointerShell()
+
+    const interactionTarget = getInteractionTarget(element)
+    rainBackground?.pushImpulse({
+      x: interactionTarget.x,
+      y: interactionTarget.y,
+      strength: 0.68,
+      kind: 'click',
+    })
+  }, 340)
+}
+
+function endPointerCharge(element: HTMLElement) {
+  window.clearTimeout(pointerChargeTimer)
+  pointerChargeTimer = 0
+  element.classList.remove('is-charging')
+
+  if (!pointerShell) return
+
+  pointerShell.dataset.pointerState = activeInteractiveTarget ? 'armed' : pointerState.visible ? 'idle' : 'hidden'
+  pointerShell.dataset.pointerLabel = activeInteractiveTarget ? getPointerLabel(activeInteractiveTarget) : 'probe'
+  pointerShell.dataset.pointerMode = activeInteractiveTarget ? getPointerMode(activeInteractiveTarget) : 'default'
+  animatePointerShell()
+}
+
 function spawnClickStamp(event: PointerEvent, element: HTMLElement) {
   if (!clickLayer) return
 
   const stamp = document.createElement('span')
   stamp.className = 'click-stamp'
   stamp.dataset.label = getPointerLabel(element)
+  stamp.dataset.mode = getPointerMode(element)
   stamp.style.setProperty('--stamp-x', `${event.clientX}px`)
   stamp.style.setProperty('--stamp-y', `${event.clientY}px`)
   clickLayer.appendChild(stamp)
   stamp.addEventListener('animationend', () => stamp.remove(), { once: true })
+}
+
+function spawnTouchProbeRipple(event: PointerEvent, element: HTMLElement) {
+  if (!clickLayer || prefersReducedMotion) return
+
+  const ripple = document.createElement('span')
+  ripple.className = 'touch-probe-ripple'
+  ripple.dataset.mode = getPointerMode(element)
+  ripple.dataset.label = getPointerLabel(element)
+  ripple.style.setProperty('--touch-x', `${event.clientX}px`)
+  ripple.style.setProperty('--touch-y', `${event.clientY}px`)
+  clickLayer.appendChild(ripple)
+
+  while (clickLayer.querySelectorAll('.touch-probe-ripple').length > 6) {
+    clickLayer.querySelector('.touch-probe-ripple')?.remove()
+  }
+
+  ripple.addEventListener('animationend', () => ripple.remove(), { once: true })
 }
 
 function spawnPointerWake(x: number, y: number) {

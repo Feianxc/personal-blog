@@ -2421,3 +2421,22 @@ body.is-soundfield-on .command-palette-trigger strong {
       linear-gradient(180deg, rgb(15 22 28 / 86%), rgb(5 8 12 / 72%));
   }
 }
+
+/* 2026-06-04 mobile clarity pass:
+   keep the visual controls available, but stop the rail from covering the first-visit route map. */
+@media (max-width: 700px) {
+  body:not(.is-command-open) .signal-quick-actions {
+    position: static;
+    inset: auto;
+    width: calc(100% - 1.2rem);
+    margin: 1.1rem auto max(1.2rem, env(safe-area-inset-bottom));
+    transform: none;
+  }
+
+  .command-palette-trigger {
+    position: static;
+    width: calc(100% - 1.2rem);
+    margin: 0.45rem auto max(1.2rem, env(safe-area-inset-bottom));
+    justify-content: center;
+  }
+}
