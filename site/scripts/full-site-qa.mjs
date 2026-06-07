@@ -1012,6 +1012,16 @@ async function evaluatePage() {
     const signalAxes = Array.from(document.querySelectorAll('button[data-signal-axis]'))
     const pointerProbe = document.querySelector('.pointer-probe')
     const pointerProbeRect = pointerProbe?.getBoundingClientRect()
+    const pointerProbeStyle = pointerProbe ? window.getComputedStyle(pointerProbe) : null
+    const pointerProbeVisible = Boolean(
+      pointerProbeRect &&
+      pointerProbeStyle &&
+      pointerProbeStyle.display !== 'none' &&
+      pointerProbeStyle.visibility !== 'hidden' &&
+      Number(pointerProbeStyle.opacity || 0) > 0.05 &&
+      pointerProbeRect.width > 0 &&
+      pointerProbeRect.height > 0,
+    )
     const bodyCursor = window.getComputedStyle(document.body).cursor
     const clarityMap = document.querySelector('[data-clarity-map]')
     const personaTargets = Array.from(document.querySelectorAll('[data-pointer-mode]')).map((element) => ({
@@ -1069,6 +1079,9 @@ async function evaluatePage() {
         pointerProbeSrc: pointerProbe?.getAttribute('src') || '',
         pointerProbeWidth: Math.round(pointerProbeRect?.width || 0),
         pointerProbeHeight: Math.round(pointerProbeRect?.height || 0),
+        pointerProbeOpacity: pointerProbeStyle?.opacity || '',
+        pointerProbeDisplay: pointerProbeStyle?.display || '',
+        pointerProbeVisible,
         pointerModes,
         modeTargets: personaTargets.length,
         touchProbeClass: document.body.classList.contains('has-touch-probe'),
@@ -1167,6 +1180,9 @@ function collectFindings(result, failureList, warningList) {
     }
     if (result.viewport === 'desktop' && result.cursor?.pointerProbeExists && result.cursor.pointerProbeWidth < 48) {
       failureList.push(`${label}: IMAGE2 pointer probe is too small (${result.cursor.pointerProbeWidth}px)`)
+    }
+    if (result.viewport === 'desktop' && result.cursor?.pointerProbeVisible) {
+      failureList.push(`${label}: duplicate enhanced pointer sprite is visible while native IMAGE2 cursor is active`)
     }
     if (!result.clarity?.hasClarityMap) {
       failureList.push(`${label}: first-visit clarity map is missing`)

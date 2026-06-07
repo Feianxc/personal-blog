@@ -1465,7 +1465,12 @@ main {
   width: 78px;
   max-width: none;
   height: 78px;
-  opacity: 0.92;
+  /*
+   * Keep the native IMAGE2 cursor as the only visible cursor bitmap.
+   * The shell still supplies persona rings, labels, click waves and charging,
+   * but this larger sprite must stay transparent or users see two cursors.
+   */
+  opacity: 0;
   pointer-events: none;
   user-select: none;
   transform: translate3d(-2px, -2px, 0) rotate(-1deg);
