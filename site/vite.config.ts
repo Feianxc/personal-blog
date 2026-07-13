@@ -22,6 +22,7 @@ export default defineConfig({
         labCadAutomation: resolve(__dirname, 'lab-cad-automation.html'),
         labOpenclawDelivery: resolve(__dirname, 'lab-openclaw-delivery.html'),
         labHtmlCanvasSignal: resolve(__dirname, 'lab-html-canvas-signal.html'),
+        labOpenaiNodeProbe: resolve(__dirname, 'lab-openai-node-probe.html'),
         archive: resolve(__dirname, 'archive.html'),
         about: resolve(__dirname, 'about.html'),
       },

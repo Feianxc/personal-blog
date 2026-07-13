@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="description" content="OpenAI 节点体检仪：面向 Windows 与 Mihomo 的全节点选线、恢复和可视化报告工具。" />
+    <title>OpenAI 节点体检仪：从全量深测到高效筛选 - FEIAN</title>
+    <link rel="stylesheet" href="/src/entry.css" />
+    <style>
+      .probe-actions { display: flex; flex-wrap: wrap; gap: .8rem; margin-top: 1.2rem; }
+      .probe-action { display: inline-flex; align-items: center; min-height: 2.8rem; padding: 0 1rem; border: 1px solid var(--line); color: var(--text); text-decoration: none; background: rgb(14 18 28 / 62%); }
+      .probe-action--primary { border-color: var(--accent); color: var(--accent); }
+      .probe-figure { margin: 1.2rem 0 0; border: 1px solid var(--line); background: rgb(10 14 22 / 72%); }
+      .probe-figure img { display: block; width: 100%; height: auto; }
+      .probe-figure figcaption { padding: .8rem 1rem; color: var(--muted); font-size: .86rem; }
+      .probe-metrics { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .8rem; margin-top: 1rem; }
+      .probe-metric { padding: 1rem; border: 1px solid var(--line); background: rgb(14 18 28 / 52%); }
+      .probe-metric span { display: block; color: var(--muted); font-size: .78rem; }
+      .probe-metric strong { display: block; margin-top: .3rem; color: var(--text); font-size: 1.35rem; }
+      .probe-note { padding: 1rem; border-left: 3px solid var(--accent); background: rgb(164 147 236 / 8%); color: var(--muted); }
+      @media (min-width: 760px) { .probe-metrics { grid-template-columns: repeat(4,minmax(0,1fr)); } }
+    </style>
+    <style data-critical-reset>
+      html { color-scheme: dark; background: #070a0f; scroll-behavior: smooth; }
+      *, *::before, *::after { box-sizing: border-box; }
+      body { margin: 0; min-width: 320px; color: #edf1f5; font-family: system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif; line-height: 1.58; background: #070a0f; }
+      .rain-canvas,.fx-layer { position: fixed; inset: 0; pointer-events: none; }
+      .rain-canvas { display: block; width: 100%; height: 100%; }
+      .fx-layer { z-index: 48; }
+      .entry-shell { position: relative; z-index: 2; overflow: clip; visibility: visible; }
+    </style>
+  </head>
+  <body class="entry-page entry-page--enhanced">
+    <div class="entry-shell">
+      <header class="entry-topbar">
+        <a href="/index.html"><strong>FEIAN</strong><span>项目实验 / node probe</span></a>
+        <nav class="entry-nav" aria-label="页面导航">
+          <a href="/index.html">首页</a><a href="/lab.html">项目实验</a><a href="/workflow.html">工作流</a><a href="/archive.html">归档</a><a href="https://github.com/Feianxc" target="_blank" rel="noopener noreferrer">GitHub</a>
+        </nav>
+      </header>
+
+      <header class="entry-header entry-header-feature">
+        <div class="entry-filebar" aria-label="项目状态">
+          <div class="entry-filebar-tag"><span>开源工具 / Windows</span><strong>openai-node-probe</strong></div>
+          <div class="entry-filebar-route"><span>项目 → 网络诊断</span><span>发布 2026-07-13</span></div>
+        </div>
+        <div class="entry-header-grid">
+          <div class="entry-header-copy">
+            <p class="entry-kicker">Mihomo / ChatGPT / Codex</p>
+            <h1>OpenAI 节点体检仪，把“哪个节点更适合”变成一份能复查的报告。</h1>
+            <p class="entry-subhead">它不只测一次延迟，而是切换节点、检查公共路径、复测候选、恢复原节点，再把可信度和边界写进报告。</p>
+            <p class="entry-lede">默认高效筛选会先快速检查全部节点，再只深入复测前 6 名。常用操作留在第一屏，高级参数、日志和术语解释按需展开。</p>
+            <div class="probe-actions">
+              <a class="probe-action probe-action--primary" href="https://github.com/Feianxc/openai-node-probe" target="_blank" rel="noopener noreferrer">查看 GitHub 源码</a>
+              <a class="probe-action" href="https://github.com/Feianxc/openai-node-probe/releases/tag/v2.2.0" target="_blank" rel="noopener noreferrer">下载 v2.2.0</a>
+            </div>
+          </div>
+          <aside class="entry-filecard entry-signalcard" aria-label="项目速览">
+            <p class="entry-filecard-label">如果只看一眼</p>
+            <div class="entry-signalgrid">
+              <div><span>平台</span><strong>Windows + PowerShell 7</strong></div>
+              <div><span>控制面</span><strong>Clash Verge Rev / Mihomo</strong></div>
+              <div><span>输出</span><strong>WPF 界面 + 单文件 HTML 报告</strong></div>
+              <div><span>许可证</span><strong>MIT，公开源码</strong></div>
+            </div>
+          </aside>
+        </div>
+      </header>
+
+      <main class="entry-main">
+        <section class="entry-section" id="result">
+          <h2>先看最终报告</h2>
+          <p>第一屏只回答是否可信、推荐哪个节点、为什么以及下一步。场景判断、节点明细和统计口径默认折叠。</p>
+          <figure class="probe-figure"><img src="/case-media/openai-node-probe-report.png" alt="OpenAI 节点体检仪的桌面版 HTML 报告，首屏展示可信度、推荐节点、原因和下一步。" loading="lazy" decoding="async" /><figcaption>单文件报告不依赖外部图表库；搜索、排序、完整列和移动端卡片视图都保留。</figcaption></figure>
+        </section>
+
+        <section class="entry-section" id="efficiency">
+          <h2>效率不是把检测做浅，而是把深测留给候选</h2>
+          <div class="probe-metrics">
+            <article class="probe-metric"><span>示例节点</span><strong>30 个</strong></article>
+            <article class="probe-metric"><span>公共目标</span><strong>4 个</strong></article>
+            <article class="probe-metric"><span>高效筛选计划</span><strong>336 次</strong></article>
+            <article class="probe-metric"><span>全部深测计划</span><strong>1200 次</strong></article>
+          </div>
+          <p class="probe-note">336 / 1200 / 72% 是默认参数下的理论请求计划，不是固定耗时或真实网络成绩。最终速度仍取决于节点数量、失败超时和本机网络。</p>
+        </section>
+
+        <section class="entry-section" id="build">
+          <h2>我是怎么把它收成工具的</h2>
+          <div class="entry-quicklook">
+            <article class="entry-quicklook-card"><span class="entry-quicklook-label">01 / switch</span><strong>真实切换，而不是只读历史延迟</strong><p>逐节点验证选择器是否真的切换；切换失败的节点不能进入可信推荐。</p></article>
+            <article class="entry-quicklook-card"><span class="entry-quicklook-label">02 / adaptive</span><strong>全节点快筛，再复测候选</strong><p>首轮偶发失败但切换成功的节点还有救援复测机会，避免一次抖动直接淘汰。</p></article>
+            <article class="entry-quicklook-card"><span class="entry-quicklook-label">03 / restore</span><strong>恢复原节点是结果的一部分</strong><p>恢复没有严格成功时，报告会把推荐标记为不可信，而不是留下伪成功结论。</p></article>
+          </div>
+        </section>
+
+        <section class="entry-section" id="boundary">
+          <h2>它能证明什么，也明确不证明什么</h2>
+          <div class="proof-grid">
+            <article class="proof-card"><h3>公共路径证据</h3><p>可以观察 DNS、TCP、TLS、HTTP 可达性、响应时间和样本稳定性。</p></article>
+            <article class="proof-card"><h3>登录态复核</h3><p>可选浏览器伴侣只观察页面可见区域的时间和计数，不读取账号凭据或正文。</p></article>
+            <article class="proof-card"><h3>不冒充完整业务测试</h3><p>公共路径结果不等于 ChatGPT 账号能力、Codex 完整任务或协议级 SSE 内容测试。</p></article>
+          </div>
+        </section>
+
+        <section class="entry-note"><p>项目已使用 MIT License 公开。源码、版本说明、安全策略和便携 ZIP 都放在 GitHub 仓库。</p></section>
+      </main>
+    </div>
+    <script type="module" src="/src/entry.ts"></script>
+  </body>
+</html>
