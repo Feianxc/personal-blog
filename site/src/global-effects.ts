@@ -243,6 +243,7 @@ export function setupGlobalEffects(options: GlobalEffectsOptions) {
   const xrayOverlay = buildXrayOverlay()
   const palette = buildCommandPalette(options.context)
   const quickActions = buildSignalQuickActions(palette)
+  const quickActionsHost = document.querySelector<HTMLElement>('[data-signal-controls-host]')
   const agentCoreOverlay = buildAgentCoreOverlay()
 
   document.body.append(
@@ -252,10 +253,20 @@ export function setupGlobalEffects(options: GlobalEffectsOptions) {
     routeLayer,
     xrayOverlay,
     agentCoreOverlay,
-    quickActions,
     palette.trigger,
     palette.shell,
   )
+  if (quickActionsHost) {
+    quickActions.classList.add('is-inline')
+    quickActionsHost.append(quickActions)
+  } else {
+    const inlineHost = document.createElement('div')
+    inlineHost.className = 'site-effects-host'
+    inlineHost.setAttribute('aria-label', '页面动效和快速入口')
+    quickActions.classList.add('is-inline')
+    inlineHost.append(quickActions)
+    document.body.append(inlineHost)
+  }
   applyStoredSignalMode()
   bindSoundfieldInteractions()
   playRouteArrival(routeLayer)
@@ -702,21 +713,20 @@ function buildSignalQuickActions(palette: CommandPalette) {
     title: string
     tip: string
   }> = [
-    { key: 'wind', label: '风压', action: 'membrane-pulse', title: '吹动首页信号膜', tip: '吹动背景信号膜：看纸张和雨幕被风压掀起来。' },
-    { key: 'storm', label: '风暴', action: 'visual-storm', title: '开启高能风暴模式', tip: '高能风暴模式：增强雨幕、扫描线和页面响应。' },
-    { key: 'xray', label: '透视', action: 'xray', title: '页面结构透视层', tip: '结构透视：当前页面区块图。' },
-    { key: 'hyper', label: '高能', action: 'hyperstorm', title: '启动终局视觉层', tip: '终局视觉层：启动最强的 Canvas / shader 风格效果。' },
-    { key: 'audio', label: '声场', action: 'audio-toggle', title: '打开或关闭点击声场', tip: '点击声场：用很轻的合成音反馈按钮和路线切换，可随时关闭。' },
-    { key: 'calm', label: '安静', action: 'visual-calm', title: '降噪恢复', tip: '安静模式：降低动效强度，恢复阅读优先。' },
-    { key: 'cmd', label: '命令', openPalette: true, title: '全站命令导航', tip: '命令导航：搜索文章、项目和页面路线。' },
+    { key: 'wind', label: '吹一下', action: 'membrane-pulse', title: '吹动首页背景', tip: '让背景和右侧装置回应一次，看看这一页是怎么动的。' },
+    { key: 'storm', label: '增强', action: 'visual-storm', title: '增强页面动效', tip: '加强雨幕、扫描线和页面响应，适合想多看一点效果时使用。' },
+    { key: 'hyper', label: '全开', action: 'hyperstorm', title: '打开完整视觉效果', tip: '把 Canvas 和最强的一层视觉效果一起打开。' },
+    { key: 'audio', label: '声音', action: 'audio-toggle', title: '打开或关闭点击声音', tip: '给按钮和路线切换加一点很轻的声音，随时可以关闭。' },
+    { key: 'calm', label: '安静', action: 'visual-calm', title: '降低页面动效', tip: '降低动效强度，把注意力留给文字和项目。' },
+    { key: 'cmd', label: '找内容', openPalette: true, title: '搜索全站内容', tip: '按项目或文章名称查找，也可以直接跳到其他页面。' },
   ]
 
   dock.className = 'signal-quick-actions'
-  dock.setAttribute('aria-label', '可见特效控制台')
+  dock.setAttribute('aria-label', '页面动效和快速入口')
   label.className = 'signal-quick-actions-label'
-  label.textContent = '视觉控制台'
+  label.textContent = '试试这里'
   hint.className = 'signal-quick-actions-hint'
-  hint.textContent = '视觉模式：风压、风暴、高能、声场、安静。'
+  hint.textContent = '这些按钮会直接改变页面；不想分心，就点“安静”。'
   dock.append(label, hint)
 
   const syncActionState = () => {

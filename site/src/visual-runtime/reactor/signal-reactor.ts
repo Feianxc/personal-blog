@@ -15,10 +15,78 @@ type ReactorOptions = {
   reducedMotion: boolean
 }
 
+type ReactorLaneKey = 'work' | 'field' | 'life'
+
+const reactorLaneProfiles: Array<{
+  key: ReactorLaneKey
+  copy: string
+}> = [
+  { key: 'work', copy: '工作：把重复步骤做成网页和系统。' },
+  { key: 'field', copy: '现场：让设备状态和排查过程更直观。' },
+  { key: 'life', copy: '生活：把兴趣和记录做成愿意反复打开的体验。' },
+]
+
 export function setupSignalReactor(options: ReactorOptions) {
   const root = document.querySelector<HTMLElement>('[data-signal-reactor]')
   const canvas = root?.querySelector<HTMLCanvasElement>('.signal-reactor-canvas')
   if (!root || !canvas) return null
+
+  const laneButtons = Array.from(
+    document.querySelectorAll<HTMLButtonElement>('button[data-reactor-lane]'),
+  )
+  const laneNodes = Array.from(
+    root.querySelectorAll<HTMLElement>('[data-reactor-node]'),
+  )
+  const focusCopy = document.querySelector<HTMLElement>('[data-reactor-focus-copy]')
+  const laneCleanups: Array<() => void> = []
+  const defaultFocusCopy = focusCopy?.textContent?.trim() || ''
+  let activeLane = -1
+  let pinnedLane: number | null = null
+  let laneBurstTimer = 0
+
+  const setActiveLane = (lane: number) => {
+    activeLane = lane
+    const profile = lane >= 0 ? reactorLaneProfiles[lane] : undefined
+
+    if (profile) root.dataset.reactorLane = profile.key
+    else delete root.dataset.reactorLane
+
+    laneButtons.forEach((button, index) => {
+      button.classList.toggle('is-active', index === lane)
+      button.setAttribute('aria-pressed', String(index === pinnedLane))
+    })
+    laneNodes.forEach((node) => {
+      node.classList.toggle('is-active', node.dataset.reactorNode === profile?.key)
+    })
+
+    if (focusCopy) focusCopy.textContent = profile?.copy || defaultFocusCopy
+  }
+
+  laneButtons.forEach((button, index) => {
+    const preview = () => setActiveLane(index)
+    const restore = () => setActiveLane(pinnedLane ?? -1)
+    const pin = () => {
+      pinnedLane = pinnedLane === index ? null : index
+      setActiveLane(pinnedLane ?? -1)
+      root.classList.add('is-reactor-burst')
+      window.clearTimeout(laneBurstTimer)
+      laneBurstTimer = window.setTimeout(() => root.classList.remove('is-reactor-burst'), 760)
+    }
+
+    button.addEventListener('pointerenter', preview, { passive: true })
+    button.addEventListener('pointerleave', restore, { passive: true })
+    button.addEventListener('focus', preview)
+    button.addEventListener('blur', restore)
+    button.addEventListener('click', pin)
+    laneCleanups.push(() => {
+      button.removeEventListener('pointerenter', preview)
+      button.removeEventListener('pointerleave', restore)
+      button.removeEventListener('focus', preview)
+      button.removeEventListener('blur', restore)
+      button.removeEventListener('click', pin)
+    })
+  })
+  setActiveLane(-1)
 
   const preferences = readMotionPreferences()
   const profile = resolveVisualRuntimeProfile({
@@ -33,7 +101,12 @@ export function setupSignalReactor(options: ReactorOptions) {
 
   if (!context || profile.quality === 'calm') {
     root.dataset.reactorReady = 'static'
-    return { destroy: () => undefined }
+    return {
+      destroy() {
+        laneCleanups.forEach((cleanup) => cleanup())
+        window.clearTimeout(laneBurstTimer)
+      },
+    }
   }
 
   const pointer = { x: 0.5, y: 0.5, energy: 0.18 }
@@ -42,8 +115,8 @@ export function setupSignalReactor(options: ReactorOptions) {
   let width = 0
   let height = 0
   let dpr = 1
-  let activeLane = -1
   let scrollEnergy = 0
+  let intersectionObserver: IntersectionObserver | null = null
 
   const resize = () => {
     const rect = root.getBoundingClientRect()
@@ -70,7 +143,7 @@ export function setupSignalReactor(options: ReactorOptions) {
   const onPointerMove = (event: PointerEvent) => setPointer(event.clientX, event.clientY)
   const onPointerLeave = () => {
     pointer.energy = 0.22
-    activeLane = -1
+    setActiveLane(pinnedLane ?? -1)
     root.style.setProperty('--reactor-energy', '0.22')
   }
   const onScroll = () => {
@@ -86,14 +159,13 @@ export function setupSignalReactor(options: ReactorOptions) {
   feedItems.forEach((item, index) => {
     item.dataset.orbitCard = String(index + 1)
     item.addEventListener('mouseenter', () => {
-      activeLane = index % 4
+      const linkedLane = index % reactorLaneProfiles.length
+      setActiveLane(linkedLane)
       item.classList.add('is-orbit-linked')
-      root.dataset.reactorLane = String(activeLane + 1)
     })
     item.addEventListener('mouseleave', () => {
-      activeLane = -1
+      setActiveLane(pinnedLane ?? -1)
       item.classList.remove('is-orbit-linked')
-      delete root.dataset.reactorLane
     })
   })
 
@@ -128,10 +200,25 @@ export function setupSignalReactor(options: ReactorOptions) {
   )
 
   loop.start()
+  if ('IntersectionObserver' in window) {
+    intersectionObserver = new IntersectionObserver(
+      ([entry]) => {
+        const nearby = Boolean(entry?.isIntersecting)
+        root.dataset.reactorPaused = nearby ? 'false' : 'true'
+        if (nearby) loop.start()
+        else loop.stop()
+      },
+      { rootMargin: '180px 0px' },
+    )
+    intersectionObserver.observe(root)
+  }
 
   return {
     destroy() {
       loop.destroy()
+      intersectionObserver?.disconnect()
+      laneCleanups.forEach((cleanup) => cleanup())
+      window.clearTimeout(laneBurstTimer)
       root.removeEventListener('pointermove', onPointerMove)
       root.removeEventListener('pointerleave', onPointerLeave)
       window.removeEventListener('scroll', onScroll)
@@ -148,7 +235,7 @@ function buildParticles(count: number): ReactorParticle[] {
     radius: 0.24 + (index % 7) * 0.048 + Math.random() * 0.05,
     speed: 0.00018 + (index % 11) * 0.000026,
     size: 0.9 + Math.random() * 2.8,
-    lane: index % 4,
+    lane: index % reactorLaneProfiles.length,
     flicker: Math.random() * Math.PI * 2,
   }))
 }
@@ -227,7 +314,7 @@ function drawOrbits(
   energy: number,
   activeLane: number,
 ) {
-  for (let lane = 0; lane < 4; lane += 1) {
+  for (let lane = 0; lane < reactorLaneProfiles.length; lane += 1) {
     const radius = min * (0.24 + lane * 0.065)
     const alpha = activeLane === -1 || activeLane === lane ? 0.32 : 0.1
     const start = time * 0.00038 * (lane % 2 ? -1 : 1) + lane
@@ -235,7 +322,6 @@ function drawOrbits(
       [243, 106, 29],
       [110, 217, 230],
       [233, 200, 133],
-      [242, 228, 204],
     ][lane]
     context.strokeStyle = `rgba(${palette[0]}, ${palette[1]}, ${palette[2]}, ${alpha + energy * 0.06})`
     context.lineWidth = activeLane === lane ? 2.2 : 1.1

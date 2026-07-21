@@ -2,6 +2,7 @@ import './index.css'
 import { setupGlobalEffects } from './global-effects'
 import { createRainBackground } from './rain-background'
 import { setupSignalReactor } from './visual-runtime/reactor/signal-reactor'
+import './production-polish.css'
 
 document.documentElement.classList.add('js')
 
@@ -202,42 +203,42 @@ setupGlobalEffects({
 const signalAxisProfiles: Record<SignalAxisKey, SignalAxisProfile> = {
   agent: {
     axis: 'agent',
-    detailKicker: 'Selected axis',
-    detailTitle: '01 / Agent 协作',
+    detailKicker: '这一条在做什么',
+    detailTitle: '01 / 日常工作',
     detailCopy:
-      '关注多智能体如何在真实约束下协同完成目标。从流程编排、记录与工具使用，到评估与迭代，构建可复用的协作范式。',
+      '把反复整理、查询和交接的事做成网页或系统，下一次不必从头再来。',
     detailHref: '/workflow.html',
-    detailCta: '查看工作流记录',
-    dashboardTitle: '协作拓扑',
-    dashboardStatus: '运行中',
-    metrics: ['127', '92.6%', '1.24s'],
-    metricLabels: ['协作会话', '闭环率', '响应延迟'],
+    detailCta: '看看这些过程',
+    dashboardTitle: '工作里的重复步骤',
+    dashboardStatus: '持续更新',
+    metrics: ['16', '3', '持续'],
+    metricLabels: ['公开页面', '常做方向', '更新状态'],
   },
   field: {
     axis: 'field',
-    detailKicker: 'Field axis',
+    detailKicker: '这一条在做什么',
     detailTitle: '02 / 工程现场',
     detailCopy:
-      '把现场问题拆成可观察、可验证、可复用的步骤。用数据、图纸和运行记录连接问题源头与交付结果。',
+      '遇到设备通信和调试问题，先把状态、顺序和变化看清楚，再一点点缩小范围。',
     detailHref: '/lab-protocol-studio.html',
-    detailCta: '查看现场实验',
-    dashboardTitle: '现场遥测',
-    dashboardStatus: '采集中',
-    metrics: ['4', '0.18%', '152ms'],
-    metricLabels: ['协议链路', '异常率', 'P95 延迟'],
+    detailCta: '看看现场工具',
+    dashboardTitle: '设备状态和排查过程',
+    dashboardStatus: '边做边记',
+    metrics: ['MCGS', 'MODBUS', '复盘'],
+    metricLabels: ['上位画面', '通信协议', '处理方式'],
   },
   tool: {
     axis: 'tool',
-    detailKicker: 'Tool axis',
-    detailTitle: '03 / 自造工具',
+    detailKicker: '这一条在做什么',
+    detailTitle: '03 / 个人工具',
     detailCopy:
-      '把高频任务沉淀成自己的工具链：入口清晰、证据完整、能继续迭代，也能在需要时公开给别人复用。',
+      '自己经常要用的东西，就做成更顺手的版本：打开能看懂，用过还能接着改。',
     detailHref: '/archive.html',
-    detailCta: '查看工具索引',
-    dashboardTitle: '工具链路',
-    dashboardStatus: '待发射',
-    metrics: ['15', '8', 'SHA'],
-    metricLabels: ['项目入口', '可复跑包', '交付指纹'],
+    detailCta: '看看项目时间线',
+    dashboardTitle: '给自己做的工具',
+    dashboardStatus: '继续打磨',
+    metrics: ['网页', '脚本', '本地'],
+    metricLabels: ['直观入口', '重复动作', '私密记录'],
   },
 }
 

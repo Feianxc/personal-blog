@@ -15,6 +15,7 @@ const reportPath = join(runRoot, 'full-site-qa-report.json')
 const reportMdPath = join(runRoot, 'full-site-qa-report.md')
 const screenshotDesktop = join(mediaRoot, 'homepage-desktop.png')
 const screenshotMobile = join(mediaRoot, 'homepage-mobile.png')
+const screenshotReactorWork = join(mediaRoot, 'homepage-reactor-work-active.png')
 
 const viewportMatrix = [
   { name: 'desktop', width: 1440, height: 960, deviceScaleFactor: 1 },
@@ -25,13 +26,12 @@ const viewportMatrix = [
 ]
 
 const requiredHomePhrases = [
-  '个人操作系统',
-  '个人数字实验室',
-  '构建物',
-  '持续运行',
-  '工作流',
+  '把日常工作',
+  '生活里的事',
+  '更智能',
+  '更直观',
   '现场',
-  '项目实验',
+  '个人博客',
 ]
 
 const forbiddenPublicCopy = [
@@ -147,6 +147,7 @@ async function main() {
     interactionResults.push(await auditHomeInteractions())
     interactionResults.push(await auditPointerPersonaStates())
     interactionResults.push(await auditTouchProbeFeedback())
+    interactionResults.push(await auditSignalReactorLanes())
     interactionResults.push(await auditSignalDashboardTabs())
     interactionResults.push(await auditCommandPaletteKeyboard())
     interactionResults.push(await auditRouteTransitionSmoke())
@@ -183,6 +184,7 @@ async function main() {
     screenshots: {
       desktop: screenshotDesktop,
       mobile: screenshotMobile,
+      reactorWorkActive: screenshotReactorWork,
     },
     warnings,
     failures,
@@ -284,7 +286,7 @@ async function auditHomeInteractions() {
   const before = await evalValue(`(() => Array.from(document.querySelectorAll('.signal-quick-action')).map((button) => button.textContent?.trim()))()`)
   await evalValue(`(() => {
     const find = (label) => Array.from(document.querySelectorAll('.signal-quick-action')).find((button) => button.textContent?.trim() === label)
-    ;['风压', '风暴', '透视', '声场', '安静', '命令'].forEach((label, index) => {
+    ;['吹一下', '增强', '全开', '声音', '安静', '找内容'].forEach((label, index) => {
       window.setTimeout(() => find(label)?.click(), index * 260)
     })
   })()`)
@@ -559,6 +561,96 @@ async function auditSignalDashboardTabs() {
     before,
     states,
     failures,
+    runtimeEvents: runtimeEvents.slice(0, 8),
+  }
+}
+
+async function auditSignalReactorLanes() {
+  runtimeEvents.length = 0
+  networkEvents.length = 0
+  await cdp.send('Emulation.setDeviceMetricsOverride', {
+    width: 390,
+    height: 844,
+    deviceScaleFactor: 2,
+    mobile: true,
+  })
+  await cdp.send('Emulation.setEmulatedMedia', { features: [] })
+  await cdp.send('Page.navigate', { url: `${baseUrl}/` })
+  await cdp.waitForEvent('Page.loadEventFired', () => true, 15_000).catch(() => {})
+  await delay(550)
+
+  await evalValue(`(() => {
+    const button = document.querySelector('button[data-reactor-lane="work"]')
+    document.documentElement.style.scrollBehavior = 'auto'
+    button?.scrollIntoView({ block: 'center', inline: 'nearest' })
+    button?.click()
+  })()`)
+  await delay(260)
+  await saveScreenshot(screenshotReactorWork)
+  await evalValue(`(() => document.querySelector('button[data-reactor-lane="work"]')?.click())()`)
+  await delay(80)
+
+  const result = await evalValue(`(async () => {
+    const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms))
+    const keys = ['work', 'field', 'life']
+    const failures = []
+    const states = []
+    const reactor = document.querySelector('[data-signal-reactor]')
+    const buttons = Array.from(document.querySelectorAll('button[data-reactor-lane]'))
+    const defaultCopy = document.querySelector('[data-reactor-focus-copy]')?.textContent?.trim() || ''
+
+    if (!reactor) failures.push('Signal Reactor root is missing')
+    if (buttons.length !== 3) failures.push('expected 3 reactor lane buttons, got ' + buttons.length)
+
+    for (const key of keys) {
+      const button = document.querySelector('button[data-reactor-lane="' + key + '"]')
+      button?.click()
+      await wait(120)
+      states.push({
+        expected: key,
+        lane: reactor?.dataset.reactorLane || '',
+        pressed: document.querySelectorAll('button[data-reactor-lane][aria-pressed="true"]').length,
+        activeNode: reactor?.querySelector('[data-reactor-node].is-active')?.dataset.reactorNode || '',
+        copy: document.querySelector('[data-reactor-focus-copy]')?.textContent?.trim() || '',
+      })
+    }
+
+    document.querySelector('button[data-reactor-lane="life"]')?.click()
+    await wait(120)
+    const cleared = {
+      lane: reactor?.dataset.reactorLane || '',
+      pressed: document.querySelectorAll('button[data-reactor-lane][aria-pressed="true"]').length,
+      activeNodes: reactor?.querySelectorAll('[data-reactor-node].is-active').length || 0,
+      copy: document.querySelector('[data-reactor-focus-copy]')?.textContent?.trim() || '',
+    }
+
+    states.forEach((state) => {
+      if (state.lane !== state.expected) failures.push('lane ' + state.expected + ' published ' + (state.lane || 'empty'))
+      if (state.pressed !== 1) failures.push('lane ' + state.expected + ' pressed count is ' + state.pressed)
+      if (state.activeNode !== state.expected) failures.push('lane ' + state.expected + ' active node is ' + (state.activeNode || 'empty'))
+      if (!state.copy || state.copy === defaultCopy) failures.push('lane ' + state.expected + ' did not update the explanation')
+    })
+    if (cleared.lane) failures.push('second click did not clear reactor lane ' + cleared.lane)
+    if (cleared.pressed !== 0) failures.push('second click left ' + cleared.pressed + ' pressed lane buttons')
+    if (cleared.activeNodes !== 0) failures.push('second click left ' + cleared.activeNodes + ' active nodes')
+    if (cleared.copy !== defaultCopy) failures.push('second click did not restore the default explanation')
+
+    return {
+      buttonCount: buttons.length,
+      states,
+      cleared,
+      overflow: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - window.innerWidth,
+      failures,
+    }
+  })()`)
+
+  if (result.overflow > 2) {
+    result.failures.push(`reactor lane interaction overflow ${result.overflow}px`)
+  }
+
+  return {
+    name: 'Signal Reactor lane controls',
+    ...result,
     runtimeEvents: runtimeEvents.slice(0, 8),
   }
 }
@@ -1067,6 +1159,9 @@ async function evaluatePage() {
         exists: Boolean(reactor),
         ready: reactor?.dataset.reactorReady || '',
         quality: reactor?.dataset.reactorQuality || document.documentElement.dataset.visualQuality || '',
+        viewportWidth: window.innerWidth,
+        left: Math.round(reactorRect?.left || 0),
+        right: Math.round(reactorRect?.right || 0),
         width: Math.round(reactorRect?.width || 0),
         height: Math.round(reactorRect?.height || 0),
         canvasVisible: Boolean(reactorCanvasRect && reactorCanvasRect.width > 0 && reactorCanvasRect.height > 0),
@@ -1157,6 +1252,14 @@ function collectFindings(result, failureList, warningList) {
     if (result.viewport === 'desktop' && result.reactor?.height < 180) {
       failureList.push(`${label}: Signal Reactor is too small (${result.reactor.height}px)`)
     }
+    if (
+      result.viewport.startsWith('mobile') &&
+      (result.reactor?.left < -2 || result.reactor?.right > result.reactor?.viewportWidth + 2)
+    ) {
+      failureList.push(
+        `${label}: Signal Reactor is clipped (${result.reactor.left}px..${result.reactor.right}px within ${result.reactor.viewportWidth}px)`,
+      )
+    }
     if (result.orbitCards < 4) {
       failureList.push(`${label}: feed orbit cards not wired (${result.orbitCards}/4)`)
     }
@@ -1208,7 +1311,7 @@ function collectInteractionFindings(result, failureList, warningList) {
   result.warnings?.forEach((item) => warningList.push(`${result.name}: ${item}`))
   if (result.name !== 'homepage visual controls') return
 
-  const expected = ['风压', '风暴', '透视', '高能', '声场', '安静', '命令']
+  const expected = ['吹一下', '增强', '全开', '声音', '安静', '找内容']
   const labels = result.after?.labels || []
   const missing = expected.filter((label) => !labels.includes(label))
   if (missing.length > 0) {
@@ -1216,9 +1319,6 @@ function collectInteractionFindings(result, failureList, warningList) {
   }
   if (!result.after?.commandOpen) {
     failureList.push(`${result.name}: command palette did not open`)
-  }
-  if (!result.after?.xrayExists) {
-    failureList.push(`${result.name}: xray overlay was not mounted`)
   }
   if (result.after?.overflow > 2) {
     failureList.push(`${result.name}: overflow after interactions ${result.after.overflow}px`)
@@ -1285,7 +1385,7 @@ function runCriticalFallbackCheck() {
   if (!/\.pointer-label\s*\{[^}]*opacity:\s*0\b/i.test(criticalStyle)) {
     failures.push('critical fallback must suppress pointer-label text before enhanced CSS loads')
   }
-  if (!html.includes('把 AI、工程现场') || !html.includes('个人操作系统。')) {
+  if (!html.includes('把日常工作') || !html.includes('做得更智能')) {
     warnings.push('homepage critical fallback copy may no longer expose the expected hero content')
   }
 
@@ -1312,6 +1412,9 @@ function runNoStaleAssetCheck() {
   const maxAgeSpreadMinutes = assets.length ? (newest - oldest) / 60_000 : 0
   const textFiles = collectTextFiles(distRoot)
   const text = textFiles.map((file) => readFileSync(file, 'utf8')).join('\n')
+  if (/fonts\.googleapis\.com|fonts\.gstatic\.com/i.test(text)) {
+    failures.push('built site still depends on external Google Fonts')
+  }
   const orphanAssets = assets.filter((file) => !text.includes(file))
 
   if (assets.length === 0) failures.push('dist/assets has no generated assets')
