@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="description" content="FEIAN 的 GEO 可见度工作台：查看品牌在 8 个平台回答里的位置、竞品变化和引用来源。" />
+    <title>GEO 可见度工作台：看看回答里有没有它 - FEIAN</title>
+    <link rel="stylesheet" href="/src/entry.css" />
+    <link rel="stylesheet" href="/src/project-case.css" />
+    <style data-critical-reset>
+      html { color-scheme: dark; background: #070a0f; scroll-behavior: smooth; }
+      *, *::before, *::after { box-sizing: border-box; }
+      body { margin: 0; min-width: 320px; color: #edf1f5; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; line-height: 1.58; background: #070a0f; }
+      .entry-shell { position: relative; z-index: 2; overflow: clip; visibility: visible; }
+    </style>
+  </head>
+  <body class="entry-page entry-page--lab entry-page--enhanced">
+    <div class="entry-shell">
+      <header class="entry-topbar">
+        <a href="/index.html"><strong>FEIAN</strong><span>最近做的系统 / geo</span></a>
+        <nav class="entry-nav" aria-label="页面导航">
+          <a href="/index.html">首页</a><a href="/lab.html">项目实验</a><a href="/archive.html">归档</a>
+        </nav>
+      </header>
+
+      <header class="entry-header entry-header-feature">
+        <div class="entry-filebar" aria-label="项目状态">
+          <div class="entry-filebar-tag"><span>可见度与内容</span><strong>GEO VISIBILITY</strong></div>
+          <div class="entry-filebar-route"><span>最近核对</span><span>2026-06-22</span></div>
+        </div>
+        <div class="entry-header-grid">
+          <div class="entry-header-copy">
+            <p class="entry-kicker">GEO 可见度工作台</p>
+            <h1>别人问起这个品牌时，回答里有没有它</h1>
+            <p class="entry-subhead">我做了一套监测工作台，用来查看 8 个平台里的回答位置、竞品变化和引用来源。</p>
+            <p class="entry-lede">先看真实问题和原回答，再决定要补哪段资料、写哪篇内容。另有一个公开文章库运行在开源的 GEOFlow 上，我负责部署、配置、内容整理和上线维护。</p>
+            <div class="entry-meta"><span>8 个平台视图</span><span>50 篇公开文章</span><span>外部账号尚未发布</span></div>
+          </div>
+          <aside class="project-case-instrument project-case--geo entry-filecard" aria-label="用户问题、答案位置、引用来源和竞品变化围绕同一条回答形成可见度星图">
+            <span class="project-case-label">一条回答里的可见度</span>
+            <div class="geo-case-orbit"></div><div class="geo-case-orbit geo-case-orbit--inner"></div>
+            <div class="geo-case-core">有没有被看见<br />有没有说清楚<small>引用从哪里来</small></div>
+            <span class="geo-case-node geo-case-node--a">用户问题</span>
+            <span class="geo-case-node geo-case-node--b">答案位置</span>
+            <span class="geo-case-node geo-case-node--c">引用来源</span>
+            <span class="geo-case-node geo-case-node--d">竞品变化</span>
+            <span class="project-case-foot">question → answer → source → next move</span>
+          </aside>
+        </div>
+      </header>
+
+      <main class="entry-main">
+        <section class="entry-section" id="answer">
+          <h2>客户打开以后，先看到答案</h2>
+          <p>第一屏先回答几件最实际的事：品牌有没有被提到，出现在哪个位置，竞品是不是更靠前，这个月发生了什么，以及下一步该补哪一块。</p>
+          <div class="entry-quicklook">
+            <article class="entry-quicklook-card"><span class="entry-quicklook-label">01 / 出现</span><strong>有没有被提到</strong><p>不只记出现次数，也看具体问题和具体回答。</p></article>
+            <article class="entry-quicklook-card"><span class="entry-quicklook-label">02 / 位置</span><strong>排在答案里的哪里</strong><p>把不同平台和不同问题分开看，不用靠一张总分猜。</p></article>
+            <article class="entry-quicklook-card"><span class="entry-quicklook-label">03 / 来源</span><strong>这句话引用了谁</strong><p>结论能回到对应的答案和来源，方便重新核对。</p></article>
+          </div>
+        </section>
+
+        <section class="entry-section" id="evidence">
+          <h2>整理完以后，我还会逐条看一遍</h2>
+          <p>问题、别名和答案可以批量整理，但遇到重复、冲突或说不准的地方，仍然由人决定新增、更新还是跳过。还没确认的内容只留在内部待办里，不会直接变成客户看到的结论。</p>
+          <div class="proof-grid">
+            <article class="proof-card"><h3>同一项目一起看</h3><p>平台、问题、竞品和原回答都能回到同一个项目里。</p></article>
+            <article class="proof-card"><h3>电脑和手机分开收</h3><p>手机只保留当下要看的内容，不把完整后台硬塞进小屏幕。</p></article>
+            <article class="proof-card"><h3>报告能拿走</h3><p>同一份项目资料可以整理成网页、打印稿和多种报告文件。</p></article>
+          </div>
+        </section>
+
+        <section class="entry-section" id="content">
+          <h2>文章库已经能访问，外部账号还要人来确认</h2>
+          <p>目前 50 篇文章都能在公开文章库中打开，五个平台方向各 10 篇。微信、知乎、百家号、头条号和小红书的账号发布是另一件事，没有登录和人工确认，我不会把它写成已经发出。</p>
+          <div class="entry-quicklook">
+            <article class="entry-quicklook-card"><span class="entry-quicklook-label">文章</span><strong>50 篇</strong><p>五个方向各 10 篇，归档页可以逐篇打开。</p></article>
+            <article class="entry-quicklook-card"><span class="entry-quicklook-label">公开入口</span><strong>文章库可访问</strong><p>首页、归档、分类和文章页分开核对。</p></article>
+            <article class="entry-quicklook-card"><span class="entry-quicklook-label">外部账号</span><strong>仍需登录确认</strong><p>没有登录态和人工确认时，不把它写成已经发出。</p></article>
+          </div>
+        </section>
+
+        <section class="entry-section" id="boundary">
+          <h2>工作台和文章库是两部分</h2>
+          <p>监测工作台是我搭的，公开文章库使用开源项目 GEOFlow。我负责部署、配置、内容整理和上线维护，GEOFlow 本身不是我的原创项目。页面里提到这些平台，只是因为我在观察它们的回答，不代表我和它们有合作。</p>
+        </section>
+
+        <section class="entry-note">
+          <p><a href="https://zj-flow.feian.online/archive" target="_blank" rel="noopener noreferrer">打开公开文章库归档 ↗</a>　或回到 <a href="/lab.html">项目实验</a> 继续看其他系统。</p>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="/src/entry.ts"></script>
+  </body>
+</html>

@@ -81,6 +81,7 @@ export function setupSignalReactor(options: ReactorOptions) {
   const isStatic = profile.quality === 'calm'
   root.dataset.reactorQuality = profile.quality
   root.dataset.reactorReady = isStatic ? 'static' : 'booting'
+  root.dataset.reactorLoop = isStatic ? 'static' : 'paused'
 
   const modeButtons = Array.from(
     root.closest('.reactor-stage')?.querySelectorAll<HTMLButtonElement>('button[data-reactor-mode]') ?? [],
@@ -112,6 +113,9 @@ export function setupSignalReactor(options: ReactorOptions) {
   }
 
   const activeRenderer = renderer
+  const staticFallback = root.querySelector<HTMLElement>('.signal-reactor-shell')
+  activeRenderer.canvas.setAttribute('aria-hidden', 'true')
+  staticFallback?.setAttribute('aria-hidden', 'true')
   root.dataset.reactorEngine = activeRenderer.engine
 
   let width = 0
@@ -251,6 +255,7 @@ export function setupSignalReactor(options: ReactorOptions) {
         resizeObserver.disconnect()
         window.clearTimeout(burstTimer)
         modeListeners.forEach((listener, button) => button.removeEventListener('click', listener))
+        root.dataset.reactorLoop = 'stopped'
       },
     }
   }
@@ -283,8 +288,12 @@ export function setupSignalReactor(options: ReactorOptions) {
   onScroll()
   setPointer(window.innerWidth * 0.66, window.innerHeight * 0.42, 0.54)
 
+  let lifecycleState: 'active' | 'context-lost' | 'destroyed' = 'active'
+
   const loop = createFrameLoop(
     (time, delta) => {
+      if (lifecycleState !== 'active') return
+
       const pointerFollow = 1 - Math.exp(-Math.max(delta, 1) / 118)
       const energyFollow = 1 - Math.exp(-Math.max(delta, 1) / 170)
       pointer.x += (pointerTarget.x - pointer.x) * pointerFollow
@@ -315,16 +324,47 @@ export function setupSignalReactor(options: ReactorOptions) {
     { fps: profile.fps },
   )
 
+  const isInsideObserverMargin = () => {
+    const rect = root.getBoundingClientRect()
+    const margin = window.innerHeight * 0.24
+    return rect.bottom > -margin && rect.top < window.innerHeight + margin
+  }
+
+  const setLoopState = (running: boolean) => {
+    if (lifecycleState === 'destroyed') {
+      loop.stop()
+      root.dataset.reactorLoop = 'stopped'
+      return
+    }
+
+    if (lifecycleState === 'context-lost') {
+      loop.stop()
+      root.dataset.reactorLoop = 'static'
+      return
+    }
+
+    root.dataset.reactorLoop = running ? 'running' : 'paused'
+    if (running) loop.start()
+    else loop.stop()
+  }
+
+  const syncLoopState = () => {
+    setLoopState(!document.hidden && isInsideObserverMargin())
+  }
+
   const visibilityObserver = new IntersectionObserver(
     ([entry]) => {
-      if (entry?.isIntersecting) loop.start()
-      else loop.stop()
+      setLoopState(Boolean(entry?.isIntersecting) && !document.hidden)
     },
     { rootMargin: '24% 0px' },
   )
   const onContextLost = (event: Event) => {
     event.preventDefault()
-    loop.stop()
+
+    if (lifecycleState !== 'active') return
+
+    lifecycleState = 'context-lost'
+    setLoopState(false)
     root.classList.add('is-context-lost')
     root.dataset.reactorReady = 'static'
     root.dataset.reactorFrame = 'static'
@@ -332,16 +372,19 @@ export function setupSignalReactor(options: ReactorOptions) {
   }
 
   visibilityObserver.observe(root)
+  document.addEventListener('visibilitychange', syncLoopState)
   activeRenderer.canvas.addEventListener('webglcontextlost', onContextLost)
-  loop.start()
+  syncLoopState()
 
   return {
     destroy() {
+      lifecycleState = 'destroyed'
+      visibilityObserver.disconnect()
+      document.removeEventListener('visibilitychange', syncLoopState)
+      activeRenderer.canvas.removeEventListener('webglcontextlost', onContextLost)
       loop.destroy()
       activeRenderer.destroy()
       resizeObserver.disconnect()
-      visibilityObserver.disconnect()
-      activeRenderer.canvas.removeEventListener('webglcontextlost', onContextLost)
       window.clearTimeout(burstTimer)
       interactionSurface.removeEventListener('pointermove', onPointerMove)
       interactionSurface.removeEventListener('pointerleave', onPointerLeave)
@@ -354,6 +397,7 @@ export function setupSignalReactor(options: ReactorOptions) {
         item.removeEventListener('mouseenter', listeners.enter)
         item.removeEventListener('mouseleave', listeners.leave)
       })
+      root.dataset.reactorLoop = 'stopped'
     },
   }
 }

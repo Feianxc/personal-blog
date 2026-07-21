@@ -1,0 +1,951 @@
+.project-case-instrument {
+  position: relative;
+  min-height: clamp(22rem, 39vw, 31rem);
+  overflow: hidden;
+  border: 1px solid rgb(var(--case-accent-rgb, 81 219 231) / 24%);
+  border-radius: 1rem;
+  background:
+    radial-gradient(circle at 50% 48%, rgb(var(--case-accent-rgb, 81 219 231) / 14%), transparent 34%),
+    linear-gradient(145deg, rgb(8 13 12 / 96%), rgb(3 7 7 / 99%));
+  box-shadow:
+    inset 0 0 4rem rgb(0 0 0 / 32%),
+    0 1.6rem 4rem rgb(0 0 0 / 24%);
+}
+
+.project-case-instrument::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.5;
+  background:
+    linear-gradient(rgb(244 234 213 / 3%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(244 234 213 / 3%) 1px, transparent 1px);
+  background-size: 2rem 2rem;
+  mask-image: linear-gradient(to bottom, black, transparent 88%);
+}
+
+.project-case-label {
+  position: absolute;
+  z-index: 9;
+  top: 1rem;
+  left: 1rem;
+  display: flex;
+  gap: 0.55rem;
+  align-items: center;
+  color: rgb(244 234 213 / 46%);
+  font: 650 0.5rem/1 var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.project-case-label::before {
+  content: '';
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 50%;
+  background: rgb(var(--case-accent-rgb, 81 219 231));
+  box-shadow: 0 0 0.9rem rgb(var(--case-accent-rgb, 81 219 231) / 78%);
+}
+
+.project-case-foot {
+  position: absolute;
+  z-index: 9;
+  right: 1rem;
+  bottom: 0.8rem;
+  color: rgb(244 234 213 / 34%);
+  font: 650 0.46rem/1 var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Detail-page instruments only spend animation work while they are visible. */
+.project-case-instrument,
+.project-case-instrument::before,
+.project-case-instrument::after,
+.project-case-instrument *,
+.project-case-instrument *::before,
+.project-case-instrument *::after {
+  animation-play-state: paused !important;
+}
+
+.project-case-instrument.is-in-view:not(.is-page-hidden),
+.project-case-instrument.is-in-view:not(.is-page-hidden)::before,
+.project-case-instrument.is-in-view:not(.is-page-hidden)::after,
+.project-case-instrument.is-in-view:not(.is-page-hidden) *,
+.project-case-instrument.is-in-view:not(.is-page-hidden) *::before,
+.project-case-instrument.is-in-view:not(.is-page-hidden) *::after {
+  animation-play-state: running !important;
+}
+
+.project-case-instrument.is-page-hidden,
+.project-case-instrument.is-page-hidden::before,
+.project-case-instrument.is-page-hidden::after,
+.project-case-instrument.is-page-hidden *,
+.project-case-instrument.is-page-hidden *::before,
+.project-case-instrument.is-page-hidden *::after {
+  animation-play-state: paused !important;
+}
+
+/* Protocol studio: two route inputs are checked against one address master,
+   then fan out into the three files that are actually delivered. */
+.entry-page--system-story.entry-page--system-protocol .entry-header-grid {
+  grid-template-columns: minmax(22rem, 1fr) minmax(34rem, 1.08fr);
+}
+
+.project-case--protocol {
+  --case-accent-rgb: 255 106 26;
+  min-height: clamp(26rem, 42vw, 33rem);
+  perspective: 920px;
+  background:
+    radial-gradient(circle at 45% 48%, rgb(255 106 26 / 17%), transparent 31%),
+    radial-gradient(circle at 83% 44%, rgb(81 219 231 / 9%), transparent 26%),
+    linear-gradient(145deg, rgb(18 8 4 / 97%), rgb(3 9 8 / 99%));
+}
+
+.project-case--protocol::after {
+  content: '';
+  position: absolute;
+  inset: 14% 3% 12%;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.5;
+  background: linear-gradient(90deg, transparent, rgb(255 106 26 / 15%) 42%, rgb(81 219 231 / 12%) 62%, transparent);
+  clip-path: polygon(0 48%, 39% 48%, 45% 40%, 57% 40%, 63% 48%, 100% 48%, 100% 52%, 63% 52%, 57% 60%, 45% 60%, 39% 52%, 0 52%);
+}
+
+.case-protocol-workbench {
+  position: absolute;
+  z-index: 3;
+  inset: 4rem 1.2rem 3.8rem;
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(7rem, 0.72fr) minmax(11rem, 1.18fr) minmax(8rem, 0.88fr);
+  grid-template-areas: 'inputs compiler outputs';
+  gap: clamp(0.75rem, 2vw, 1.5rem);
+  align-items: center;
+  perspective: 760px;
+}
+
+.case-protocol-inputs {
+  grid-area: inputs;
+  display: grid;
+  min-width: 0;
+  gap: 0.8rem;
+}
+
+.case-protocol-input {
+  position: relative;
+  display: grid;
+  gap: 0.34rem;
+  min-width: 0;
+  padding: 0.85rem 0.9rem 0.78rem;
+  color: rgb(244 234 213 / 72%);
+  border: 1px solid rgb(255 106 26 / 28%);
+  border-radius: 0.68rem;
+  background:
+    linear-gradient(135deg, rgb(255 106 26 / 12%), transparent 64%),
+    rgb(22 9 4 / 90%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 221 194 / 6%),
+    0 0.9rem 2rem rgb(0 0 0 / 24%);
+  transform-style: preserve-3d;
+  animation: case-protocol-intake 8.4s cubic-bezier(0.77, 0, 0.175, 1) infinite;
+}
+
+.case-protocol-input--b {
+  animation-delay: 0.18s;
+}
+
+.case-protocol-input::after {
+  content: '';
+  position: absolute;
+  right: 0.65rem;
+  bottom: 0.5rem;
+  left: 0.65rem;
+  height: 1px;
+  opacity: 0.62;
+  background: linear-gradient(90deg, rgb(255 106 26 / 68%), transparent);
+}
+
+.case-protocol-input span,
+.case-protocol-file span {
+  color: rgb(255 164 106 / 82%);
+  font: 720 0.48rem/1 var(--mono);
+  letter-spacing: 0.1em;
+}
+
+.case-protocol-input strong,
+.case-protocol-file strong {
+  min-width: 0;
+  font: 720 0.64rem/1.25 var(--mono);
+}
+
+.case-protocol-input i,
+.case-protocol-file i {
+  color: rgb(244 234 213 / 38%);
+  font: 620 0.43rem/1.2 var(--mono);
+  font-style: normal;
+}
+
+.case-protocol-compiler {
+  position: relative;
+  grid-area: compiler;
+  display: grid;
+  gap: 0.8rem;
+  min-width: 0;
+  min-height: clamp(13rem, 24vw, 18rem);
+  align-content: center;
+  padding: clamp(1rem, 2vw, 1.5rem);
+  overflow: hidden;
+  color: rgb(244 234 213 / 70%);
+  border: 1px solid rgb(255 106 26 / 34%);
+  border-radius: 1rem;
+  background:
+    linear-gradient(135deg, rgb(255 106 26 / 12%), transparent 48%),
+    rgb(7 10 8 / 94%);
+  box-shadow:
+    0 1.6rem 3.4rem rgb(0 0 0 / 34%),
+    0 0 3.2rem rgb(255 106 26 / 10%),
+    inset 0 0 2rem rgb(255 106 26 / 5%);
+  transform: rotateX(3deg) translateZ(0.6rem);
+  transform-style: preserve-3d;
+  animation: case-protocol-compiler 8.4s cubic-bezier(0.77, 0, 0.175, 1) infinite;
+}
+
+.case-protocol-compiler-head {
+  display: flex;
+  gap: 0.65rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.case-protocol-compiler-head span {
+  color: rgb(255 164 106 / 74%);
+  font: 680 0.48rem/1 var(--mono);
+  letter-spacing: 0.08em;
+}
+
+.case-protocol-compiler-head strong {
+  font: 680 0.56rem/1 var(--mono);
+}
+
+.case-protocol-matrix {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: clamp(0.25rem, 0.65vw, 0.46rem);
+  width: min(100%, 13rem);
+  justify-self: center;
+}
+
+.case-protocol-matrix i {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 1px solid rgb(255 106 26 / 18%);
+  border-radius: 0.2rem;
+  background: rgb(255 106 26 / 4%);
+}
+
+.case-protocol-matrix i::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  opacity: 0.16;
+  background: linear-gradient(135deg, #ff6a1a, #51dbe7);
+  transform: scale(0.56);
+  animation: case-protocol-cell 8.4s cubic-bezier(0.77, 0, 0.175, 1) infinite;
+}
+
+.case-protocol-matrix i:nth-child(5n + 2)::after { animation-delay: 0.08s; }
+.case-protocol-matrix i:nth-child(5n + 3)::after { animation-delay: 0.16s; }
+.case-protocol-matrix i:nth-child(5n + 4)::after { animation-delay: 0.24s; }
+.case-protocol-matrix i:nth-child(5n + 5)::after { animation-delay: 0.32s; }
+
+.case-protocol-scan {
+  position: absolute;
+  z-index: 5;
+  top: 4.2rem;
+  right: 0.8rem;
+  left: 0.8rem;
+  height: 1px;
+  opacity: 0;
+  background: linear-gradient(90deg, transparent, #ff9a58 44%, #51dbe7 58%, transparent);
+  box-shadow: 0 0 0.8rem rgb(255 106 26 / 32%);
+  transform: translateY(0);
+  animation: case-protocol-scan 8.4s linear infinite;
+}
+
+.case-protocol-check {
+  position: relative;
+  z-index: 6;
+  display: flex;
+  gap: 0.45rem;
+  align-items: center;
+  justify-self: center;
+  color: rgb(244 234 213 / 52%);
+  font: 650 0.45rem/1 var(--mono);
+  letter-spacing: 0.06em;
+  animation: case-protocol-check 8.4s cubic-bezier(0.23, 1, 0.32, 1) infinite;
+}
+
+.case-protocol-check i {
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 50%;
+  background: #51dbe7;
+  box-shadow: 0 0 0.75rem rgb(81 219 231 / 68%);
+}
+
+.case-protocol-outputs {
+  grid-area: outputs;
+  display: grid;
+  min-width: 0;
+  gap: 0.62rem;
+  transform-style: preserve-3d;
+}
+
+.case-protocol-file {
+  position: relative;
+  display: grid;
+  gap: 0.28rem;
+  min-width: 0;
+  padding: 0.72rem 0.75rem;
+  color: rgb(244 234 213 / 72%);
+  border: 1px solid rgb(81 219 231 / 20%);
+  border-radius: 0.55rem;
+  background:
+    linear-gradient(135deg, rgb(81 219 231 / 9%), transparent 66%),
+    rgb(3 14 13 / 91%);
+  box-shadow: 0 0.9rem 1.8rem rgb(0 0 0 / 26%);
+  transform-origin: 0 50%;
+  animation: case-protocol-output 8.4s cubic-bezier(0.23, 1, 0.32, 1) infinite;
+}
+
+.case-protocol-file::after {
+  content: '';
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 0.85rem;
+  aspect-ratio: 1;
+  border-left: 1px solid rgb(81 219 231 / 24%);
+  border-bottom: 1px solid rgb(81 219 231 / 24%);
+  background: rgb(7 20 18 / 94%);
+  clip-path: polygon(100% 0, 100% 100%, 0 0);
+}
+
+.case-protocol-file--csv { animation-delay: 0.36s; }
+.case-protocol-file--code { animation-delay: 0.72s; }
+
+.case-protocol-file span {
+  color: rgb(81 219 231 / 72%);
+}
+
+.case-protocol-stages {
+  position: absolute;
+  z-index: 8;
+  right: 38%;
+  bottom: 1.05rem;
+  left: 1rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.case-protocol-stages span {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+  color: rgb(244 234 213 / 36%);
+  font: 620 0.42rem/1 var(--mono);
+  letter-spacing: 0.05em;
+  animation: case-protocol-stage 8.4s cubic-bezier(0.23, 1, 0.32, 1) infinite;
+}
+
+.case-protocol-stages span::before {
+  content: '';
+  width: 0.32rem;
+  height: 0.32rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.case-protocol-stages span:nth-child(2) { animation-delay: 0.62s; }
+.case-protocol-stages span:nth-child(3) { animation-delay: 1.24s; }
+
+/* GEO */
+.project-case--geo {
+  --case-accent-rgb: 159 130 255;
+}
+
+.geo-case-orbit {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: 50%;
+  width: 74%;
+  aspect-ratio: 1.7;
+  border: 1px solid rgb(159 130 255 / 22%);
+  border-radius: 50%;
+  transform: translate(-50%, -50%) rotate(-12deg);
+  animation: project-case-orbit 18s linear infinite;
+}
+
+.geo-case-orbit--inner {
+  width: 48%;
+  aspect-ratio: 1.35;
+  border-style: dashed;
+  border-color: rgb(81 219 231 / 19%);
+  transform: translate(-50%, -50%) rotate(28deg);
+  animation-name: project-case-orbit-inner;
+  animation-direction: reverse;
+  animation-duration: 12s;
+}
+
+.geo-case-core {
+  position: absolute;
+  z-index: 5;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: clamp(9rem, 31%, 12rem);
+  aspect-ratio: 1;
+  place-content: center;
+  padding: 1rem;
+  color: rgb(244 234 213 / 72%);
+  font: 700 0.72rem/1.35 var(--mono);
+  text-align: center;
+  border: 1px solid rgb(159 130 255 / 38%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(159 130 255 / 21%), rgb(5 8 17 / 96%) 68%);
+  box-shadow: 0 0 4rem rgb(159 130 255 / 20%);
+  transform: translate(-50%, -50%);
+}
+
+.geo-case-core small {
+  display: block;
+  margin-top: 0.45rem;
+  color: rgb(81 219 231 / 58%);
+  font-size: 0.47rem;
+  letter-spacing: 0.08em;
+}
+
+.geo-case-node {
+  position: absolute;
+  z-index: 6;
+  min-width: 5.4rem;
+  padding: 0.52rem 0.7rem;
+  color: rgb(244 234 213 / 66%);
+  font: 650 0.53rem/1 var(--mono);
+  text-align: center;
+  border: 1px solid rgb(159 130 255 / 22%);
+  border-radius: 999px;
+  background: rgb(7 7 17 / 88%);
+  animation: project-case-node 5.8s cubic-bezier(0.77, 0, 0.175, 1) infinite;
+}
+
+.geo-case-node--a { top: 20%; left: 8%; }
+.geo-case-node--b { top: 20%; right: 8%; animation-delay: -1.5s; }
+.geo-case-node--c { right: 8%; bottom: 20%; animation-delay: -3s; }
+.geo-case-node--d { bottom: 20%; left: 8%; animation-delay: -4.5s; }
+
+/* Digital busbar */
+.project-case--busbar3d {
+  --case-accent-rgb: 237 200 120;
+  perspective: 760px;
+}
+
+.case-busbar-plane {
+  position: absolute;
+  z-index: 1;
+  right: 7%;
+  bottom: 12%;
+  left: 7%;
+  height: 38%;
+  border: 1px solid rgb(237 200 120 / 12%);
+  transform: perspective(600px) rotateX(66deg) rotateZ(-8deg);
+  background:
+    linear-gradient(rgb(237 200 120 / 6%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(237 200 120 / 6%) 1px, transparent 1px);
+  background-size: 1.5rem 1.5rem;
+}
+
+.case-busbar-segment {
+  position: absolute;
+  z-index: 5;
+  height: 1.35rem;
+  border: 1px solid rgb(255 228 154 / 46%);
+  border-radius: 0.16rem;
+  background: linear-gradient(180deg, #e0b85c, #8b5d27 54%, #34200d);
+  box-shadow:
+    inset 0 1px 0 rgb(255 246 207 / 52%),
+    inset 0 -0.24rem 0 rgb(67 35 9 / 62%),
+    0 1.4rem 2.6rem rgb(0 0 0 / 42%),
+    0 0 1.8rem rgb(237 200 120 / 12%);
+  transform-style: preserve-3d;
+  animation: project-case-segment 6.8s cubic-bezier(0.77, 0, 0.175, 1) infinite;
+}
+
+.case-busbar-segment::before,
+.case-busbar-segment::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  background: linear-gradient(180deg, #805324, #2c1a0a);
+}
+
+.case-busbar-segment::before {
+  top: 100%;
+  right: -1px;
+  left: -1px;
+  height: 0.45rem;
+  border: 1px solid rgb(237 200 120 / 20%);
+  transform-origin: 50% 0;
+  transform: rotateX(-72deg);
+}
+
+.case-busbar-segment::after {
+  top: -1px;
+  bottom: -1px;
+  left: 100%;
+  width: 0.4rem;
+  border: 1px solid rgb(237 200 120 / 18%);
+  transform-origin: 0 50%;
+  transform: rotateY(68deg);
+}
+
+.case-busbar-segment--a { top: 28%; left: 8%; width: 35%; transform: rotateX(56deg) rotateZ(-10deg); }
+.case-busbar-segment--b { top: 47%; left: 34%; width: 42%; transform: rotateX(56deg) rotateZ(-10deg); animation-delay: -2.2s; }
+.case-busbar-segment--c { top: 65%; right: 6%; width: 30%; transform: rotateX(56deg) rotateZ(-10deg); animation-delay: -4.4s; }
+
+.case-busbar-joint {
+  position: absolute;
+  z-index: 6;
+  top: 45%;
+  left: 45%;
+  width: 2.2rem;
+  aspect-ratio: 1;
+  border: 1px solid rgb(255 228 154 / 58%);
+  background: linear-gradient(135deg, #d4a64a, #4a2c10);
+  transform: rotateX(54deg) rotateZ(35deg) translateZ(1.1rem);
+  box-shadow:
+    inset 0 1px 0 rgb(255 246 207 / 44%),
+    0 1rem 1.8rem rgb(0 0 0 / 44%),
+    0 0 1.8rem rgb(237 200 120 / 20%);
+}
+
+.case-busbar-steps {
+  position: absolute;
+  z-index: 8;
+  right: 1rem;
+  bottom: 1rem;
+  left: 1rem;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.38rem;
+}
+
+.case-busbar-steps span {
+  padding: 0.42rem;
+  color: rgb(244 234 213 / 38%);
+  font: 650 0.45rem/1 var(--mono);
+  text-align: center;
+  border: 1px solid rgb(237 200 120 / 12%);
+  border-radius: 999px;
+}
+
+/* MCGS atlas */
+.project-case--atlas {
+  --case-accent-rgb: 81 219 231;
+}
+
+.case-atlas-stack {
+  position: absolute;
+  z-index: 4;
+  inset: 15% 9% 12%;
+  display: grid;
+  gap: 0.5rem;
+  align-content: center;
+}
+
+.case-atlas-row {
+  display: grid;
+  grid-template-columns: 2.2rem minmax(0, 1fr) auto;
+  gap: 0.65rem;
+  align-items: center;
+  padding: 0.62rem 0.75rem;
+  color: rgb(244 234 213 / 48%);
+  font: 650 0.52rem/1 var(--mono);
+  border-left: 1px solid rgb(81 219 231 / 32%);
+  background: linear-gradient(90deg, rgb(81 219 231 / 8%), transparent 82%);
+  animation: project-case-row 6s cubic-bezier(0.77, 0, 0.175, 1) infinite;
+}
+
+.case-atlas-row:nth-child(2) { animation-delay: -1.2s; }
+.case-atlas-row:nth-child(3) { animation-delay: -2.4s; }
+.case-atlas-row:nth-child(4) { animation-delay: -3.6s; }
+.case-atlas-row:nth-child(5) { animation-delay: -4.8s; }
+
+.case-atlas-row i {
+  height: 1px;
+  background: linear-gradient(90deg, rgb(81 219 231 / 48%), transparent);
+}
+
+.case-atlas-scan {
+  position: absolute;
+  z-index: 7;
+  top: 12%;
+  right: 7%;
+  left: 7%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #51dbe7, transparent);
+  box-shadow: 0 0 1rem rgb(81 219 231 / 42%);
+  animation: project-case-scan 6s cubic-bezier(0.77, 0, 0.175, 1) infinite;
+}
+
+/* Containment demo */
+.project-case--scp {
+  --case-accent-rgb: 255 86 86;
+}
+
+.case-scp-seal {
+  position: absolute;
+  z-index: 5;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: clamp(10rem, 38%, 14rem);
+  aspect-ratio: 1.42;
+  place-content: center;
+  color: rgb(244 234 213 / 78%);
+  font: 720 0.78rem/1.3 var(--mono);
+  text-align: center;
+  border: 1px solid rgb(255 86 86 / 38%);
+  border-radius: 0.9rem;
+  background:
+    linear-gradient(135deg, rgb(255 86 86 / 13%), transparent 54%),
+    rgb(15 7 7 / 94%);
+  box-shadow:
+    0 0 3rem rgb(255 86 86 / 14%),
+    inset 0 0 2rem rgb(255 86 86 / 7%);
+  transform: translate(-50%, -50%) rotate(-2deg);
+}
+
+.case-scp-seal::before,
+.case-scp-seal::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border: 1px solid rgb(255 86 86 / 22%);
+  border-radius: 0.9rem;
+  background: rgb(12 5 5 / 78%);
+  transform: translate(-0.95rem, 0.95rem) rotate(-3deg);
+  animation: project-case-stack 6.2s ease-in-out infinite;
+}
+
+.case-scp-seal::after {
+  inset: 0;
+  transform: translate(0.95rem, -0.95rem) rotate(3deg);
+  animation-delay: -3.1s;
+}
+
+.case-scp-event {
+  position: absolute;
+  z-index: 6;
+  min-width: 6rem;
+  padding: 0.55rem 0.7rem;
+  color: rgb(244 234 213 / 56%);
+  font: 650 0.5rem/1 var(--mono);
+  text-align: center;
+  border: 1px solid rgb(255 86 86 / 20%);
+  border-radius: 0.45rem;
+  background: rgb(14 5 5 / 86%);
+  animation: project-case-event 5.8s cubic-bezier(0.77, 0, 0.175, 1) infinite;
+}
+
+.case-scp-event--a { top: 18%; left: 7%; }
+.case-scp-event--b { top: 20%; right: 7%; animation-delay: -1.9s; }
+.case-scp-event--c { right: 8%; bottom: 17%; animation-delay: -3.8s; }
+.case-scp-event--d { bottom: 17%; left: 8%; animation-delay: -4.9s; }
+
+@keyframes case-protocol-intake {
+  0%, 8% { opacity: 0.34; transform: translate3d(-0.8rem, 0, -0.6rem); }
+  16%, 34% { opacity: 1; transform: translate3d(0, 0, 0.5rem); }
+  46%, 100% { opacity: 0.62; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes case-protocol-compiler {
+  0%, 18% { opacity: 0.58; transform: rotateX(3deg) translate3d(0, 0.35rem, -0.8rem); }
+  28%, 62% { opacity: 1; transform: rotateX(3deg) translate3d(0, 0, 0.9rem); }
+  74%, 100% { opacity: 0.76; transform: rotateX(3deg) translate3d(0, 0, 0.6rem); }
+}
+
+@keyframes case-protocol-cell {
+  0%, 24% { opacity: 0.12; transform: scale(0.56); }
+  34%, 54% { opacity: 0.82; transform: scale(1); }
+  66%, 100% { opacity: 0.22; transform: scale(0.72); }
+}
+
+@keyframes case-protocol-scan {
+  0%, 25% { opacity: 0; transform: translateY(0); }
+  31%, 48% { opacity: 0.92; }
+  56% { opacity: 0; transform: translateY(9.8rem); }
+  100% { opacity: 0; transform: translateY(9.8rem); }
+}
+
+@keyframes case-protocol-check {
+  0%, 42% { opacity: 0.34; transform: translateY(0.25rem); }
+  50%, 68% { opacity: 1; transform: translateY(0); }
+  80%, 100% { opacity: 0.58; transform: translateY(0); }
+}
+
+@keyframes case-protocol-output {
+  0%, 56% { opacity: 0.22; transform: translate3d(-0.9rem, 0, -0.8rem) rotateY(-5deg); }
+  66%, 88% { opacity: 1; transform: translate3d(0, 0, 0.7rem) rotateY(0); }
+  100% { opacity: 0.56; transform: translate3d(0, 0, 0) rotateY(0); }
+}
+
+@keyframes case-protocol-stage {
+  0%, 12% { opacity: 0.34; transform: translateX(0); }
+  20%, 38% { opacity: 1; transform: translateX(0.12rem); }
+  48%, 100% { opacity: 0.38; transform: translateX(0); }
+}
+
+@keyframes project-case-orbit {
+  from { transform: translate(-50%, -50%) rotate(-12deg); }
+  to { transform: translate(-50%, -50%) rotate(348deg); }
+}
+
+@keyframes project-case-orbit-inner {
+  from { transform: translate(-50%, -50%) rotate(28deg); }
+  to { transform: translate(-50%, -50%) rotate(388deg); }
+}
+
+@keyframes project-case-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes project-case-node {
+  0%, 100% { opacity: 0.56; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-0.2rem); }
+}
+
+@keyframes project-case-segment {
+  0%, 100% { opacity: 0.42; }
+  50% { opacity: 1; }
+}
+
+@keyframes project-case-row {
+  0%, 72%, 100% { color: rgb(244 234 213 / 38%); background: transparent; }
+  82%, 94% { color: rgb(244 234 213 / 82%); background: linear-gradient(90deg, rgb(81 219 231 / 13%), transparent); }
+}
+
+@keyframes project-case-scan {
+  0% { opacity: 0; transform: translateY(0); }
+  15%, 76% { opacity: 0.9; }
+  100% { opacity: 0; transform: translateY(17rem); }
+}
+
+@keyframes project-case-event {
+  0%, 70%, 100% { opacity: 0.36; transform: translateY(0); }
+  80%, 92% { opacity: 1; transform: translateY(-0.18rem); border-color: rgb(255 86 86 / 46%); }
+}
+
+@keyframes project-case-stack {
+  0%, 100% { opacity: 0.36; }
+  50% { opacity: 0.82; }
+}
+
+@media (max-width: 1180px) {
+  .entry-page--system-story.entry-page--system-protocol .entry-header-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 680px) {
+  .project-case-instrument {
+    min-height: 21rem;
+  }
+
+  .project-case--protocol {
+    min-height: 34rem;
+  }
+
+  .case-protocol-workbench {
+    inset: 3.4rem 0.65rem 4.7rem;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(11rem, 1fr) auto;
+    grid-template-areas:
+      'inputs'
+      'compiler'
+      'outputs';
+    gap: 0.62rem;
+  }
+
+  .case-protocol-inputs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+  }
+
+  .case-protocol-input {
+    padding: 0.58rem 0.62rem;
+  }
+
+  .case-protocol-compiler {
+    min-height: 11rem;
+    padding: 0.75rem 1rem;
+    transform: none;
+  }
+
+  .case-protocol-matrix {
+    width: min(100%, 10rem);
+  }
+
+  .case-protocol-matrix i::after {
+    animation: none;
+    opacity: 0.48;
+    transform: scale(0.86);
+  }
+
+  .case-protocol-scan {
+    top: 3.6rem;
+  }
+
+  .case-protocol-outputs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.42rem;
+  }
+
+  .case-protocol-file {
+    min-height: 4.3rem;
+    padding: 0.55rem 0.48rem;
+  }
+
+  .case-protocol-file strong {
+    font-size: 0.66rem;
+  }
+
+  .case-protocol-file i {
+    font-size: 0.38rem;
+  }
+
+  .case-protocol-stages {
+    right: 0.7rem;
+    bottom: 2.25rem;
+    left: 0.7rem;
+  }
+
+  .project-case--protocol .project-case-foot {
+    right: 0.7rem;
+    bottom: 0.65rem;
+  }
+
+  .geo-case-node,
+  .case-scp-event {
+    min-width: 4.6rem;
+    padding-inline: 0.48rem;
+    font-size: 0.44rem;
+  }
+
+  .geo-case-node--a,
+  .case-scp-event--a { left: 3%; }
+  .geo-case-node--b,
+  .case-scp-event--b { right: 3%; }
+  .geo-case-node--c,
+  .case-scp-event--c { right: 3%; }
+  .geo-case-node--d,
+  .case-scp-event--d { left: 3%; }
+
+  .case-busbar-steps {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .case-atlas-stack {
+    inset-inline: 5%;
+  }
+}
+
+@media (max-width: 420px) {
+  .case-protocol-input strong,
+  .case-protocol-file strong {
+    font-size: 0.64rem;
+  }
+
+  .case-protocol-input i,
+  .case-protocol-file i {
+    display: none;
+  }
+
+  .case-protocol-stages span {
+    font-size: 0.37rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto !important;
+  }
+
+  .project-case-instrument,
+  .project-case-instrument::before,
+  .project-case-instrument::after,
+  .project-case-instrument *,
+  .project-case-instrument *::before,
+  .project-case-instrument *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .project-case--protocol .case-protocol-matrix i::after {
+    opacity: 0.48;
+    transform: scale(0.86);
+  }
+}
+
+html.motion-reduce {
+  scroll-behavior: auto !important;
+}
+
+html.motion-reduce .project-case-instrument,
+html.motion-reduce .project-case-instrument::before,
+html.motion-reduce .project-case-instrument::after,
+html.motion-reduce .project-case-instrument *,
+html.motion-reduce .project-case-instrument *::before,
+html.motion-reduce .project-case-instrument *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+html.motion-reduce .project-case--protocol .case-protocol-matrix i::after {
+  opacity: 0.48;
+  transform: scale(0.86);
+}
+
+@media (forced-colors: active) {
+  .project-case-instrument,
+  .case-protocol-input,
+  .case-protocol-compiler,
+  .case-protocol-file,
+  .geo-case-core,
+  .geo-case-node,
+  .case-atlas-row,
+  .case-scp-seal,
+  .case-scp-event {
+    color: CanvasText;
+    border-color: CanvasText;
+    background: Canvas;
+    box-shadow: none;
+  }
+
+  .case-protocol-matrix i,
+  .case-protocol-matrix i::after {
+    border-color: CanvasText;
+    background: CanvasText;
+  }
+}

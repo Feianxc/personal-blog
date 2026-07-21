@@ -1,4 +1,5 @@
 import {
+  setGlobalReducedMotionPreference,
   setupCodeConsoleInteractions,
   setupGlobalEffects,
 } from './global-effects'
@@ -6,12 +7,16 @@ import {
 const entryPage = document.body
 
 if (entryPage.classList.contains('entry-page')) {
+  const destroyProjectCaseMotion = setupProjectCaseMotion()
   const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
-  const prefersReducedMotion = reducedMotionQuery.matches
+  let prefersReducedMotion = reducedMotionQuery.matches
   document.documentElement.classList.toggle('motion-reduce', prefersReducedMotion)
   reducedMotionQuery.addEventListener('change', (event) => {
+    prefersReducedMotion = event.matches
     document.documentElement.classList.toggle('motion-reduce', event.matches)
+    setGlobalReducedMotionPreference(event.matches)
   })
+  window.addEventListener('beforeunload', destroyProjectCaseMotion, { once: true })
   const activeRevealTargets = new WeakSet<HTMLElement>()
   const revealPulseTimers = new WeakMap<HTMLElement, number>()
   const entryStrikeTimers = new WeakMap<HTMLElement, number>()
@@ -30,7 +35,7 @@ if (entryPage.classList.contains('entry-page')) {
   if (header && main && sections.length > 0) {
     document.documentElement.classList.add('js-entry')
     entryPage.classList.add('entry-page--enhanced')
-    setupCodeConsoleInteractions(prefersReducedMotion)
+    setupCodeConsoleInteractions()
 
     const sectionMeta = sections.map((section, index) => {
       if (!section.id) {
@@ -485,6 +490,89 @@ if (entryPage.classList.contains('entry-page')) {
 
       topbarResizeObserver?.disconnect()
       mainResizeObserver?.disconnect()
+    })
+  }
+}
+
+function setupProjectCaseMotion() {
+  const instruments = Array.from(
+    document.querySelectorAll<HTMLElement>(
+      '.project-case-instrument, .story-visual',
+    ),
+  )
+
+  if (instruments.length === 0) {
+    return () => {}
+  }
+
+  const visibility = new WeakMap<HTMLElement, boolean>()
+  const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+  let observer: IntersectionObserver | null = null
+
+  const isInsideViewport = (instrument: HTMLElement) => {
+    const rect = instrument.getBoundingClientRect()
+    return rect.bottom > 0 && rect.top < window.innerHeight
+  }
+
+  const syncInstrument = (instrument: HTMLElement, visible: boolean) => {
+    const pageHidden = document.hidden
+    const motionActive = visible && !pageHidden && !motionQuery.matches
+    instrument.classList.toggle('is-page-hidden', pageHidden)
+    instrument.classList.toggle('is-in-view', visible && !pageHidden)
+    instrument.querySelectorAll<SVGSVGElement>('svg').forEach((svg) => {
+      if (motionActive) svg.unpauseAnimations?.()
+      else svg.pauseAnimations?.()
+    })
+  }
+
+  const measureInstruments = () => {
+    instruments.forEach((instrument) => {
+      const visible = isInsideViewport(instrument)
+      visibility.set(instrument, visible)
+      syncInstrument(instrument, visible)
+    })
+  }
+
+  const handlePageVisibility = () => {
+    if (document.hidden) {
+      instruments.forEach((instrument) => syncInstrument(instrument, false))
+      return
+    }
+
+    measureInstruments()
+  }
+
+  observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        const instrument = entry.target as HTMLElement
+        const visible = entry.isIntersecting && entry.intersectionRatio > 0
+        visibility.set(instrument, visible)
+        syncInstrument(instrument, visible)
+      })
+    },
+    { threshold: [0, 0.01, 0.16] },
+  )
+
+  instruments.forEach((instrument) => observer?.observe(instrument))
+
+  measureInstruments()
+  /* IntersectionObserver is the primary gate; the one-instrument scroll
+     fallback also covers large scripted jumps and throttled background tabs. */
+  window.addEventListener('scroll', measureInstruments, { passive: true })
+  window.addEventListener('resize', measureInstruments)
+  document.addEventListener('visibilitychange', handlePageVisibility)
+  motionQuery.addEventListener('change', measureInstruments)
+
+  return () => {
+    observer?.disconnect()
+    document.removeEventListener('visibilitychange', handlePageVisibility)
+    motionQuery.removeEventListener('change', measureInstruments)
+    window.removeEventListener('scroll', measureInstruments)
+    window.removeEventListener('resize', measureInstruments)
+    instruments.forEach((instrument) => {
+      instrument.classList.remove('is-in-view', 'is-page-hidden')
+      visibility.delete(instrument)
     })
   }
 }

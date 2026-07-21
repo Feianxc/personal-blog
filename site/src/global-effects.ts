@@ -228,13 +228,58 @@ function restartClassNextFrame(element: HTMLElement, className: string) {
   })
 }
 
+export function setGlobalReducedMotionPreference(reducedMotion: boolean) {
+  const changed = reducedMotionPreference !== reducedMotion
+  reducedMotionPreference = reducedMotion
+
+  if (reducedMotion) {
+    stopHyperstorm()
+
+    if (agentCoreTimer !== null) {
+      window.clearTimeout(agentCoreTimer)
+      agentCoreTimer = null
+    }
+    if (membranePulseTimer !== null) {
+      window.clearTimeout(membranePulseTimer)
+      membranePulseTimer = null
+    }
+    if (signalStormTimer !== null) {
+      window.clearTimeout(signalStormTimer)
+      signalStormTimer = null
+    }
+    if (heroBurstTimer !== null) {
+      window.clearTimeout(heroBurstTimer)
+      heroBurstTimer = null
+    }
+
+    document.body.classList.remove(
+      'is-agent-core',
+      'is-membrane-pulse',
+      'is-signal-storm-burst',
+      'is-hero-burst',
+      'is-route-arrived',
+    )
+    document
+      .querySelectorAll<HTMLElement>('.code-console.is-scanning, .code-console.is-dock-scanning')
+      .forEach((console) => console.classList.remove('is-scanning', 'is-dock-scanning'))
+    delete document.documentElement.dataset.agentCore
+  }
+
+  if (changed) {
+    window.dispatchEvent(new CustomEvent('feian:reduced-motion-change', {
+      detail: { reducedMotion },
+    }))
+  }
+}
+
 export function setupGlobalEffects(options: GlobalEffectsOptions) {
+  setGlobalReducedMotionPreference(options.reducedMotion)
+  activeContext = options.context
+  document.documentElement.dataset.globalFx = options.context
+
   if (effectsReady) return
 
   effectsReady = true
-  reducedMotionPreference = options.reducedMotion
-  activeContext = options.context
-  document.documentElement.dataset.globalFx = options.context
 
   const routeLayer = buildRouteLayer()
   const hyperstormCanvas = buildHyperstormCanvas()
@@ -265,7 +310,7 @@ export function setupGlobalEffects(options: GlobalEffectsOptions) {
   bindXrayShortcuts()
 }
 
-export function setupCodeConsoleInteractions(reducedMotion: boolean) {
+export function setupCodeConsoleInteractions() {
   const blocks = Array.from(
     document.querySelectorAll<HTMLPreElement>('pre:not([data-code-console])'),
   )
@@ -325,11 +370,21 @@ export function setupCodeConsoleInteractions(reducedMotion: boolean) {
     foldButton.setAttribute('aria-controls', viewport.id)
     wrapper.classList.add('is-lines-pending')
 
-    if (reducedMotion) {
-      scanButton.disabled = true
-      scanButton.textContent = '静态'
-      scanButton.setAttribute('aria-label', '扫描动效已因减少动态效果关闭')
+    const syncScanMotionPreference = () => {
+      const reducedMotion = reducedMotionPreference
+      scanButton.disabled = reducedMotion
+      scanButton.textContent = reducedMotion ? '静态' : '扫描'
+      scanButton.setAttribute(
+        'aria-label',
+        reducedMotion ? '扫描动效已因减少动态效果关闭' : '扫描代码块',
+      )
+      if (reducedMotion) {
+        wrapper.classList.remove('is-scanning', 'is-dock-scanning')
+      }
     }
+
+    syncScanMotionPreference()
+    window.addEventListener('feian:reduced-motion-change', syncScanMotionPreference)
 
     actions.append(lineToggleButton, scanButton, copyButton, foldButton)
     toolbar.append(meta, actions, liveStatus)
@@ -426,7 +481,7 @@ export function setupCodeConsoleInteractions(reducedMotion: boolean) {
     wrapper.append(dockDoor, dockEnergy, dockLock, toolbar, viewport)
 
     scanButton.addEventListener('click', () => {
-      if (reducedMotion) return
+      if (reducedMotionPreference) return
       restartClassNextFrame(wrapper, 'is-scanning')
       restartClassNextFrame(wrapper, 'is-dock-scanning')
       window.setTimeout(() => wrapper.classList.remove('is-scanning'), 1250)

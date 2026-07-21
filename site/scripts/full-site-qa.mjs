@@ -21,7 +21,8 @@ const viewportMatrix = [
   { name: 'tablet', width: 768, height: 1024, deviceScaleFactor: 1 },
   { name: 'mobile430', width: 430, height: 932, deviceScaleFactor: 2 },
   { name: 'mobile', width: 390, height: 844, deviceScaleFactor: 2 },
-  { name: 'mobile360', width: 360, height: 740, deviceScaleFactor: 2 },
+  { name: 'mobile360', width: 360, height: 800, deviceScaleFactor: 2 },
+  { name: 'mobile320', width: 320, height: 568, deviceScaleFactor: 2 },
 ]
 
 const requiredHomePhrases = [
@@ -39,6 +40,8 @@ const forbiddenPublicCopy = [
   '证据工程',
   'Evidence',
   'evidence slice',
+  'Agent',
+  'Token',
   '喜欢把麻烦做成能点开的东西',
   '作为AI',
   '作为一个AI',
@@ -87,7 +90,6 @@ const cdpCommandTimeouts = {
   'Page.captureScreenshot': 20_000,
 }
 const cdpRetryableMethods = new Set([
-  'Runtime.evaluate',
   'Emulation.setDeviceMetricsOverride',
   'Emulation.setEmulatedMedia',
   'Page.captureScreenshot',
@@ -97,15 +99,21 @@ async function main() {
   const staticCheck = runStaticLinkCheck(htmlFiles)
   const assetCheck = runNoStaleAssetCheck()
   const criticalFallbackCheck = runCriticalFallbackCheck()
+  const motionSourceContractCheck = runMotionSourceContractCheck()
   const server = await startStaticServer(distRoot)
   baseUrl = `http://127.0.0.1:${server.port}`
   const chrome = await launchChrome()
   cdp = await createPageSession(chrome.port)
 
   cdp.on('Runtime.exceptionThrown', (event) => {
+    const details = event.exceptionDetails || {}
+    const stack = (details.stackTrace?.callFrames || [])
+      .slice(0, 4)
+      .map((frame) => `${frame.functionName || '<anonymous>'}@${frame.url || 'inline'}:${frame.lineNumber ?? 0}`)
+      .join(' <- ')
     runtimeEvents.push({
       type: 'exception',
-      text: event.exceptionDetails?.text || event.exceptionDetails?.exception?.description || 'Runtime exception',
+      text: [details.text, details.exception?.description, stack].filter(Boolean).join(' | ') || 'Runtime exception',
     })
   })
   cdp.on('Runtime.consoleAPICalled', (event) => {
@@ -134,6 +142,14 @@ async function main() {
       type: event.type,
     })
   })
+  cdp.on('Network.loadingFailed', (event) => {
+    if (event.canceled || event.errorText === 'net::ERR_ABORTED') return
+    runtimeEvents.push({
+      type: 'network-error',
+      text: event.errorText || 'Network loading failed',
+      url: event.url || '',
+    })
+  })
 
   try {
     await cdp.send('Page.enable')
@@ -152,10 +168,13 @@ async function main() {
     interactionResults.push(await auditHomeInteractions())
     interactionResults.push(await auditPointerPersonaStates())
     interactionResults.push(await auditTouchProbeFeedback())
-    interactionResults.push(await auditLiveSystemsTabs())
+    interactionResults.push(await auditProjectGalleryMotion())
+    interactionResults.push(await auditMotionPreferenceLifecycle())
+    interactionResults.push(await auditCoarsePointerCadMotion())
     interactionResults.push(await auditCommandPaletteKeyboard())
     interactionResults.push(await auditRouteTransitionSmoke())
     interactionResults.push(await auditReducedMotion())
+    interactionResults.push(await auditProjectCaseReducedMotion())
     interactionResults.push(await auditReactorContextLoss())
     interactionResults.push(await auditCodeConsoleCollapse())
     interactionResults.forEach((result) => collectInteractionFindings(result, failures, warnings))
@@ -172,6 +191,8 @@ async function main() {
   assetCheck.warnings.forEach((item) => warnings.push(item))
   criticalFallbackCheck.failures.forEach((item) => failures.push(item))
   criticalFallbackCheck.warnings.forEach((item) => warnings.push(item))
+  motionSourceContractCheck.failures.forEach((item) => failures.push(item))
+  motionSourceContractCheck.warnings.forEach((item) => warnings.push(item))
 
   const report = {
     status: failures.length === 0 ? 'PASS' : 'FAIL',
@@ -184,6 +205,7 @@ async function main() {
     staticLinkCheck: staticCheck,
     noStaleAssetCheck: assetCheck,
     criticalFallbackCheck,
+    motionSourceContractCheck,
     results,
     interactionResults,
     screenshots: {
@@ -212,11 +234,16 @@ async function main() {
 async function auditRoute(route, viewport) {
   runtimeEvents.length = 0
   networkEvents.length = 0
+  const mobileViewport = viewport.name.startsWith('mobile')
+  await cdp.send(
+    'Emulation.setTouchEmulationEnabled',
+    mobileViewport ? { enabled: true, maxTouchPoints: 1 } : { enabled: false },
+  )
   await cdp.send('Emulation.setDeviceMetricsOverride', {
     width: viewport.width,
     height: viewport.height,
     deviceScaleFactor: viewport.deviceScaleFactor,
-    mobile: viewport.name === 'mobile',
+    mobile: mobileViewport,
   })
   await cdp.send('Emulation.setEmulatedMedia', { features: [] })
 
@@ -262,6 +289,7 @@ async function auditRoute(route, viewport) {
     quickActionMetrics: page.quickActionMetrics,
     liveSystems: page.liveSystems,
     reactor: page.reactor,
+    projectGallery: page.projectGallery,
     orbitCards: page.orbitCards,
     cursor: page.cursor,
     clarity: page.clarity,
@@ -446,7 +474,7 @@ async function auditTouchProbeFeedback() {
   const result = await evalValue(`(async () => {
     const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms))
     const failures = []
-    const target = document.querySelector('[data-clarity-map] [data-pointer-mode="scan"]') || document.querySelector('.feed-item[data-pointer-mode="scan"]')
+    const target = document.querySelector('[data-project-gallery] [data-project-card][data-pointer-mode="scan"]')
 
     if (typeof PointerEvent !== 'function') {
       failures.push('PointerEvent constructor is unavailable for touch audit')
@@ -475,15 +503,11 @@ async function auditTouchProbeFeedback() {
 
     const ripple = document.querySelector('.touch-probe-ripple')
     const rippleStyle = ripple ? window.getComputedStyle(ripple) : null
-    const feedBadge = document.querySelector('.feed-item[data-pointer-mode="scan"]')
-    const feedBadgeStyle = feedBadge ? window.getComputedStyle(feedBadge, '::before') : null
-    const feedBadgeContent = feedBadgeStyle?.content || ''
-
     if (!document.body.classList.contains('has-touch-probe')) failures.push('mobile touch probe body class is missing')
     if (!ripple) failures.push('touch pointerdown did not create probe ripple')
     if (ripple && ripple.dataset.mode !== 'scan') failures.push('touch ripple mode is ' + (ripple.dataset.mode || 'empty'))
     if (rippleStyle && rippleStyle.animationName === 'none') failures.push('touch ripple animation is not active')
-    if (!feedBadgeContent || feedBadgeContent === 'none' || feedBadgeContent === 'normal') failures.push('mobile feed card probe badge is not visible')
+    if (!target.matches('[data-project-card]')) failures.push('touch audit did not exercise a project card')
 
     target.dispatchEvent(new PointerEvent('pointerup', options))
     await wait(80)
@@ -492,7 +516,7 @@ async function auditTouchProbeFeedback() {
       hasTouchProbe: document.body.classList.contains('has-touch-probe'),
       rippleMode: ripple?.dataset.mode || '',
       rippleAnimation: rippleStyle?.animationName || '',
-      feedBadgeContent,
+      targetKind: target.getAttribute('data-project-kind') || target.querySelector('h3')?.textContent?.trim() || '',
       failures,
       overflow: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - window.innerWidth,
     }
@@ -745,6 +769,1011 @@ async function auditLiveSystemsTabs() {
   }
 }
 
+async function auditProjectGalleryMotion() {
+  runtimeEvents.length = 0
+  networkEvents.length = 0
+  await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: false })
+  await cdp.send('Emulation.setDeviceMetricsOverride', {
+    width: 1440,
+    height: 960,
+    deviceScaleFactor: 1,
+    mobile: false,
+  })
+  await cdp.send('Emulation.setEmulatedMedia', { features: [] })
+  await cdp.send('Page.navigate', { url: `${baseUrl}/` })
+  await cdp.waitForEvent('Page.loadEventFired', () => true, 15_000).catch(() => {})
+  await delay(650)
+
+  const result = await evalValue(`(async () => {
+    const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms))
+    const waitFrame = () => new Promise((resolve) => {
+      let settled = false
+      let watchdog = 0
+      const finish = () => {
+        if (settled) return
+        settled = true
+        window.clearTimeout(watchdog)
+        resolve()
+      }
+      watchdog = window.setTimeout(finish, 34)
+      window.requestAnimationFrame(finish)
+    })
+    const waitFrames = async (count = 1) => {
+      for (let frame = 0; frame < count; frame += 1) await waitFrame()
+    }
+    const waitUntil = async (predicate, timeout = 850) => {
+      const started = performance.now()
+      while (performance.now() - started < timeout) {
+        if (predicate()) return true
+        await wait(50)
+      }
+      return predicate()
+    }
+    const cardPose = (card) => {
+      const style = window.getComputedStyle(card)
+      const matrix = style.transform === 'none' ? null : new DOMMatrixReadOnly(style.transform)
+      return {
+        opacity: Number(style.opacity || 1),
+        translateY: matrix?.m42 || 0,
+        transform: style.transform,
+      }
+    }
+    const centerCard = (card) => {
+      const rect = card.getBoundingClientRect()
+      const absoluteTop = window.scrollY + rect.top
+      const targetTop = Math.max(0, absoluteTop - Math.max(0, (window.innerHeight - rect.height) / 2))
+      window.scrollTo({ top: targetTop, behavior: 'auto' })
+      window.dispatchEvent(new Event('scroll'))
+    }
+    const failures = []
+    const gallery = document.querySelector('[data-project-gallery]')
+    const cards = Array.from(gallery?.querySelectorAll('[data-project-card]') || [])
+    const first = cards[0]
+    const motionParts = cards.map((card) => card.querySelector('[data-project-motion]'))
+    const motionStates = []
+
+    if (!gallery) failures.push('project gallery root is missing')
+    if (cards.length !== 10) failures.push('project gallery card count is ' + cards.length + '/10')
+    motionParts.forEach((part, index) => {
+      if (!part) failures.push('project card ' + (index + 1) + ' has no motion sentinel')
+    })
+    if (!first) return { failures, cards: cards.length }
+
+    const originalScrollBehavior = document.documentElement.style.scrollBehavior
+    document.documentElement.style.scrollBehavior = 'auto'
+    for (let index = 0; index < cards.length; index += 1) {
+      const card = cards[index]
+      const part = motionParts[index]
+      centerCard(card)
+      await waitFrames(2)
+      const activated = await waitUntil(() => {
+        const rect = card.getBoundingClientRect()
+        return Boolean(
+          rect.bottom > 0 &&
+          rect.top < window.innerHeight &&
+          card.classList.contains('is-in-view') &&
+          (!part || window.getComputedStyle(part).animationPlayState === 'running')
+        )
+      })
+      const rect = card.getBoundingClientRect()
+      const playState = part ? window.getComputedStyle(part).animationPlayState : ''
+      const animationName = part ? window.getComputedStyle(part).animationName : ''
+      if (!activated) failures.push('project card ' + (index + 1) + ' did not activate in the viewport')
+      if (part && animationName === 'none') failures.push('project card ' + (index + 1) + ' motion sentinel has no animation')
+      if (part && playState !== 'running') failures.push('project card ' + (index + 1) + ' animation is ' + (playState || 'unset') + ' in view')
+      motionStates.push({
+        index: index + 1,
+        activated,
+        animationName,
+        playState,
+        scrollY: Math.round(window.scrollY),
+        rect: { top: Math.round(rect.top), bottom: Math.round(rect.bottom) },
+      })
+    }
+
+    const markerStyle = window.getComputedStyle(first, '::before')
+    const cardRect = first.getBoundingClientRect()
+    const markerWidth = Number.parseFloat(markerStyle.width || '0')
+    const markerHeight = Number.parseFloat(markerStyle.height || '0')
+
+    if (markerStyle.borderTopWidth !== '0px') failures.push('obsolete square project marker still has a border')
+    if (markerWidth < cardRect.width * 0.8 || markerHeight < cardRect.height * 0.8) {
+      failures.push('project hover light is not a full-surface layer')
+    }
+
+    window.scrollTo({ top: 0, behavior: 'auto' })
+    window.dispatchEvent(new Event('scroll'))
+    const allPaused = await waitUntil(() => cards.every((card, index) => {
+      const part = motionParts[index]
+      const rect = card.getBoundingClientRect()
+      const outsideViewport = rect.bottom <= 0 || rect.top >= window.innerHeight
+      return outsideViewport && !card.classList.contains('is-in-view') && (!part || window.getComputedStyle(part).animationPlayState === 'paused')
+    }), 1500)
+    const activeAfterLeave = cards.filter((card) => card.classList.contains('is-in-view')).length
+    const pausedAnimations = motionParts.filter((part) => part && window.getComputedStyle(part).animationPlayState === 'paused').length
+
+    centerCard(first)
+    const visibilityCardActivated = await waitUntil(() => first.classList.contains('is-in-view'))
+    const entranceSettled = await waitUntil(() => {
+      const pose = cardPose(first)
+      return pose.opacity > 0.99 && Math.abs(pose.translateY) < 0.75
+    }, 1600)
+    const visibilityLifecycle = {
+      supported: true,
+      activated: visibilityCardActivated,
+      entranceSettled,
+      hiddenPaused: false,
+      hiddenTimeStable: false,
+      visibleResumed: false,
+      replayDetected: false,
+      samples: [],
+    }
+    const ownHiddenDescriptor = Object.getOwnPropertyDescriptor(document, 'hidden')
+    let simulatedHidden = false
+
+    try {
+      Object.defineProperty(document, 'hidden', {
+        configurable: true,
+        get: () => simulatedHidden,
+      })
+    } catch (error) {
+      visibilityLifecycle.supported = false
+      failures.push('page visibility simulation is unavailable: ' + (error?.message || String(error)))
+    }
+
+    if (visibilityLifecycle.supported) {
+      const sentinelAnimation = motionParts[0]?.getAnimations()[0] || null
+      simulatedHidden = true
+      document.dispatchEvent(new Event('visibilitychange'))
+      await waitFrames(1)
+      const hiddenTimeStart = Number(sentinelAnimation?.currentTime ?? 0)
+      await waitFrames(3)
+      const hiddenTimeEnd = Number(sentinelAnimation?.currentTime ?? 0)
+      visibilityLifecycle.hiddenPaused =
+        gallery.classList.contains('is-page-hidden') &&
+        (!motionParts[0] || window.getComputedStyle(motionParts[0]).animationPlayState === 'paused')
+      visibilityLifecycle.hiddenTimeStable =
+        !sentinelAnimation || Math.abs(hiddenTimeEnd - hiddenTimeStart) < 1
+
+      simulatedHidden = false
+      document.dispatchEvent(new Event('visibilitychange'))
+      visibilityLifecycle.samples.push(cardPose(first))
+      for (let frame = 0; frame < 8; frame += 1) {
+        await waitFrames(1)
+        visibilityLifecycle.samples.push(cardPose(first))
+      }
+      visibilityLifecycle.visibleResumed =
+        !gallery.classList.contains('is-page-hidden') &&
+        first.classList.contains('is-in-view') &&
+        (!motionParts[0] || window.getComputedStyle(motionParts[0]).animationPlayState === 'running')
+      visibilityLifecycle.replayDetected = visibilityLifecycle.samples.some((sample) =>
+        sample.opacity < 0.98 || Math.abs(sample.translateY) > 1.5
+      )
+
+      if (!visibilityLifecycle.hiddenPaused) failures.push('project motion did not pause while the page was hidden')
+      if (!visibilityLifecycle.hiddenTimeStable) failures.push('project animation time advanced while the page was hidden')
+      if (!visibilityLifecycle.visibleResumed) failures.push('project motion did not resume after the page became visible')
+      if (visibilityLifecycle.replayDetected) failures.push('project card entrance replayed after hidden to visible')
+    }
+
+    if (ownHiddenDescriptor) {
+      Object.defineProperty(document, 'hidden', ownHiddenDescriptor)
+    } else {
+      delete document.hidden
+    }
+    document.documentElement.style.scrollBehavior = originalScrollBehavior
+
+    if (!allPaused) failures.push('project animations did not all pause after leaving the gallery')
+    if (!visibilityCardActivated) failures.push('visibility lifecycle card did not activate')
+    if (!entranceSettled) failures.push('visibility lifecycle card entrance did not settle')
+
+    return {
+      cards: cards.length,
+      features: gallery.querySelectorAll('.project-feature').length,
+      shelfCards: gallery.querySelectorAll('.project-shelf-card').length,
+      geoCards: gallery.querySelectorAll('[data-project-kind="geo"]').length,
+      motionStates,
+      activeAfterLeave,
+      pausedAnimations,
+      visibilityLifecycle,
+      markerBorderWidth: markerStyle.borderTopWidth,
+      markerWidth: Math.round(markerWidth),
+      markerHeight: Math.round(markerHeight),
+      overflow: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - window.innerWidth,
+      failures,
+    }
+  })()`, {
+    label: 'auditProjectGalleryMotion',
+    timeout: 20_000,
+    retries: 0,
+  })
+
+  const dispatchTab = async (shiftKey = false) => {
+    if (shiftKey) {
+      await cdp.send('Input.dispatchKeyEvent', {
+        type: 'keyDown',
+        key: 'Shift',
+        code: 'ShiftLeft',
+        modifiers: 8,
+        windowsVirtualKeyCode: 16,
+        nativeVirtualKeyCode: 16,
+      })
+    }
+
+    const modifiers = shiftKey ? 8 : 0
+    await cdp.send('Input.dispatchKeyEvent', {
+      type: 'keyDown',
+      key: 'Tab',
+      code: 'Tab',
+      modifiers,
+      windowsVirtualKeyCode: 9,
+      nativeVirtualKeyCode: 9,
+    })
+    await cdp.send('Input.dispatchKeyEvent', {
+      type: 'keyUp',
+      key: 'Tab',
+      code: 'Tab',
+      modifiers,
+      windowsVirtualKeyCode: 9,
+      nativeVirtualKeyCode: 9,
+    })
+
+    if (shiftKey) {
+      await cdp.send('Input.dispatchKeyEvent', {
+        type: 'keyUp',
+        key: 'Shift',
+        code: 'ShiftLeft',
+        modifiers: 0,
+        windowsVirtualKeyCode: 16,
+        nativeVirtualKeyCode: 16,
+      })
+    }
+
+    await delay(24)
+  }
+
+  const keyboardFocus = {
+    setup: null,
+    forward: [],
+    reverse: [],
+    trustedTabKeydowns: 0,
+    trustedShiftTabs: 0,
+    untrustedTabKeydowns: 0,
+  }
+
+  const readProjectFocusSnapshot = () => evalValue(`(() => {
+    const cards = Array.from(document.querySelectorAll('[data-project-card]'))
+    const card = document.activeElement?.matches?.('[data-project-card]')
+      ? document.activeElement
+      : null
+    const style = card ? window.getComputedStyle(card) : null
+    const lightStyle = card ? window.getComputedStyle(card, '::before') : null
+    const durationIsZero = (value) => String(value || '').split(',').every((token) => {
+      const amount = Number.parseFloat(token) || 0
+      return token.trim().endsWith('ms') ? amount <= 0.01 : amount <= 0.00001
+    })
+    const capturePointerOnlyState = () => {
+      const pointer = document.querySelector('.pointer-shell')
+      const reactor = document.querySelector('[data-signal-reactor]')
+      const rain = document.querySelector('.rain-canvas')
+      return {
+        bodyPointerMode: document.body.dataset.pointerMode || '',
+        pointerState: pointer?.dataset.pointerState || '',
+        pointerMode: pointer?.dataset.pointerMode || '',
+        pointerKind: pointer?.dataset.pointerKind || '',
+        pointerLabel: pointer?.dataset.pointerLabel || '',
+        reactorMode: reactor?.dataset.reactorMode || '',
+        reactorLane: reactor?.dataset.reactorLane || '',
+        rainClass: rain?.className || '',
+        rainStyle: rain?.getAttribute('style') || '',
+      }
+    }
+    const pointerState = capturePointerOnlyState()
+    const baseline = window.__projectCardKeyboardAudit?.baseline || null
+
+    return {
+      index: card ? cards.indexOf(card) + 1 : 0,
+      focusVisible: Boolean(card?.matches(':focus-visible')),
+      outlineVisible: Boolean(
+        style &&
+        style.outlineStyle !== 'none' &&
+        Number.parseFloat(style.outlineWidth || '0') >= 1
+      ),
+      transitionDuration: style?.transitionDuration || '',
+      transitionStopped: durationIsZero(style?.transitionDuration),
+      lightTransitionDuration: lightStyle?.transitionDuration || '',
+      lightTransitionStopped: durationIsZero(lightStyle?.transitionDuration),
+      pointerClasses: card
+        ? ['is-hot', 'is-charging', 'is-routing'].filter((name) => card.classList.contains(name))
+        : [],
+      pointerState,
+      pointerStateStable: Boolean(baseline && JSON.stringify(pointerState) === JSON.stringify(baseline)),
+    }
+  })()`, { label: 'projectGallery.keyboardSnapshot', timeout: 2_000, retries: 0 })
+
+  try {
+    keyboardFocus.setup = await evalValue(`(async () => {
+      window.__projectCardKeyboardAudit?.cleanup?.()
+      const cards = Array.from(document.querySelectorAll('[data-project-card]'))
+      const capturePointerOnlyState = () => {
+        const pointer = document.querySelector('.pointer-shell')
+        const reactor = document.querySelector('[data-signal-reactor]')
+        const rain = document.querySelector('.rain-canvas')
+        return {
+          bodyPointerMode: document.body.dataset.pointerMode || '',
+          pointerState: pointer?.dataset.pointerState || '',
+          pointerMode: pointer?.dataset.pointerMode || '',
+          pointerKind: pointer?.dataset.pointerKind || '',
+          pointerLabel: pointer?.dataset.pointerLabel || '',
+          reactorMode: reactor?.dataset.reactorMode || '',
+          reactorLane: reactor?.dataset.reactorLane || '',
+          rainClass: rain?.className || '',
+          rainStyle: rain?.getAttribute('style') || '',
+        }
+      }
+      const audit = {
+        baseline: null,
+        capturePointerOnlyState,
+        trustedTabKeydowns: 0,
+        trustedShiftTabs: 0,
+        untrustedTabKeydowns: 0,
+        listener: null,
+        cleanup: null,
+      }
+      audit.listener = (event) => {
+        if (event.key !== 'Tab') return
+        if (event.isTrusted) {
+          audit.trustedTabKeydowns += 1
+          if (event.shiftKey) audit.trustedShiftTabs += 1
+        } else {
+          audit.untrustedTabKeydowns += 1
+        }
+      }
+      audit.cleanup = () => document.removeEventListener('keydown', audit.listener, true)
+      document.addEventListener('keydown', audit.listener, true)
+      window.__projectCardKeyboardAudit = audit
+      cards[0]?.focus({ preventScroll: true })
+      await new Promise((resolve) => window.setTimeout(resolve, 80))
+      audit.baseline = capturePointerOnlyState()
+      return { cards: cards.length, baseline: audit.baseline }
+    })()`, { label: 'projectGallery.keyboardSetup', timeout: 2_000, retries: 0 })
+
+    await dispatchTab(true)
+    await dispatchTab(false)
+    keyboardFocus.setup.baseline = await evalValue(`(() => {
+      const audit = window.__projectCardKeyboardAudit
+      if (!audit?.capturePointerOnlyState) return null
+      audit.baseline = audit.capturePointerOnlyState()
+      return audit.baseline
+    })()`, { label: 'projectGallery.keyboardBaseline', timeout: 2_000, retries: 0 })
+    keyboardFocus.forward.push(await readProjectFocusSnapshot())
+    for (let index = 1; index < 10; index += 1) {
+      await dispatchTab(false)
+      keyboardFocus.forward.push(await readProjectFocusSnapshot())
+    }
+
+    await dispatchTab(false)
+    for (let index = 9; index >= 0; index -= 1) {
+      await dispatchTab(true)
+      keyboardFocus.reverse.push(await readProjectFocusSnapshot())
+    }
+
+    const keyStats = await evalValue(`(() => ({
+      trustedTabKeydowns: window.__projectCardKeyboardAudit?.trustedTabKeydowns || 0,
+      trustedShiftTabs: window.__projectCardKeyboardAudit?.trustedShiftTabs || 0,
+      untrustedTabKeydowns: window.__projectCardKeyboardAudit?.untrustedTabKeydowns || 0,
+    }))()`, { label: 'projectGallery.keyboardStats', timeout: 2_000, retries: 0 })
+    Object.assign(keyboardFocus, keyStats)
+  } catch (error) {
+    result.failures.push(`project keyboard traversal failed: ${error?.message || String(error)}`)
+  } finally {
+    await evalValue(`(() => {
+      window.__projectCardKeyboardAudit?.cleanup?.()
+      document.activeElement?.blur?.()
+      delete window.__projectCardKeyboardAudit
+      return true
+    })()`, { label: 'projectGallery.keyboardCleanup', timeout: 2_000, retries: 0 }).catch(() => {})
+  }
+
+  const validateKeyboardPass = (snapshots, expected, direction) => {
+    if (snapshots.length !== expected.length) {
+      result.failures.push(`project ${direction} keyboard traversal produced ${snapshots.length}/${expected.length} snapshots`)
+    }
+    snapshots.forEach((snapshot, position) => {
+      const expectedIndex = expected[position]
+      const label = `project card ${expectedIndex || position + 1} ${direction} focus`
+      if (snapshot.index !== expectedIndex) result.failures.push(`${label} landed on card ${snapshot.index || 'none'}`)
+      if (!snapshot.focusVisible) result.failures.push(`${label} did not match :focus-visible`)
+      if (!snapshot.outlineVisible) result.failures.push(`${label} outline was not visibly rendered`)
+      if (!snapshot.transitionStopped) result.failures.push(`${label} transition duration remained ${snapshot.transitionDuration || 'unset'}`)
+      if (!snapshot.lightTransitionStopped) result.failures.push(`${label} ::before transition duration remained ${snapshot.lightTransitionDuration || 'unset'}`)
+      if (snapshot.pointerClasses.length > 0) result.failures.push(`${label} added pointer-only classes ${snapshot.pointerClasses.join(', ')}`)
+      if (!snapshot.pointerStateStable) result.failures.push(`${label} changed Reactor/rain pointer-only state`)
+    })
+  }
+
+  validateKeyboardPass(keyboardFocus.forward, Array.from({ length: 10 }, (_, index) => index + 1), 'forward')
+  validateKeyboardPass(keyboardFocus.reverse, Array.from({ length: 10 }, (_, index) => 10 - index), 'reverse')
+  if (keyboardFocus.setup?.cards !== 10) result.failures.push(`project keyboard traversal found ${keyboardFocus.setup?.cards || 0}/10 cards`)
+  if (keyboardFocus.trustedTabKeydowns < 22) result.failures.push(`project keyboard traversal received only ${keyboardFocus.trustedTabKeydowns}/22 trusted Tab keydowns`)
+  if (keyboardFocus.trustedShiftTabs < 11) result.failures.push(`project keyboard traversal received only ${keyboardFocus.trustedShiftTabs}/11 trusted Shift+Tab keydowns`)
+  if (keyboardFocus.untrustedTabKeydowns > 0) result.failures.push(`project keyboard traversal received ${keyboardFocus.untrustedTabKeydowns} untrusted Tab keydowns`)
+  result.keyboardFocus = keyboardFocus
+
+  if (result.overflow > 2) {
+    result.failures.push(`project gallery motion overflow ${result.overflow}px`)
+  }
+
+  return {
+    name: 'project gallery motion',
+    ...result,
+    runtimeEvents: runtimeEvents.slice(0, 8),
+  }
+}
+
+async function auditMotionPreferenceLifecycle() {
+  runtimeEvents.length = 0
+  networkEvents.length = 0
+  await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: false })
+  await cdp.send('Emulation.setDeviceMetricsOverride', {
+    width: 1440,
+    height: 960,
+    deviceScaleFactor: 1,
+    mobile: false,
+  })
+  await cdp.send('Emulation.setEmulatedMedia', { features: [] })
+
+  const loadPromise = cdp.waitForEvent('Page.loadEventFired', () => true, 15_000)
+  const nav = await cdp.send('Page.navigate', { url: `${baseUrl}/` })
+  await loadPromise.catch(() => {})
+
+  const failures = []
+  if (nav.errorText) failures.push(`navigation failed ${nav.errorText}`)
+  let initial
+  let reduced
+  let restored
+
+  try {
+    initial = await evalValue(`(async () => {
+      const waitFrame = () => new Promise((resolve) => {
+        let settled = false
+        let watchdog = 0
+        const finish = () => {
+          if (settled) return
+          settled = true
+          window.clearTimeout(watchdog)
+          resolve()
+        }
+        watchdog = window.setTimeout(finish, 34)
+        window.requestAnimationFrame(finish)
+      })
+      const waitUntil = async (predicate, timeout = 6000) => {
+        const deadline = performance.now() + timeout
+        while (performance.now() < deadline) {
+          if (predicate()) return true
+          await waitFrame()
+        }
+        return predicate()
+      }
+      const root = document.querySelector('[data-project-gallery]')
+      const cards = Array.from(root?.querySelectorAll('[data-project-card]') || [])
+      const parts = cards.map((card) => card.querySelector('[data-project-motion]'))
+      const first = cards[0]
+      const hyper = document.querySelector('[data-signal-action="hyper"]')
+      const reactor = document.querySelector('[data-signal-reactor]')
+      const localFailures = []
+
+      window.__reactorLoopLifecycleAudit?.observer?.disconnect()
+      const reactorLoopTransitions = []
+      const reactorLoopObserver = reactor ? new MutationObserver((records) => {
+        records.forEach((record) => {
+          if (record.oldValue) reactorLoopTransitions.push(record.oldValue)
+        })
+        reactorLoopTransitions.push(reactor.dataset.reactorLoop || '')
+      }) : null
+      reactorLoopObserver?.observe(reactor, {
+        attributes: true,
+        attributeFilter: ['data-reactor-loop'],
+        attributeOldValue: true,
+      })
+      window.__reactorLoopLifecycleAudit = {
+        observer: reactorLoopObserver,
+        transitions: reactorLoopTransitions,
+      }
+
+      const reactorInsideViewport = () => {
+        const rect = reactor?.getBoundingClientRect()
+        return Boolean(rect && rect.bottom > 0 && rect.top < window.innerHeight)
+      }
+      const centerReactor = () => {
+        const rect = reactor?.getBoundingClientRect()
+        if (!rect) return
+        const absoluteTop = window.scrollY + rect.top
+        const targetTop = Math.max(
+          0,
+          absoluteTop - Math.max(0, (window.innerHeight - rect.height) / 2),
+        )
+        window.scrollTo(0, targetTop)
+      }
+
+      if (!reactorInsideViewport()) {
+        centerReactor()
+        await waitFrame()
+        await waitFrame()
+      }
+      const reactorActivated = await waitUntil(() => Boolean(
+        reactorInsideViewport() &&
+        reactor?.dataset.reactorReady === 'active' &&
+        reactor?.dataset.reactorFrame === 'live' &&
+        reactor?.dataset.reactorLoop === 'running'
+      ), 3500)
+
+      first?.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'auto' })
+      const galleryReady = await waitUntil(() => Boolean(
+          first?.classList.contains('is-in-view') &&
+          parts[0] &&
+          window.getComputedStyle(parts[0]).animationPlayState === 'running'
+      ), 3500)
+      const reactorPausedAfterGallery = await waitUntil(
+        () => reactor?.dataset.reactorLoop === 'paused',
+        1200,
+      )
+      const ready = reactorActivated && galleryReady && reactorPausedAfterGallery
+      hyper?.click()
+      const hyperStarted = await waitUntil(() => document.body.classList.contains('is-hyperstorm'), 1200)
+      const animationNames = parts.map((part) => part ? window.getComputedStyle(part).animationName : '')
+
+      if (!root) localFailures.push('project gallery root is missing before preference switch')
+      if (cards.length !== 10) localFailures.push('project gallery card count is ' + cards.length + '/10 before preference switch')
+      if (parts.some((part) => !part)) localFailures.push('at least one project card has no motion sentinel before preference switch')
+      if (animationNames.some((name) => !name || name === 'none')) localFailures.push('at least one project motion sentinel has no animation before preference switch')
+      if (!reactorActivated) localFailures.push('Signal Reactor did not render a running live frame before preference switch')
+      if (!galleryReady) localFailures.push('project gallery baseline did not become ready before preference switch')
+      if (!reactorPausedAfterGallery) localFailures.push('Signal Reactor loop did not pause after leaving the hero')
+      if (!hyper) localFailures.push('global high-energy action is missing')
+      if (!hyperStarted) localFailures.push('global high-energy effect did not start before preference switch')
+
+      return {
+        cards: cards.length,
+        animationNames,
+        firstPlayState: parts[0] ? window.getComputedStyle(parts[0]).animationPlayState : '',
+        globalFx: document.documentElement.dataset.globalFx || '',
+        reactorQuality: reactor?.dataset.reactorQuality || '',
+        reactorReady: reactor?.dataset.reactorReady || '',
+        reactorLoop: reactor?.dataset.reactorLoop || '',
+        reactorPausedAfterGallery,
+        hyperStarted,
+        failures: localFailures,
+      }
+    })()`, {
+      label: 'motionPreferenceLifecycle.initial',
+      timeout: 12_000,
+      retries: 0,
+    })
+
+    await cdp.send('Emulation.setEmulatedMedia', {
+      features: [{ name: 'prefers-reduced-motion', value: 'reduce' }],
+    })
+    reduced = await evalValue(`(async () => {
+      const waitFrame = () => new Promise((resolve) => {
+        let settled = false
+        let watchdog = 0
+        const finish = () => {
+          if (settled) return
+          settled = true
+          window.clearTimeout(watchdog)
+          resolve()
+        }
+        watchdog = window.setTimeout(finish, 34)
+        window.requestAnimationFrame(finish)
+      })
+      const waitUntil = async (predicate, timeout = 6000) => {
+        const deadline = performance.now() + timeout
+        while (performance.now() < deadline) {
+          if (predicate()) return true
+          await waitFrame()
+        }
+        return predicate()
+      }
+      const durationIsZero = (value) => value.split(',').every((token) => {
+        const amount = Number.parseFloat(token) || 0
+        return token.trim().endsWith('ms') ? amount <= 0.01 : amount <= 0.00001
+      })
+      const ready = await waitUntil(() => {
+        const root = document.querySelector('[data-project-gallery]')
+        const reactor = document.querySelector('[data-signal-reactor]')
+        const runningAnimations = root?.getAnimations({ subtree: true })
+          .filter((animation) => animation.playState === 'running').length || 0
+        return Boolean(
+          document.documentElement.classList.contains('motion-reduce') &&
+          root?.classList.contains('is-motion-reduced') &&
+          reactor?.dataset.reactorQuality === 'calm' &&
+          reactor?.dataset.reactorLoop === 'static' &&
+          !document.body.classList.contains('is-hyperstorm') &&
+          runningAnimations === 0
+        )
+      })
+      await waitFrame()
+      const root = document.querySelector('[data-project-gallery]')
+      const cards = Array.from(root?.querySelectorAll('[data-project-card]') || [])
+      const parts = cards.map((card) => card.querySelector('[data-project-motion]'))
+      const animationNames = parts.map((part) => part ? window.getComputedStyle(part).animationName : '')
+      const runningAnimations = root?.getAnimations({ subtree: true }).filter((animation) => animation.playState === 'running').length || 0
+      const rain = document.querySelector('.rain-canvas')
+      const rainStyle = rain ? window.getComputedStyle(rain) : null
+      const rainStopped = !rain || rainStyle.display === 'none' || rainStyle.visibility === 'hidden' || Number(rainStyle.opacity) === 0
+      const ctas = Array.from(document.querySelectorAll('.project-feature-cta, .project-shelf-cta'))
+      const ctaTransitions = ctas.map((cta) => {
+        const style = window.getComputedStyle(cta, '::after')
+        return { duration: style.transitionDuration, property: style.transitionProperty }
+      })
+      const ctaTransitionsStopped = ctaTransitions.every((item) => durationIsZero(item.duration))
+      const reactorDestroyTransitions = Array.from(
+        window.__reactorLoopLifecycleAudit?.transitions || [],
+      )
+      const dynamicDestroyStopped = reactorDestroyTransitions.includes('stopped')
+      if (window.__reactorLoopLifecycleAudit?.transitions) {
+        window.__reactorLoopLifecycleAudit.transitions.length = 0
+      }
+      const localFailures = []
+
+      if (!ready) localFailures.push('reduce preference did not propagate to gallery and global effects')
+      if (cards.length !== 10) localFailures.push('project gallery card count is ' + cards.length + '/10 after reduce')
+      if (animationNames.some((name) => name !== 'none')) localFailures.push('at least one project motion sentinel remained animated after reduce')
+      if (runningAnimations > 0) localFailures.push(runningAnimations + ' gallery animations remained running after reduce')
+      if (!rainStopped) localFailures.push('rain effect remained visible after reduce')
+      if (document.body.classList.contains('is-hyperstorm')) localFailures.push('global high-energy effect remained active after reduce')
+      if (ctas.length !== 10) localFailures.push('project CTA count is ' + ctas.length + '/10 under reduce')
+      if (!ctaTransitionsStopped) localFailures.push('at least one project CTA transition remained active after reduce')
+      if (!dynamicDestroyStopped) localFailures.push('dynamic Signal Reactor destroy did not publish stopped before calm rebuild')
+
+      return {
+        ready,
+        cards: cards.length,
+        animationNames,
+        runningAnimations,
+        rainStopped,
+        hyperStopped: !document.body.classList.contains('is-hyperstorm'),
+        reactorQuality: document.querySelector('[data-signal-reactor]')?.dataset.reactorQuality || '',
+        reactorLoop: document.querySelector('[data-signal-reactor]')?.dataset.reactorLoop || '',
+        reactorDestroyTransitions,
+        dynamicDestroyStopped,
+        ctaTransitions,
+        ctaTransitionsStopped,
+        failures: localFailures,
+      }
+    })()`, {
+      label: 'motionPreferenceLifecycle.reduced',
+      timeout: 12_000,
+      retries: 0,
+    })
+
+    await cdp.send('Emulation.setEmulatedMedia', { features: [] })
+    const expectedAnimationNames = JSON.stringify(initial.animationNames)
+    const expectedReactorQuality = JSON.stringify(initial.reactorQuality)
+    restored = await evalValue(`(async () => {
+      const waitFrame = () => new Promise((resolve) => {
+        let settled = false
+        let watchdog = 0
+        const finish = () => {
+          if (settled) return
+          settled = true
+          window.clearTimeout(watchdog)
+          resolve()
+        }
+        watchdog = window.setTimeout(finish, 34)
+        window.requestAnimationFrame(finish)
+      })
+      const waitUntil = async (predicate, timeout = 6000) => {
+        const deadline = performance.now() + timeout
+        while (performance.now() < deadline) {
+          if (predicate()) return true
+          await waitFrame()
+        }
+        return predicate()
+      }
+      const expectedNames = ${expectedAnimationNames}
+      const expectedQuality = ${expectedReactorQuality}
+      const root = document.querySelector('[data-project-gallery]')
+      const cards = Array.from(root?.querySelectorAll('[data-project-card]') || [])
+      const parts = cards.map((card) => card.querySelector('[data-project-motion]'))
+      const first = cards[0]
+      const firstPart = parts[0]
+      const reactor = document.querySelector('[data-signal-reactor]')
+      const previousScrollBehavior = document.documentElement.style.scrollBehavior
+
+      document.documentElement.style.scrollBehavior = 'auto'
+
+      const galleryRestored = await waitUntil(() => {
+        const rain = document.querySelector('.rain-canvas')
+        const rainStyle = rain ? window.getComputedStyle(rain) : null
+        const rainIsVisible = Boolean(
+          rain &&
+          rainStyle?.display !== 'none' &&
+          rainStyle?.visibility !== 'hidden' &&
+          Number(rainStyle?.opacity) > 0
+        )
+        return Boolean(
+          !document.documentElement.classList.contains('motion-reduce') &&
+          !root?.classList.contains('is-motion-reduced') &&
+          firstPart &&
+          window.getComputedStyle(firstPart).animationPlayState === 'running' &&
+          reactor?.dataset.reactorQuality === expectedQuality &&
+          rainIsVisible
+        )
+      }, 3000)
+
+      const reactorInsideViewport = () => {
+        const rect = reactor?.getBoundingClientRect()
+        return Boolean(rect && rect.bottom > 0 && rect.top < window.innerHeight)
+      }
+      const centerReactor = () => {
+        const rect = reactor?.getBoundingClientRect()
+        if (!rect) return
+        const absoluteTop = window.scrollY + rect.top
+        const targetTop = Math.max(
+          0,
+          absoluteTop - Math.max(0, (window.innerHeight - rect.height) / 2),
+        )
+        window.scrollTo(0, targetTop)
+      }
+
+      await waitFrame()
+      await waitFrame()
+      await waitFrame()
+
+      for (let attempt = 0; attempt < 3 && !reactorInsideViewport(); attempt += 1) {
+        centerReactor()
+        await waitFrame()
+        await waitFrame()
+      }
+
+      const reactorLive = await waitUntil(() => Boolean(
+        reactorInsideViewport() &&
+        reactor?.dataset.reactorReady === 'active' &&
+        reactor?.dataset.reactorFrame === 'live' &&
+        reactor?.dataset.reactorLoop === 'running'
+      ), 3000)
+      const reactorInViewport = reactorInsideViewport()
+      const reactorActivated = reactorInViewport && reactorLive
+      const reactorAnchor = document.getElementById('cover')
+        ?? reactor?.closest('.reactor-stage')
+        ?? reactor
+      const reactorRect = reactor?.getBoundingClientRect()
+      const reactorAnchorRect = reactorAnchor?.getBoundingClientRect()
+      const reactorCanvas = reactor?.querySelector('canvas')
+      const reactorActivationState = {
+        ready: reactor?.dataset.reactorReady || '',
+        engine: reactor?.dataset.reactorEngine || '',
+        frame: reactor?.dataset.reactorFrame || '',
+        loop: reactor?.dataset.reactorLoop || '',
+        quality: reactor?.dataset.reactorQuality || '',
+        insideViewport: Boolean(
+          reactorRect &&
+          reactorRect.bottom > 0 &&
+          reactorRect.top < window.innerHeight
+        ),
+        rect: reactorRect ? {
+          top: Math.round(reactorRect.top),
+          bottom: Math.round(reactorRect.bottom),
+          width: Math.round(reactorRect.width),
+          height: Math.round(reactorRect.height),
+        } : null,
+        anchorRect: reactorAnchorRect ? {
+          top: Math.round(reactorAnchorRect.top),
+          bottom: Math.round(reactorAnchorRect.bottom),
+          width: Math.round(reactorAnchorRect.width),
+          height: Math.round(reactorAnchorRect.height),
+        } : null,
+        canvas: reactorCanvas ? {
+          width: reactorCanvas.width,
+          height: reactorCanvas.height,
+          connected: reactorCanvas.isConnected,
+        } : null,
+        scrollY: Math.round(window.scrollY),
+        viewportHeight: window.innerHeight,
+        documentHidden: document.hidden,
+        reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+      }
+
+      first?.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'auto' })
+      const galleryResumed = await waitUntil(() => Boolean(
+        first?.classList.contains('is-in-view') &&
+        firstPart &&
+        window.getComputedStyle(firstPart).animationPlayState === 'running'
+      ), 2000)
+      const reactorPausedAfterGallery = await waitUntil(
+        () => reactor?.dataset.reactorLoop === 'paused',
+        1200,
+      )
+
+      document.documentElement.style.scrollBehavior = previousScrollBehavior
+      const animationNames = parts.map((part) => part ? window.getComputedStyle(part).animationName : '')
+      const rain = document.querySelector('.rain-canvas')
+      const rainStyle = rain ? window.getComputedStyle(rain) : null
+      const rainRestored = Boolean(rain && rainStyle.display !== 'none' && rainStyle.visibility !== 'hidden' && Number(rainStyle.opacity) > 0)
+      const hyper = document.querySelector('[data-signal-action="hyper"]')
+      hyper?.click()
+      const hyperRestored = await waitUntil(() => document.body.classList.contains('is-hyperstorm'), 1200)
+      const localFailures = []
+      const reactorDestroyTransitions = Array.from(
+        window.__reactorLoopLifecycleAudit?.transitions || [],
+      )
+      const staticDestroyStopped = reactorDestroyTransitions.includes('stopped')
+
+      if (!galleryRestored) localFailures.push('no-preference did not restore gallery, rain, and global effect quality')
+      if (!reactorInViewport) localFailures.push('Signal Reactor scroll target did not enter the viewport after restore')
+      if (!reactorLive) localFailures.push('Signal Reactor loop did not resume with a live frame after restore')
+      if (!galleryResumed) localFailures.push('project gallery did not resume after returning from Signal Reactor')
+      if (!reactorPausedAfterGallery) localFailures.push('Signal Reactor loop did not pause after returning to the project gallery')
+      if (cards.length !== 10) localFailures.push('project gallery card count is ' + cards.length + '/10 after restore')
+      if (JSON.stringify(animationNames) !== JSON.stringify(expectedNames)) localFailures.push('project motion sentinel animations did not restore after reduce')
+      if (!rainRestored) localFailures.push('rain effect did not restore after reduce')
+      if (!hyperRestored) localFailures.push('global high-energy effect could not restart after reduce')
+      if (!staticDestroyStopped) localFailures.push('calm Signal Reactor destroy did not publish stopped before live rebuild')
+
+      document.querySelector('[data-signal-action="calm"]')?.click()
+      window.__reactorLoopLifecycleAudit?.observer?.disconnect()
+      delete window.__reactorLoopLifecycleAudit
+      return {
+        ready: galleryRestored && reactorActivated && galleryResumed && reactorPausedAfterGallery,
+        galleryRestored,
+        reactorActivated,
+        reactorInViewport,
+        reactorLive,
+        reactorActivationState,
+        galleryResumed,
+        reactorPausedAfterGallery,
+        cards: cards.length,
+        animationNames,
+        firstPlayState: parts[0] ? window.getComputedStyle(parts[0]).animationPlayState : '',
+        rainRestored,
+        hyperRestored,
+        reactorQuality: document.querySelector('[data-signal-reactor]')?.dataset.reactorQuality || '',
+        reactorDestroyTransitions,
+        staticDestroyStopped,
+        failures: localFailures,
+      }
+    })()`, {
+      label: 'motionPreferenceLifecycle.restored',
+      timeout: 12_000,
+      retries: 0,
+    })
+  } finally {
+    await evalValue(`(() => {
+      window.__reactorLoopLifecycleAudit?.observer?.disconnect()
+      delete window.__reactorLoopLifecycleAudit
+      return true
+    })()`, { label: 'motionPreferenceLifecycle.cleanup', timeout: 2_000, retries: 0 }).catch(() => {})
+    await cdp.send('Emulation.setEmulatedMedia', { features: [] }).catch(() => {})
+    await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: false }).catch(() => {})
+  }
+
+  failures.push(...(initial?.failures || []), ...(reduced?.failures || []), ...(restored?.failures || []))
+
+  return {
+    name: 'motion preference lifecycle',
+    initial,
+    reduced,
+    restored,
+    failures,
+    runtimeEvents: runtimeEvents.slice(0, 8),
+  }
+}
+
+async function auditCoarsePointerCadMotion() {
+  runtimeEvents.length = 0
+  networkEvents.length = 0
+  await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 })
+  await cdp.send('Emulation.setDeviceMetricsOverride', {
+    width: 320,
+    height: 568,
+    deviceScaleFactor: 2,
+    mobile: true,
+  })
+  await cdp.send('Emulation.setEmulatedMedia', { features: [] })
+
+  const loadPromise = cdp.waitForEvent('Page.loadEventFired', () => true, 15_000)
+  const nav = await cdp.send('Page.navigate', { url: `${baseUrl}/` })
+  await loadPromise.catch(() => {})
+  let result
+
+  try {
+    result = await evalValue(`(async () => {
+      const waitFrame = () => new Promise((resolve) => {
+        let settled = false
+        let watchdog = 0
+        const finish = () => {
+          if (settled) return
+          settled = true
+          window.clearTimeout(watchdog)
+          resolve()
+        }
+        watchdog = window.setTimeout(finish, 34)
+        window.requestAnimationFrame(finish)
+      })
+      const waitUntil = async (predicate, timeout = 6000) => {
+        const deadline = performance.now() + timeout
+        while (performance.now() < deadline) {
+          if (predicate()) return true
+          await waitFrame()
+        }
+        return predicate()
+      }
+      const failures = []
+      const shape = document.querySelector('.cad-shape')
+      const card = shape?.closest('[data-project-card]')
+      card?.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'auto' })
+      const activated = await waitUntil(() => card?.classList.contains('is-in-view'))
+      const directParts = Array.from(card?.querySelectorAll('.cad-axis-x, .cad-axis-y, .cad-shape, .cad-point') || [])
+      const directAnimations = directParts.map((part) => ({
+        className: part.className,
+        animationName: window.getComputedStyle(part).animationName,
+      }))
+      const shapeStyle = shape ? window.getComputedStyle(shape) : null
+      const shapeBefore = shape ? window.getComputedStyle(shape, '::before') : null
+      const shapeAfter = shape ? window.getComputedStyle(shape, '::after') : null
+      const anchor = card?.querySelector('.cad-axis-y')
+      const anchorStyle = anchor ? window.getComputedStyle(anchor) : null
+      const scan = card?.querySelector('.cad-axis-x')
+      const scanStyle = scan ? window.getComputedStyle(scan) : null
+      const points = Array.from(card?.querySelectorAll('.cad-point') || [])
+      const pointsAtRest = points.every((point) => {
+        const style = window.getComputedStyle(point)
+        return Number(style.opacity) > 0.99 && (style.transform === 'none' || new DOMMatrixReadOnly(style.transform).a > 0.99)
+      })
+      const coarsePointer = window.matchMedia('(pointer: coarse)').matches
+      const noHover = window.matchMedia('(hover: none)').matches
+      const staticFrame = Boolean(
+        shapeStyle && Number(shapeStyle.opacity) > 0.99 &&
+        shapeBefore && Number(shapeBefore.opacity) > 0.99 && shapeBefore.transform === 'none' &&
+        shapeAfter && Number(shapeAfter.opacity) > 0.99 && shapeAfter.transform === 'none' &&
+        anchorStyle && Number(anchorStyle.opacity) > 0.99 &&
+        scanStyle && Number(scanStyle.opacity) === 0 &&
+        pointsAtRest
+      )
+
+      if (!shape || !card) failures.push('CAD project card is missing at 320px')
+      if (!activated) failures.push('CAD project card did not activate at 320px')
+      if (!coarsePointer || !noHover) failures.push('320px touch emulation did not expose a coarse non-hover pointer')
+      if (directParts.length < 6) failures.push('CAD motion parts are incomplete (' + directParts.length + ')')
+      if (directAnimations.some((item) => item.animationName !== 'none')) failures.push('CAD direct motion remained animated for a coarse pointer')
+      if (shapeBefore?.animationName !== 'none' || shapeAfter?.animationName !== 'none') failures.push('CAD crop pseudo-elements remained animated for a coarse pointer')
+      if (!staticFrame) failures.push('CAD coarse-pointer static frame did not reach the designed terminal state')
+
+      return {
+        viewport: { width: window.innerWidth, height: window.innerHeight },
+        coarsePointer,
+        noHover,
+        activated,
+        directAnimations,
+        pseudoAnimations: {
+          before: shapeBefore?.animationName || '',
+          after: shapeAfter?.animationName || '',
+        },
+        staticFrame,
+        overflow: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - window.innerWidth,
+        failures,
+      }
+    })()`, {
+      label: 'coarsePointerCadMotion',
+      timeout: 10_000,
+      retries: 0,
+    })
+  } finally {
+    await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: false }).catch(() => {})
+  }
+
+  if (nav.errorText) result.failures.push(`navigation failed ${nav.errorText}`)
+  if (result.overflow > 2) result.failures.push(`CAD coarse-pointer overflow ${result.overflow}px`)
+
+  return {
+    name: 'coarse pointer CAD motion',
+    ...result,
+    runtimeEvents: runtimeEvents.slice(0, 8),
+  }
+}
+
 async function auditCommandPaletteKeyboard() {
   runtimeEvents.length = 0
   networkEvents.length = 0
@@ -981,6 +2010,15 @@ async function auditReducedMotion() {
       reactor?.dataset.reactorMode === 'field' &&
       fieldMode?.getAttribute('aria-pressed') === 'true' &&
       document.querySelector('[data-reactor-title]')?.textContent?.includes('现场')
+    const projectCards = Array.from(document.querySelectorAll('[data-project-gallery] [data-project-card]'))
+    const animatedProjectParts = Array.from(document.querySelectorAll('[data-project-gallery] *')).filter((element) => {
+      const style = window.getComputedStyle(element)
+      return style.animationName !== 'none' && style.animationDuration !== '0s'
+    })
+    const projectCardsVisible = projectCards.filter((card) => {
+      const style = window.getComputedStyle(card)
+      return style.display !== 'none' && style.visibility !== 'hidden' && Number(style.opacity || 1) > 0.05
+    }).length
     if (!motionReduce) failures.push('html.motion-reduce was not set under reduced motion')
     if (!rainHidden) failures.push('rain canvas remained visible under reduced motion')
     if (heavyCanvasReady) failures.push('hyper canvas loaded under reduced motion')
@@ -989,6 +2027,9 @@ async function auditReducedMotion() {
     if (!reactorStaticFrame) failures.push('Signal Reactor did not publish a rendered static frame')
     if (!reactorCanvasVisible) failures.push('Signal Reactor static canvas is not visibly sized under reduced motion')
     if (!fieldModeWorks) failures.push('Signal Reactor mode controls stopped working under reduced motion')
+    if (projectCards.length !== 10) failures.push('project gallery card count is ' + projectCards.length + '/10 under reduced motion')
+    if (animatedProjectParts.length > 0) failures.push('project gallery animations remained active under reduced motion')
+    if (projectCardsVisible !== projectCards.length) failures.push('project cards became hidden under reduced motion')
     return {
       motionReduce,
       rainHidden,
@@ -998,6 +2039,9 @@ async function auditReducedMotion() {
       reactorStaticFrame,
       reactorCanvasVisible,
       fieldModeWorks,
+      animatedProjectParts: animatedProjectParts.length,
+      projectCardsVisible,
+      projectCards: projectCards.length,
       overflow: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - window.innerWidth,
       failures,
     }
@@ -1012,6 +2056,206 @@ async function auditReducedMotion() {
   return {
     name: 'reduced motion',
     ...result,
+    runtimeEvents: runtimeEvents.slice(0, 8),
+  }
+}
+
+async function auditProjectCaseReducedMotion() {
+  runtimeEvents.length = 0
+  networkEvents.length = 0
+  const caseRoutes = [
+    '/lab-mcgs-chain.html',
+    '/lab-busbar-debugging-platform.html',
+    '/lab-protocol-studio.html',
+    '/lab-geo-star-engine.html',
+    '/lab-digital-busbar-chain.html',
+    '/lab-mcgs-atlas.html',
+    '/lab-scp-containment-admin.html',
+  ]
+  const failures = []
+  const pages = []
+  const lifecyclePages = []
+
+  await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 })
+  await cdp.send('Emulation.setDeviceMetricsOverride', {
+    width: 390,
+    height: 844,
+    deviceScaleFactor: 2,
+    mobile: true,
+  })
+  await cdp.send('Emulation.setEmulatedMedia', { features: [] })
+
+  for (const route of caseRoutes) {
+    const loadPromise = cdp.waitForEvent('Page.loadEventFired', () => true, 15_000)
+    const nav = await cdp.send('Page.navigate', { url: `${baseUrl}${route}` })
+    if (nav.errorText) failures.push(`${route}: lifecycle navigation failed ${nav.errorText}`)
+    await loadPromise.catch((error) => failures.push(`${route}: lifecycle load timeout ${error.message}`))
+    await delay(360)
+    const lifecycle = await evalValue(`(async () => {
+      const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms))
+      const waitUntil = async (predicate, timeout = 1200) => {
+        const started = performance.now()
+        while (performance.now() - started < timeout) {
+          if (predicate()) return true
+          await wait(40)
+        }
+        return predicate()
+      }
+      const waitFrames = async (count = 1) => {
+        for (let index = 0; index < count; index += 1) {
+          await new Promise((resolve) => {
+            let settled = false
+            let watchdog = 0
+            const finish = () => {
+              if (settled) return
+              settled = true
+              window.clearTimeout(watchdog)
+              resolve()
+            }
+            watchdog = window.setTimeout(finish, 34)
+            window.requestAnimationFrame(finish)
+          })
+        }
+      }
+      const instrument = document.querySelector('.project-case-instrument, .story-visual')
+      const animations = () => instrument?.getAnimations({ subtree: true }) || []
+      const smilRoots = Array.from(instrument?.querySelectorAll('svg') || [])
+        .filter((svg) => typeof svg.animationsPaused === 'function')
+      const smilPaused = () => smilRoots.every((svg) => svg.animationsPaused())
+      const isRunning = () => Boolean(
+        instrument?.classList.contains('is-in-view') &&
+        animations().length > 0 &&
+        animations().some((animation) => animation.playState === 'running') &&
+        smilRoots.every((svg) => !svg.animationsPaused())
+      )
+      const allPaused = () => (
+        animations().every((animation) => animation.playState !== 'running') &&
+        smilPaused()
+      )
+      const originalScrollY = window.scrollY
+      const originalScrollBehavior = document.documentElement.style.scrollBehavior
+      const ownHiddenDescriptor = Object.getOwnPropertyDescriptor(document, 'hidden')
+      let simulatedHidden = false
+      let hiddenOverrideInstalled = false
+      const result = {
+        route: window.location.pathname,
+        instrument: Boolean(instrument),
+        animationCount: animations().length,
+        smilRoots: smilRoots.length,
+        enteredRunning: false,
+        exitedViewport: false,
+        offscreenPaused: false,
+        returnedRunning: false,
+        visibilitySupported: true,
+        hiddenPaused: false,
+        visibleResumed: false,
+      }
+
+      try {
+        document.documentElement.style.scrollBehavior = 'auto'
+        instrument?.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'auto' })
+        result.enteredRunning = await waitUntil(isRunning)
+
+        window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'auto' })
+        result.exitedViewport = await waitUntil(() => {
+          const rect = instrument?.getBoundingClientRect()
+          return Boolean(rect && (rect.bottom < 0 || rect.top > window.innerHeight))
+        })
+        result.offscreenPaused = await waitUntil(() => Boolean(
+          instrument &&
+          !instrument.classList.contains('is-in-view') &&
+          allPaused()
+        ))
+
+        instrument?.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'auto' })
+        result.returnedRunning = await waitUntil(isRunning)
+
+        try {
+          Object.defineProperty(document, 'hidden', {
+            configurable: true,
+            get: () => simulatedHidden,
+          })
+          hiddenOverrideInstalled = true
+        } catch {
+          result.visibilitySupported = false
+        }
+
+        if (result.visibilitySupported) {
+          simulatedHidden = true
+          document.dispatchEvent(new Event('visibilitychange'))
+          result.hiddenPaused = await waitUntil(() => Boolean(
+            instrument?.classList.contains('is-page-hidden') && allPaused()
+          ))
+
+          simulatedHidden = false
+          document.dispatchEvent(new Event('visibilitychange'))
+          result.visibleResumed = await waitUntil(isRunning)
+        }
+      } finally {
+        if (hiddenOverrideInstalled) {
+          if (ownHiddenDescriptor) Object.defineProperty(document, 'hidden', ownHiddenDescriptor)
+          else delete document.hidden
+        }
+        window.scrollTo({ top: originalScrollY, behavior: 'auto' })
+        document.documentElement.style.scrollBehavior = originalScrollBehavior
+      }
+
+      return result
+    })()`, { label: `projectCaseLifecycle.${route}`, timeout: 8_000, retries: 0 })
+
+    if (!lifecycle.instrument) failures.push(`${route}: project case lifecycle instrument is missing`)
+    if (lifecycle.animationCount < 1) failures.push(`${route}: project case lifecycle has no observable animation`)
+    if (!lifecycle.enteredRunning) failures.push(`${route}: project case animation did not run in the viewport`)
+    if (!lifecycle.exitedViewport) failures.push(`${route}: project case instrument did not leave the viewport`)
+    if (!lifecycle.offscreenPaused) failures.push(`${route}: project case animation did not pause offscreen`)
+    if (!lifecycle.returnedRunning) failures.push(`${route}: project case animation did not resume after returning`)
+    if (!lifecycle.visibilitySupported) failures.push(`${route}: project case hidden-state simulation is unavailable`)
+    if (lifecycle.visibilitySupported && !lifecycle.hiddenPaused) failures.push(`${route}: project case animation did not pause while hidden`)
+    if (lifecycle.visibilitySupported && !lifecycle.visibleResumed) failures.push(`${route}: project case animation did not resume after visibility returned`)
+    lifecyclePages.push(lifecycle)
+  }
+
+  await cdp.send('Emulation.setEmulatedMedia', {
+    features: [{ name: 'prefers-reduced-motion', value: 'reduce' }],
+  })
+
+  for (const route of caseRoutes) {
+    const loadPromise = cdp.waitForEvent('Page.loadEventFired', () => true, 15_000)
+    const nav = await cdp.send('Page.navigate', { url: `${baseUrl}${route}` })
+    if (nav.errorText) failures.push(`${route}: navigation failed ${nav.errorText}`)
+    await loadPromise.catch((error) => failures.push(`${route}: load timeout ${error.message}`))
+    await delay(360)
+    const page = await evalValue(`(() => {
+      const instrument = document.querySelector('.project-case-instrument, .story-visual')
+      const animations = instrument?.getAnimations({ subtree: true }) || []
+      const smilRoots = Array.from(instrument?.querySelectorAll('svg') || [])
+        .filter((svg) => typeof svg.animationsPaused === 'function')
+      return {
+        route: window.location.pathname,
+        instrument: Boolean(instrument),
+        runningAnimations: animations.filter((animation) => animation.playState === 'running').length,
+        smilRoots: smilRoots.length,
+        smilPaused: smilRoots.every((svg) => svg.animationsPaused()),
+        scrollBehavior: window.getComputedStyle(document.documentElement).scrollBehavior,
+        overflow: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - window.innerWidth,
+      }
+    })()`)
+    if (!page.instrument) failures.push(`${route}: project case instrument is missing`)
+    if (page.runningAnimations > 0) failures.push(`${route}: ${page.runningAnimations} animations still run under reduced motion`)
+    if (!page.smilPaused) failures.push(`${route}: SVG motion still runs under reduced motion`)
+    if (page.scrollBehavior !== 'auto') failures.push(`${route}: scroll behavior remained ${page.scrollBehavior}`)
+    if (page.overflow > 2) failures.push(`${route}: reduced-motion overflow ${page.overflow}px`)
+    pages.push(page)
+  }
+
+  await cdp.send('Emulation.setEmulatedMedia', { features: [] })
+  await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: false }).catch(() => {})
+
+  return {
+    name: 'project case reduced motion',
+    pages,
+    lifecyclePages,
+    failures,
     runtimeEvents: runtimeEvents.slice(0, 8),
   }
 }
@@ -1032,14 +2276,40 @@ async function auditReactorContextLoss() {
 
   const result = await evalValue(`(async () => {
     const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms))
+    const waitFrame = () => new Promise((resolve) => {
+      let settled = false
+      let watchdog = 0
+      const finish = () => {
+        if (settled) return
+        settled = true
+        window.clearTimeout(watchdog)
+        resolve()
+      }
+      watchdog = window.setTimeout(finish, 34)
+      window.requestAnimationFrame(finish)
+    })
+    const waitFrames = async (count = 1) => {
+      for (let frame = 0; frame < count; frame += 1) await waitFrame()
+    }
+    const waitUntil = async (predicate, timeout = 900) => {
+      const started = performance.now()
+      while (performance.now() - started < timeout) {
+        if (predicate()) return true
+        await wait(40)
+      }
+      return predicate()
+    }
     const failures = []
     const reactor = document.querySelector('[data-signal-reactor]')
     const canvas = reactor?.querySelector('.signal-reactor-canvas')
     const shell = reactor?.querySelector('.signal-reactor-shell')
+    const originalScrollY = window.scrollY
+    const originalScrollBehavior = document.documentElement.style.scrollBehavior
     const before = {
       engine: reactor?.dataset.reactorEngine || '',
       ready: reactor?.dataset.reactorReady || '',
       frame: reactor?.dataset.reactorFrame || '',
+      loop: reactor?.dataset.reactorLoop || '',
     }
 
     const gl = canvas?.getContext('webgl2') || canvas?.getContext('webgl')
@@ -1051,6 +2321,12 @@ async function auditReactorContextLoss() {
     loseContext?.loseContext()
     await wait(180)
 
+    const loopTransitions = []
+    const loopObserver = reactor ? new MutationObserver(() => {
+      loopTransitions.push(reactor.dataset.reactorLoop || '')
+    }) : null
+    loopObserver?.observe(reactor, { attributes: true, attributeFilter: ['data-reactor-loop'] })
+
     const canvasStyle = canvas ? window.getComputedStyle(canvas) : null
     const shellStyle = shell ? window.getComputedStyle(shell) : null
     const shellRect = shell?.getBoundingClientRect()
@@ -1059,6 +2335,9 @@ async function auditReactorContextLoss() {
       engine: reactor?.dataset.reactorEngine || '',
       ready: reactor?.dataset.reactorReady || '',
       frame: reactor?.dataset.reactorFrame || '',
+      loop: reactor?.dataset.reactorLoop || '',
+      canvasAriaHidden: canvas?.getAttribute('aria-hidden') || '',
+      shellAriaHidden: shell?.getAttribute('aria-hidden') || '',
       canvasOpacity: Number(canvasStyle?.opacity || 0),
       shellOpacity: Number(shellStyle?.opacity || 0),
       shellVisible: Boolean(
@@ -1075,13 +2354,108 @@ async function auditReactorContextLoss() {
     if (after.engine !== 'css') failures.push(\`context-loss engine remained \${after.engine || 'unset'}\`)
     if (after.ready !== 'static') failures.push(\`context-loss ready state remained \${after.ready || 'unset'}\`)
     if (after.frame !== 'static') failures.push(\`context-loss frame state remained \${after.frame || 'unset'}\`)
+    if (after.loop !== 'static') failures.push(\`context-loss loop state remained \${after.loop || 'unset'}\`)
+    if (after.canvasAriaHidden !== 'true') failures.push(\`context-loss canvas aria-hidden is \${after.canvasAriaHidden || 'unset'}\`)
+    if (after.shellAriaHidden !== 'true') failures.push(\`context-loss CSS fallback aria-hidden is \${after.shellAriaHidden || 'unset'}\`)
     if (after.canvasOpacity > 0.01) failures.push(\`context-loss canvas opacity remained \${after.canvasOpacity}\`)
     if (!after.shellVisible) failures.push('CSS reactor fallback was not visibly sized')
+
+    const terminalSnapshot = () => ({
+      loop: reactor?.dataset.reactorLoop || '',
+      engine: reactor?.dataset.reactorEngine || '',
+      ready: reactor?.dataset.reactorReady || '',
+      frame: reactor?.dataset.reactorFrame || '',
+      contextLostClass: reactor?.classList.contains('is-context-lost') || false,
+    })
+    const assertTerminal = (state, label) => {
+      if (state.loop !== 'static') failures.push(label + ' loop became ' + (state.loop || 'unset'))
+      if (state.engine !== 'css') failures.push(label + ' engine became ' + (state.engine || 'unset'))
+      if (state.ready !== 'static' || state.frame !== 'static') {
+        failures.push(label + ' fallback state became ' + (state.ready || 'unset') + '/' + (state.frame || 'unset'))
+      }
+      if (!state.contextLostClass) failures.push(label + ' lost the context-loss class')
+    }
+
+    const lifecycle = {
+      visibilitySupported: true,
+      hidden: null,
+      visible: null,
+      exitedViewport: false,
+      offscreen: null,
+      returnedToViewport: false,
+      returned: null,
+    }
+    const ownHiddenDescriptor = Object.getOwnPropertyDescriptor(document, 'hidden')
+    let simulatedHidden = false
+    let hiddenOverrideInstalled = false
+
+    try {
+      document.documentElement.style.scrollBehavior = 'auto'
+      try {
+        Object.defineProperty(document, 'hidden', {
+          configurable: true,
+          get: () => simulatedHidden,
+        })
+        hiddenOverrideInstalled = true
+      } catch (error) {
+        lifecycle.visibilitySupported = false
+        failures.push('context-loss visibility simulation is unavailable: ' + (error?.message || String(error)))
+      }
+
+      if (lifecycle.visibilitySupported) {
+        simulatedHidden = true
+        document.dispatchEvent(new Event('visibilitychange'))
+        await waitFrames(2)
+        lifecycle.hidden = terminalSnapshot()
+        assertTerminal(lifecycle.hidden, 'hidden context-loss lifecycle')
+
+        simulatedHidden = false
+        document.dispatchEvent(new Event('visibilitychange'))
+        await waitFrames(2)
+        lifecycle.visible = terminalSnapshot()
+        assertTerminal(lifecycle.visible, 'visible context-loss lifecycle')
+      }
+
+      const gallery = document.querySelector('[data-project-gallery]')
+      gallery?.scrollIntoView({ block: 'start', inline: 'nearest', behavior: 'auto' })
+      lifecycle.exitedViewport = await waitUntil(() => {
+        const rect = reactor?.getBoundingClientRect()
+        return Boolean(rect && (rect.bottom < 0 || rect.top > window.innerHeight))
+      })
+      await waitFrames(2)
+      lifecycle.offscreen = terminalSnapshot()
+      assertTerminal(lifecycle.offscreen, 'offscreen context-loss lifecycle')
+
+      reactor?.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'auto' })
+      lifecycle.returnedToViewport = await waitUntil(() => {
+        const rect = reactor?.getBoundingClientRect()
+        return Boolean(rect && rect.bottom > 0 && rect.top < window.innerHeight)
+      })
+      await waitFrames(2)
+      lifecycle.returned = terminalSnapshot()
+      assertTerminal(lifecycle.returned, 'returned context-loss lifecycle')
+    } finally {
+      loopObserver?.disconnect()
+      if (hiddenOverrideInstalled) {
+        if (ownHiddenDescriptor) Object.defineProperty(document, 'hidden', ownHiddenDescriptor)
+        else delete document.hidden
+      }
+      window.scrollTo({ top: originalScrollY, behavior: 'auto' })
+      document.documentElement.style.scrollBehavior = originalScrollBehavior
+    }
+
+    if (!lifecycle.exitedViewport) failures.push('context-loss reactor did not leave the viewport')
+    if (!lifecycle.returnedToViewport) failures.push('context-loss reactor did not return to the viewport')
+    if (loopTransitions.includes('running')) {
+      failures.push('context-loss loop restarted during visibility or intersection lifecycle')
+    }
 
     return {
       extensionAvailable: Boolean(loseContext),
       before,
       after,
+      lifecycle,
+      loopTransitions,
       overflow: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - window.innerWidth,
       failures,
     }
@@ -1306,6 +2680,11 @@ async function evaluatePage() {
     const liveSystemsStageRect = liveSystemsStage?.getBoundingClientRect()
     const liveSystemsRail = liveSystemsRoot?.querySelector('.systems-rail')
     const liveSystemsRailStyle = liveSystemsRail ? window.getComputedStyle(liveSystemsRail) : null
+    const projectGalleryRoot = document.querySelector('[data-project-gallery]')
+    const projectCards = Array.from(projectGalleryRoot?.querySelectorAll('[data-project-card]') || [])
+    const projectFeatures = projectCards.filter((card) => card.classList.contains('project-feature'))
+    const projectShelfCards = projectCards.filter((card) => card.classList.contains('project-shelf-card'))
+    const firstProjectMarker = projectCards[0] ? window.getComputedStyle(projectCards[0], '::before') : null
     const pointerProbe = document.querySelector('.pointer-probe')
     const pointerProbeRect = pointerProbe?.getBoundingClientRect()
     const pointerProbeStyle = pointerProbe ? window.getComputedStyle(pointerProbe) : null
@@ -1381,6 +2760,19 @@ async function evaluatePage() {
         height: Math.round(reactorRect?.height || 0),
         canvasVisible: Boolean(reactorCanvasRect && reactorCanvasRect.width > 0 && reactorCanvasRect.height > 0),
       },
+      projectGallery: {
+        exists: Boolean(projectGalleryRoot),
+        cards: projectCards.length,
+        features: projectFeatures.length,
+        shelfCards: projectShelfCards.length,
+        visuals: projectGalleryRoot?.querySelectorAll('.project-visual, .project-shelf-visual').length || 0,
+        geoCards: projectGalleryRoot?.querySelectorAll('[data-project-kind="geo"]').length || 0,
+        allCardsAreLinks: projectCards.every((card) => card.tagName === 'A' && Boolean(card.getAttribute('href'))),
+        inViewCards: projectCards.filter((card) => card.classList.contains('is-in-view')).length,
+        markerBorderWidth: firstProjectMarker?.borderTopWidth || '',
+        markerWidth: firstProjectMarker?.width || '',
+        markerHeight: firstProjectMarker?.height || '',
+      },
       orbitCards: Array.from(document.querySelectorAll('[data-orbit-card]')).length,
       cursor: {
         bodyCursor,
@@ -1412,7 +2804,7 @@ async function evaluatePage() {
 
 function collectFindings(result, failureList, warningList) {
   const label = `${result.route} [${result.viewport}]`
-  if (result.documentStatus && result.documentStatus !== 200) {
+  if (result.documentStatus !== 200) {
     failureList.push(`${label}: document HTTP status ${result.documentStatus}`)
   }
   if (result.readyState !== 'complete') {
@@ -1446,9 +2838,13 @@ function collectFindings(result, failureList, warningList) {
       failureList.push(`${label}: mobile visual controls are too small ${JSON.stringify(tooSmall.slice(0, 4))}`)
     }
   }
-  const errors = result.runtimeEvents.filter((event) => event.type.includes('error') || event.type === 'exception' || event.type === 'navigation')
+  const errors = result.runtimeEvents.filter((event) => event.type.includes('error') || event.type === 'exception' || event.type === 'navigation' || event.type === 'load-timeout')
   if (errors.length > 0) {
     failureList.push(`${label}: runtime errors ${JSON.stringify(errors)}`)
+  }
+  const runtimeWarnings = result.runtimeEvents.filter((event) => event.type.includes('warning'))
+  if (runtimeWarnings.length > 0) {
+    warningList.push(`${label}: runtime warnings ${JSON.stringify(runtimeWarnings)}`)
   }
   if (result.chineseRatio < 0.42) {
     warningList.push(`${label}: Chinese-first ratio is low (${result.chineseRatio.toFixed(2)})`)
@@ -1467,51 +2863,29 @@ function collectFindings(result, failureList, warningList) {
     if (result.viewport === 'desktop' && result.reactor?.height < 180) {
       failureList.push(`${label}: Signal Reactor is too small (${result.reactor.height}px)`)
     }
-    if (result.orbitCards < 4) {
-      failureList.push(`${label}: feed orbit cards not wired (${result.orbitCards}/4)`)
+    if (result.orbitCards < 10) {
+      failureList.push(`${label}: project motion cards not wired (${result.orbitCards}/10)`)
     }
-    if (!result.liveSystems?.exists) {
-      failureList.push(`${label}: live systems section is missing`)
+    if (!result.projectGallery?.exists) {
+      failureList.push(`${label}: project gallery is missing`)
     }
-    if (result.liveSystems?.tabs !== 3) {
-      failureList.push(`${label}: live system tabs not wired (${result.liveSystems?.tabs || 0}/3)`)
+    if (result.projectGallery?.features !== 4) {
+      failureList.push(`${label}: featured project count is ${result.projectGallery?.features || 0}/4`)
     }
-    if (result.liveSystems?.panels !== 3) {
-      failureList.push(`${label}: live system panels not wired (${result.liveSystems?.panels || 0}/3)`)
+    if ((result.projectGallery?.shelfCards || 0) < 6) {
+      failureList.push(`${label}: supporting project count is ${result.projectGallery?.shelfCards || 0}/6`)
     }
-    if (result.liveSystems?.selectedTabs !== 1) {
-      failureList.push(`${label}: live systems selected tab count is ${result.liveSystems?.selectedTabs || 0}`)
+    if ((result.projectGallery?.visuals || 0) < 10) {
+      failureList.push(`${label}: project visuals are missing (${result.projectGallery?.visuals || 0}/10)`)
     }
-    if (result.liveSystems?.visiblePanels !== 1) {
-      failureList.push(`${label}: live systems visible panel count is ${result.liveSystems?.visiblePanels || 0}`)
+    if (result.projectGallery?.geoCards !== 1) {
+      failureList.push(`${label}: GEO project card count is ${result.projectGallery?.geoCards || 0}/1`)
     }
-    if (result.liveSystems?.activeSystem !== result.liveSystems?.selectedKey) {
-      failureList.push(`${label}: active live system ${result.liveSystems?.activeSystem || 'empty'} does not match selected ${result.liveSystems?.selectedKey || 'empty'}`)
+    if (!result.projectGallery?.allCardsAreLinks) {
+      failureList.push(`${label}: at least one project card has no usable link`)
     }
-    if (result.liveSystems?.selectedPanelHidden !== 'false') {
-      failureList.push(`${label}: selected live system panel aria-hidden is ${result.liveSystems?.selectedPanelHidden ?? 'missing'}`)
-    }
-    if (result.liveSystems?.selectedPanelInert) {
-      failureList.push(`${label}: selected live system panel is inert`)
-    }
-    if (result.liveSystems?.inactivePanels !== 2 || result.liveSystems?.inactiveInertPanels !== 2) {
-      failureList.push(`${label}: inactive live system panels are not inert (${result.liveSystems?.inactiveInertPanels || 0}/${result.liveSystems?.inactivePanels || 0})`)
-    }
-    if (result.liveSystems?.tabStops !== 1) {
-      failureList.push(`${label}: live systems tab stop count is ${result.liveSystems?.tabStops || 0}`)
-    }
-    if (result.viewport === 'desktop' && (result.liveSystems?.stageWidth < 620 || result.liveSystems?.stageHeight < 560)) {
-      failureList.push(`${label}: live systems stage is too small (${result.liveSystems?.stageWidth || 0}x${result.liveSystems?.stageHeight || 0}px)`)
-    }
-    if (result.viewport.startsWith('mobile')) {
-      const tabsSized = result.liveSystems?.tabMetrics?.every((tab) => tab.width > 0 && tab.height >= 40)
-      if (!tabsSized) {
-        failureList.push(`${label}: live systems mobile tabs are not usable ${JSON.stringify(result.liveSystems?.tabMetrics || [])}`)
-      }
-      const railNeedsScroll = (result.liveSystems?.railScrollWidth || 0) > (result.liveSystems?.railWidth || 0) + 2
-      if (railNeedsScroll && !/auto|scroll/.test(result.liveSystems?.railOverflowX || '')) {
-        failureList.push(`${label}: live systems mobile tabs overflow without a horizontal scroller`)
-      }
+    if (result.projectGallery?.markerBorderWidth !== '0px') {
+      failureList.push(`${label}: obsolete square timeline marker is still visible (${result.projectGallery?.markerBorderWidth || 'unknown'})`)
     }
     if (result.viewport === 'desktop' && !result.cursor?.hasNativeImageCursor) {
       failureList.push(`${label}: native IMAGE2 cursor fallback is not active (${result.cursor?.bodyCursor || 'empty'})`)
@@ -1547,6 +2921,19 @@ function collectFindings(result, failureList, warningList) {
 function collectInteractionFindings(result, failureList, warningList) {
   result.failures?.forEach((item) => failureList.push(`${result.name}: ${item}`))
   result.warnings?.forEach((item) => warningList.push(`${result.name}: ${item}`))
+  const expectedContextLoss = result.name === 'reactor context loss fallback'
+  const runtimeErrors = (result.runtimeEvents || []).filter((event) => {
+    const isError = event.type?.includes('error') || event.type === 'exception' || event.type === 'navigation' || event.type === 'load-timeout'
+    if (!isError) return false
+    return !(expectedContextLoss && /context.{0,8}lost|webgl/i.test(event.text || ''))
+  })
+  const runtimeWarnings = (result.runtimeEvents || []).filter((event) => event.type?.includes('warning'))
+  if (runtimeErrors.length > 0) {
+    failureList.push(`${result.name}: runtime errors ${JSON.stringify(runtimeErrors)}`)
+  }
+  if (runtimeWarnings.length > 0) {
+    warningList.push(`${result.name}: runtime warnings ${JSON.stringify(runtimeWarnings)}`)
+  }
   if (result.name !== 'homepage visual controls') return
 
   const expected = ['风压', '风暴', '透视', '高能', '声场', '安静', '命令']
@@ -1564,8 +2951,54 @@ function collectInteractionFindings(result, failureList, warningList) {
   if (result.after?.overflow > 2) {
     failureList.push(`${result.name}: overflow after interactions ${result.after.overflow}px`)
   }
-  if (result.runtimeEvents?.length) {
-    warningList.push(`${result.name}: runtime events ${JSON.stringify(result.runtimeEvents)}`)
+}
+
+function runMotionSourceContractCheck() {
+  const failures = []
+  const warnings = []
+  const cssPath = join(siteRoot, 'src', 'project-gallery.css')
+
+  if (!existsSync(cssPath)) {
+    failures.push(`motion contract stylesheet is missing: ${cssPath}`)
+    return { cssPath, failures, warnings }
+  }
+
+  const css = readFileSync(cssPath, 'utf8')
+  const railBlock = css.match(/\.protocol-rail\s*\{([^}]+)\}/i)?.[1] || ''
+  const dashValues = (railBlock.match(/stroke-dasharray:\s*([^;]+)/i)?.[1] || '')
+    .trim()
+    .split(/[\s,]+/)
+    .map(Number)
+    .filter(Number.isFinite)
+  const keyframes = css.match(/@keyframes\s+protocol-rail-run\s*\{([\s\S]*?)\n\}/i)?.[1] || ''
+  const terminalOffset = Number(keyframes.match(/stroke-dashoffset:\s*(-?[\d.]+)/i)?.[1])
+  const dashPeriod = dashValues.reduce((total, value) => total + value, 0)
+  const completePeriods = dashPeriod > 0 && Number.isFinite(terminalOffset)
+    ? Math.abs(terminalOffset) / dashPeriod
+    : Number.NaN
+  const seamless = terminalOffset === -112 || (Number.isFinite(completePeriods) && Math.abs(completePeriods - Math.round(completePeriods)) < 0.0001)
+
+  if (!/animation:\s*protocol-rail-run\b/i.test(railBlock)) {
+    failures.push('protocol rail is not wired to protocol-rail-run')
+  }
+  if (dashValues.length < 2 || dashPeriod <= 0) {
+    failures.push('protocol rail dash period could not be derived')
+  }
+  if (!Number.isFinite(terminalOffset)) {
+    failures.push('protocol-rail-run terminal stroke-dashoffset is missing')
+  } else if (!seamless) {
+    failures.push(`protocol rail terminal ${terminalOffset} is not a complete ${dashPeriod}-unit dash period`)
+  }
+
+  return {
+    cssPath,
+    dashValues,
+    dashPeriod,
+    terminalOffset,
+    completePeriods: Number.isFinite(completePeriods) ? completePeriods : null,
+    seamless,
+    failures,
+    warnings,
   }
 }
 
@@ -1923,14 +3356,26 @@ class CdpSession {
   }
 }
 
-async function evalValue(expression) {
-  const result = await cdp.send('Runtime.evaluate', {
-    expression,
-    awaitPromise: true,
-    returnByValue: true,
-  })
+async function evalValue(expression, options = {}) {
+  let result
+  try {
+    result = await cdp.send('Runtime.evaluate', {
+      expression,
+      awaitPromise: true,
+      returnByValue: true,
+    }, {
+      timeout: options.timeout,
+      retries: options.retries,
+    })
+  } catch (error) {
+    const label = options.label || 'Runtime.evaluate'
+    throw new Error(`${label}: ${error instanceof Error ? error.message : String(error)}`, {
+      cause: error,
+    })
+  }
   if (result.exceptionDetails) {
-    throw new Error(result.exceptionDetails.text || 'Runtime.evaluate failed')
+    const label = options.label || 'Runtime.evaluate'
+    throw new Error(`${label}: ${result.exceptionDetails.text || 'Runtime.evaluate failed'}`)
   }
   return result.result?.value
 }

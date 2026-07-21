@@ -409,6 +409,36 @@ body.entry-page--system-busbar {
   }
 }
 
+/* System-story instruments share the same lifecycle contract as the newer
+   project-case workbenches. CSS and SVG motion only run while the visual is
+   both visible and on an active page. */
+.story-visual,
+.story-visual::before,
+.story-visual::after,
+.story-visual *,
+.story-visual *::before,
+.story-visual *::after {
+  animation-play-state: paused !important;
+}
+
+.story-visual.is-in-view:not(.is-page-hidden),
+.story-visual.is-in-view:not(.is-page-hidden)::before,
+.story-visual.is-in-view:not(.is-page-hidden)::after,
+.story-visual.is-in-view:not(.is-page-hidden) *,
+.story-visual.is-in-view:not(.is-page-hidden) *::before,
+.story-visual.is-in-view:not(.is-page-hidden) *::after {
+  animation-play-state: running !important;
+}
+
+.story-visual.is-page-hidden,
+.story-visual.is-page-hidden::before,
+.story-visual.is-page-hidden::after,
+.story-visual.is-page-hidden *,
+.story-visual.is-page-hidden *::before,
+.story-visual.is-page-hidden *::after {
+  animation-play-state: paused !important;
+}
+
 @media (max-width: 760px) {
   .entry-page--system-story .entry-header-grid {
     grid-template-columns: minmax(0, 1fr);
@@ -465,6 +495,10 @@ body.entry-page--system-busbar {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
   .story-visual::after,
   .story-visual-core::before,
   .story-visual-core::after,

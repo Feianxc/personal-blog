@@ -1,15 +1,18 @@
 import './index.css'
 import './impact.css'
-import './system-triptych.css'
-import { setupGlobalEffects } from './global-effects'
+import './project-gallery.css'
+import {
+  setGlobalReducedMotionPreference,
+  setupGlobalEffects,
+} from './global-effects'
 import { setupImpactChoreography } from './impact-choreography'
+import { setupProjectGallery } from './project-gallery'
 import { createRainBackground } from './rain-background'
-import { setupSystemTriptych } from './system-triptych'
 import { setupSignalReactor } from './visual-runtime/reactor/signal-reactor'
 
 document.documentElement.classList.add('js', 'impact-edition')
 
-const sectionIds = ['cover', 'signals', 'feed', 'archive'] as const
+const sectionIds = ['cover', 'feed', 'archive'] as const
 
 type SectionId = (typeof sectionIds)[number]
 type PointerPoint = Pick<PointerEvent, 'clientX' | 'clientY'>
@@ -81,18 +84,21 @@ const pointerWakeLayer =
       })
     : null)
 const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
-const prefersReducedMotion = reducedMotionQuery.matches
+let prefersReducedMotion = reducedMotionQuery.matches
 const supportsFinePointer = window.matchMedia('(pointer: fine)').matches
 const supportsHoverPointer = window.matchMedia('(hover: hover)').matches
-const enhancedPointerEnabled = supportsFinePointer && supportsHoverPointer && !prefersReducedMotion
+let enhancedPointerEnabled = supportsFinePointer && supportsHoverPointer && !prefersReducedMotion
 
 document.documentElement.classList.toggle('motion-reduce', prefersReducedMotion)
 reducedMotionQuery.addEventListener('change', (event) => {
+  prefersReducedMotion = event.matches
+  enhancedPointerEnabled = supportsFinePointer && supportsHoverPointer && !event.matches
   document.documentElement.classList.toggle('motion-reduce', event.matches)
+  setGlobalReducedMotionPreference(event.matches)
 })
 
 const rainCanvas = document.getElementById('rain-canvas') as HTMLCanvasElement | null
-const rainBackground = rainCanvas
+let rainBackground = rainCanvas
   ? createRainBackground(rainCanvas, { reducedMotion: prefersReducedMotion })
   : null
 let signalReactor = setupSignalReactor({ reducedMotion: prefersReducedMotion })
@@ -207,15 +213,36 @@ let impactChoreography = setupImpactChoreography({
   reducedMotion: prefersReducedMotion,
 })
 
-const systemTriptych = setupSystemTriptych({
+const projectGallery = setupProjectGallery({
   reducedMotion: prefersReducedMotion,
 })
 
 reducedMotionQuery.addEventListener('change', (event) => {
+  rainBackground?.destroy()
+  rainBackground = rainCanvas
+    ? createRainBackground(rainCanvas, { reducedMotion: event.matches })
+    : null
   impactChoreography.destroy()
   signalReactor?.destroy()
   signalReactor = setupSignalReactor({ reducedMotion: event.matches })
   impactChoreography = setupImpactChoreography({ reducedMotion: event.matches })
+
+  if (event.matches) {
+    pointerWakeLayer?.replaceChildren()
+    document.querySelectorAll('.impact-wave, .click-stamp').forEach((node) => node.remove())
+    revealTargets.forEach((element) => {
+      element.classList.add('is-visible')
+      clearTransientState(element, 'is-revealing', revealPulseTimers)
+    })
+    interactiveTargets.forEach((element) => {
+      element.classList.remove('is-pressed', 'is-struck', 'is-surfing')
+      clearSurfaceAtmosphere(element)
+    })
+    queuedSurfaceAtmospheres.clear()
+    window.clearTimeout(motionIdleTimer)
+    motionIdleTimer = 0
+    setBodyMotionState('idle')
+  }
 })
 
 const signalAxisProfiles: Record<SignalAxisKey, SignalAxisProfile> = {
@@ -468,23 +495,11 @@ if (revealTargets.length > 0) {
 }
 
 interactiveTargets.forEach((element) => {
-  const focusTarget = (event?: FocusEvent | PointerEvent) => {
-    const pointerEvent = event instanceof PointerEvent ? event : undefined
-
+  const focusTarget = (event: PointerEvent) => {
     rememberInteractionSnapshot(element)
-
-    if (pointerEvent) {
-      writeLocalPointerPosition(element, pointerEvent)
-      syncPointer(pointerEvent)
-    } else if (enhancedPointerEnabled) {
-      const rect = element.getBoundingClientRect()
-      pointerState.targetX = rect.left + rect.width / 2
-      pointerState.targetY = rect.top + rect.height / 2
-      pointerState.visible = true
-      animatePointerShell()
-    }
-
-    setInteractiveFocus(element, pointerEvent)
+    writeLocalPointerPosition(element, event)
+    syncPointer(event)
+    setInteractiveFocus(element, event)
   }
 
   const moveTarget = (event: PointerEvent) => {
@@ -544,7 +559,6 @@ interactiveTargets.forEach((element) => {
 
   element.addEventListener('pointerenter', focusTarget)
   element.addEventListener('pointermove', moveTarget, { passive: true })
-  element.addEventListener('focus', focusTarget)
   element.addEventListener('pointerleave', clearTarget)
   element.addEventListener('blur', clearTarget)
   element.addEventListener('pointerdown', pressTarget)
@@ -1617,7 +1631,7 @@ window.addEventListener('beforeunload', () => {
   }
 
   stopInteractiveBeat()
-  systemTriptych.destroy()
+  projectGallery.destroy()
   impactChoreography.destroy()
   signalReactor?.destroy()
   rainBackground?.destroy()

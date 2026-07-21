@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="description" content="FEIAN 的收容黑箱网页演示：用虚构资料把档案、异常事件、工单、搜索和权限串成一套本地管理系统。" />
+    <title>收容黑箱：不只是一张有气氛的管理大屏 - FEIAN</title>
+    <link rel="stylesheet" href="/src/entry.css" />
+    <link rel="stylesheet" href="/src/project-case.css" />
+    <style data-critical-reset>
+      html { color-scheme: dark; background: #070a0f; scroll-behavior: smooth; }
+      *, *::before, *::after { box-sizing: border-box; }
+      body { margin: 0; min-width: 320px; color: #edf1f5; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; line-height: 1.58; background: #070a0f; }
+      .entry-shell { position: relative; z-index: 2; overflow: clip; visibility: visible; }
+    </style>
+  </head>
+  <body class="entry-page entry-page--lab entry-page--enhanced">
+    <div class="entry-shell">
+      <header class="entry-topbar">
+        <a href="/index.html"><strong>FEIAN</strong><span>项目实验 / containment</span></a>
+        <nav class="entry-nav" aria-label="页面导航"><a href="/index.html">首页</a><a href="/lab.html">项目实验</a><a href="/archive.html">归档</a></nav>
+      </header>
+
+      <header class="entry-header entry-header-feature">
+        <div class="entry-filebar" aria-label="项目状态">
+          <div class="entry-filebar-tag"><span>网页演示</span><strong>CONTAINMENT ADMIN</strong></div>
+          <div class="entry-filebar-route"><span>内容</span><span>全部为虚构资料</span></div>
+        </div>
+        <div class="entry-header-grid">
+          <div class="entry-header-copy">
+            <p class="entry-kicker">收容黑箱</p>
+            <h1>我用虚构资料搭了一套真的能操作的收容站后台</h1>
+            <p class="entry-subhead">档案不是摆着看的卡片。修改会留下旧版本，异常事件能转成工单，搜索也能同时找到档案、事件和处理记录。</p>
+            <p class="entry-lede">我想试的是：界面可以有气氛，但操作不能被气氛盖住。表单、表格和按钮都是真正的网页控件，不是贴在背景图里的假界面。</p>
+            <div class="entry-meta"><span>React + TypeScript</span><span>Express</span><span>本地 SQLite</span></div>
+          </div>
+          <aside class="project-case-instrument project-case--scp entry-filecard" aria-label="虚构收容站的档案、异常记录、工单和操作记录围绕管理核心运转">
+            <span class="project-case-label">虚构资料，本地演示</span>
+            <div class="case-scp-seal">档案<br />总览</div>
+            <span class="case-scp-event case-scp-event--a">档案更新</span>
+            <span class="case-scp-event case-scp-event--b">异常记录</span>
+            <span class="case-scp-event case-scp-event--c">工单处理</span>
+            <span class="case-scp-event case-scp-event--d">操作回看</span>
+            <span class="project-case-foot">archive → incident → work order → audit</span>
+          </aside>
+        </div>
+      </header>
+
+      <main class="entry-main">
+        <section class="entry-section" id="flow">
+          <h2>不只做一张好看的控制台</h2>
+          <p>档案每次修改都会留下旧版本，删除先进入归档；事件和工单也只能按允许的顺序往下走，遇到不合理的操作会直接拦住。</p>
+          <div class="entry-quicklook">
+            <article class="entry-quicklook-card"><span class="entry-quicklook-label">01 / 档案</span><strong>修改有旧版本</strong><p>重要内容不会被一次覆盖后完全找不回来。</p></article>
+            <article class="entry-quicklook-card"><span class="entry-quicklook-label">02 / 事件</span><strong>异常能接到工单</strong><p>从发现问题到有人处理，中间不会断成两套记录。</p></article>
+            <article class="entry-quicklook-card"><span class="entry-quicklook-label">03 / 回看</span><strong>操作留有记录</strong><p>可以按关键词、严重程度和处理结果筛选。</p></article>
+          </div>
+        </section>
+
+        <section class="entry-section" id="visual">
+          <h2>图片负责气氛，操作还是交给网页</h2>
+          <p>视觉素材只用在背景、纹理和图标上。表格、表单、按钮和业务文字都由网页自己画出来，所以关键操作不会藏在一张看起来像后台、实际上什么都点不了的图片里。</p>
+          <div class="proof-grid">
+            <article class="proof-card"><h3>桌面和手机都能用</h3><p>小屏幕重新安排信息，不只是把整张后台缩小。</p></article>
+            <article class="proof-card"><h3>权限不是装饰标签</h3><p>不同身份看到的入口和能做的操作不一样。</p></article>
+            <article class="proof-card"><h3>搜索跨过几类资料</h3><p>档案、事件和工单能从同一个搜索入口找到。</p></article>
+          </div>
+        </section>
+
+        <section class="entry-section" id="boundary">
+          <h2>它是演示，不是安防产品</h2>
+          <p>所有内容都是虚构资料，不连接真实安防系统、云服务或生产数据。这套本地登录和 SQLite 方案只适合演示，还没有按企业系统的安全标准做完整加固，也没有经过长期真实使用。</p>
+        </section>
+
+        <section class="entry-note"><p>这个项目主要用来练一件事：视觉可以大胆，但业务动作要真的存在。回到 <a href="/lab.html">项目实验</a> 可以继续看其他项目。</p></section>
+      </main>
+    </div>
+    <script type="module" src="/src/entry.ts"></script>
+  </body>
+</html>

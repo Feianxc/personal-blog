@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="description" content="FEIAN 的数字母线项目梳理：理清现有前后端从路线绘制、后端分段到 GLB 三维预览的链路。" />
+    <title>数字母线项目梳理：从网页走势到三维预览 - FEIAN</title>
+    <link rel="stylesheet" href="/src/entry.css" />
+    <link rel="stylesheet" href="/src/project-case.css" />
+    <style data-critical-reset>
+      html { color-scheme: dark; background: #070a0f; scroll-behavior: smooth; }
+      *, *::before, *::after { box-sizing: border-box; }
+      body { margin: 0; min-width: 320px; color: #edf1f5; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; line-height: 1.58; background: #070a0f; }
+      .entry-shell { position: relative; z-index: 2; overflow: clip; visibility: visible; }
+    </style>
+  </head>
+  <body class="entry-page entry-page--lab entry-page--enhanced">
+    <div class="entry-shell">
+      <header class="entry-topbar">
+        <a href="/index.html"><strong>FEIAN</strong><span>项目实验 / digital busbar</span></a>
+        <nav class="entry-nav" aria-label="页面导航"><a href="/index.html">首页</a><a href="/lab.html">项目实验</a><a href="/archive.html">归档</a></nav>
+      </header>
+
+      <header class="entry-header entry-header-feature">
+        <div class="entry-filebar" aria-label="项目状态">
+          <div class="entry-filebar-tag"><span>工业与三维</span><strong>ROUTE TO SEGMENTS</strong></div>
+          <div class="entry-filebar-route"><span>记录时间</span><span>2026-07-10</span></div>
+        </div>
+        <div class="entry-header-grid">
+          <div class="entry-header-copy">
+            <p class="entry-kicker">数字母线项目梳理</p>
+            <h1>我把路线绘制、后端分段和三维预览这条链路重新理了一遍</h1>
+            <p class="entry-subhead">这套现有项目由 Vue 和 Three.js 前端、Express 后端组成。我这次做的是读代码、画项目地图、整理交接包，让接手的人知道数据从哪里来，下一步应该改哪里。</p>
+            <p class="entry-lede">路线保存、分段和 GLB 预览之间的代码关系已经理清。STEP 输出、真实登录、多项目切换和部分弯头显示还没核到稳定，所以暂时不写成已经完成。</p>
+            <div class="entry-meta"><span>Vue 3</span><span>Three.js</span><span>Express / MySQL</span></div>
+          </div>
+          <aside class="project-case-instrument project-case--busbar3d entry-filecard" aria-label="一条母线路线被拆成三段并组合成三维预览">
+            <span class="project-case-label">走势正在拆成零件</span>
+            <div class="case-busbar-plane"></div>
+            <span class="case-busbar-segment case-busbar-segment--a"></span>
+            <span class="case-busbar-segment case-busbar-segment--b"></span>
+            <span class="case-busbar-segment case-busbar-segment--c"></span>
+            <i class="case-busbar-joint"></i>
+            <div class="case-busbar-steps"><span>画走势</span><span>保存</span><span>拆分</span><span>预览</span></div>
+          </aside>
+        </div>
+      </header>
+
+      <main class="entry-main">
+        <section class="entry-section" id="route">
+          <h2>我接手时，先把一条路线跟到底</h2>
+          <p>使用者在三维画布里放好起点和终点，再填写宽度、深度和排列方向。保存以后，后端会把整条走势拆成直段、弯头和连接件。我沿着这条数据链把前端页面、接口和模型加载位置一一对上。</p>
+          <div class="entry-quicklook">
+            <article class="entry-quicklook-card"><span class="entry-quicklook-label">01 / 输入</span><strong>起点、终点与尺寸</strong><p>路线参数先作为一份完整项目保存。</p></article>
+            <article class="entry-quicklook-card"><span class="entry-quicklook-label">02 / 拆分</span><strong>直段、弯头与连接件</strong><p>每一段保留自己的位置、方向和长度。</p></article>
+            <article class="entry-quicklook-card"><span class="entry-quicklook-label">03 / 回看</span><strong>GLB 三维预览</strong><p>分段结果带着模型路径回到网页里。</p></article>
+          </div>
+        </section>
+
+        <section class="entry-section" id="handoff">
+          <h2>代码很多，所以先给接手的人一张地图</h2>
+          <p>我先用一个完整故事讲清使用者做了什么、数据去了哪里，再补上视觉总图、接口速查和模块分工。这样后来的人不用一上来就在前后端两个仓库里猜产品怎么跑。</p>
+          <div class="proof-grid">
+            <article class="proof-card"><h3>先讲完整流程</h3><p>从画路线到加载三维模型，用同一个例子串起来。</p></article>
+            <article class="proof-card"><h3>再看接口和模块</h3><p>每一步对应到具体接口、数据和文件位置。</p></article>
+            <article class="proof-card"><h3>未完成项单独写</h3><p>登录、配置、几何细节和导出能力不混在已完成内容里。</p></article>
+          </div>
+        </section>
+
+        <section class="entry-section" id="boundary">
+          <h2>还有几段没核稳</h2>
+          <p>路线保存、分段和 GLB 预览之间的关系已经理清。STEP 输出、真实登录、多项目切换和部分弯头显示还要继续确认，公开页面也不会使用真实业务模型或内部文件。</p>
+        </section>
+
+        <section class="entry-note"><p>这页先记录我已经弄明白的部分。等 STEP 输出和弯头显示也稳定后，我再把制造文件这一段补上。回到 <a href="/lab.html">项目实验</a> 可以继续看其他项目。</p></section>
+      </main>
+    </div>
+    <script type="module" src="/src/entry.ts"></script>
+  </body>
+</html>

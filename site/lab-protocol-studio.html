@@ -11,6 +11,7 @@
     <title>动环协议自动生成系统：一次填参，生成三份文件 - FEIAN</title>
     <link rel="stylesheet" href="/src/entry.css" />
     <link rel="stylesheet" href="/src/system-story.css" />
+    <link rel="stylesheet" href="/src/project-case.css" />
     <style data-critical-reset>
       html { color-scheme: dark; background: #070a0f; scroll-behavior: smooth; }
       *, *::before, *::after { box-sizing: border-box; }
@@ -62,21 +63,58 @@
             </div>
           </div>
 
-          <aside class="story-visual entry-filecard" aria-label="协议数据从输入流向三份文件的抽象图">
-            <div class="story-visual-core">
-              <span>统一母版</span>
-              <strong>ONE SOURCE<br />THREE FILES</strong>
+          <aside
+            class="project-case-instrument project-case--protocol entry-filecard"
+            role="img"
+            aria-label="A 路和 B 路的箱型、板卡与地址参数汇入统一母版，经过地址冲突检查后，生成协议 Excel、设备 CSV 和报警状态代码"
+          >
+            <span class="project-case-label">一份项目数据，三份交付文件</span>
+            <div class="case-protocol-workbench" aria-hidden="true">
+              <div class="case-protocol-inputs">
+                <div class="case-protocol-input case-protocol-input--a">
+                  <span>A 路</span>
+                  <strong>箱型 · 板卡</strong>
+                  <i>地址区间</i>
+                </div>
+                <div class="case-protocol-input case-protocol-input--b">
+                  <span>B 路</span>
+                  <strong>箱型 · 板卡</strong>
+                  <i>地址区间</i>
+                </div>
+              </div>
+
+              <div class="case-protocol-compiler">
+                <div class="case-protocol-compiler-head">
+                  <span>统一母版</span>
+                  <strong>地址冲突检查</strong>
+                </div>
+                <div class="case-protocol-matrix">
+                  <i></i><i></i><i></i><i></i><i></i>
+                  <i></i><i></i><i></i><i></i><i></i>
+                  <i></i><i></i><i></i><i></i><i></i>
+                  <i></i><i></i><i></i><i></i><i></i>
+                  <i></i><i></i><i></i><i></i><i></i>
+                </div>
+                <div class="case-protocol-scan"></div>
+                <div class="case-protocol-check"><i></i><span>地址重叠就停止</span></div>
+              </div>
+
+              <div class="case-protocol-outputs">
+                <div class="case-protocol-file case-protocol-file--excel">
+                  <span>XLSX</span><strong>协议 Excel</strong><i>工作簿结构</i>
+                </div>
+                <div class="case-protocol-file case-protocol-file--csv">
+                  <span>CSV</span><strong>设备 CSV</strong><i>MCGS 导入</i>
+                </div>
+                <div class="case-protocol-file case-protocol-file--code">
+                  <span>CODE</span><strong>报警状态代码</strong><i>同一份地址</i>
+                </div>
+              </div>
             </div>
-            <span class="story-visual-node story-visual-node--one">A / B 路</span>
-            <span class="story-visual-node story-visual-node--two">板卡布局</span>
-            <span class="story-visual-node story-visual-node--three">Excel</span>
-            <span class="story-visual-node story-visual-node--four">设备 CSV</span>
-            <span class="story-visual-node story-visual-node--five">状态代码</span>
-            <i class="story-visual-path story-visual-path--one"></i>
-            <i class="story-visual-path story-visual-path--two"></i>
-            <i class="story-visual-path story-visual-path--three"></i>
-            <i class="story-visual-pulse"></i>
-            <i class="story-visual-pulse story-visual-pulse--two"></i>
+            <div class="case-protocol-stages" aria-hidden="true">
+              <span>参数汇入</span><span>范围校验</span><span>文件生成</span>
+            </div>
+            <span class="project-case-foot">input → validate → deliver</span>
           </aside>
         </div>
       </header>
@@ -180,7 +218,7 @@
           <div class="story-links">
             <a href="/lab-mcgs-chain.html">继续看 MCGS 装配台</a>
             <a href="/lab-busbar-debugging-platform.html">继续看大小母线平台</a>
-            <a href="/index.html#signals">回到三套系统</a>
+            <a href="/index.html#feed">回到项目画廊</a>
           </div>
         </section>
 

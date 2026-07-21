@@ -110,8 +110,7 @@
 
         <nav class="topnav" aria-label="主导航">
           <a href="#cover" data-interactive-lens data-pointer-label="top">首页</a>
-          <a href="#signals" data-interactive-lens data-pointer-label="axis" data-pointer-mode="scan">系统</a>
-          <a href="#feed" data-interactive-lens data-pointer-label="scan" data-pointer-mode="scan">构建物</a>
+          <a href="#feed" data-interactive-lens data-pointer-label="scan" data-pointer-mode="scan">项目</a>
           <a href="/workflow.html" data-interactive-lens data-pointer-label="term" data-pointer-mode="terminal">运行日志</a>
           <a href="/archive.html" data-interactive-lens data-pointer-label="index" data-pointer-mode="index">归档</a>
           <a href="/about.html" data-interactive-lens data-pointer-label="about">关于</a>
@@ -121,9 +120,8 @@
 
       <div class="register-spine" aria-hidden="true">
         <span data-register-item="cover" data-label="入口">00</span>
-        <span data-register-item="signals" data-label="系统">01</span>
-        <span data-register-item="feed" data-label="构建">02</span>
-        <span data-register-item="archive" data-label="索引">03</span>
+        <span data-register-item="feed" data-label="项目">01</span>
+        <span data-register-item="archive" data-label="索引">02</span>
       </div>
 
       <main>
@@ -178,8 +176,8 @@
 
               <div class="cover-status-strip" aria-label="当前状态">
                 <span><i></i>这是 FEIAN 的个人实验站</span>
-                <span>主要入口：构建物 / 运行日志 / 归档</span>
-                <span>鼠标探针会提示当前动作</span>
+                <span>主要入口：项目 / 运行日志 / 归档</span>
+                <span>能点击的地方会给出动作提示</span>
               </div>
             </article>
 
@@ -268,334 +266,334 @@
           </div>
         </section>
 
-        <section
-          id="signals"
-          class="section section-signals section-live-systems"
-          data-live-systems
-          data-system-active="protocol"
-        >
-          <div class="section-head systems-section-head" data-reveal>
-            <p class="section-label">THREE LIVE SYSTEMS / 三套正在生长的系统</p>
-            <h2>这三套系统，都从真实工作里长出来</h2>
-            <p>它们都来自真实工作。一个负责出动环协议，一个把 MCGS 改造步骤收拢起来，还有一个专门记录和追踪大小母线现场问题。</p>
-          </div>
-
-          <div class="systems-scroll" data-systems-scroll>
-            <div class="systems-sticky">
-              <div class="systems-progress" aria-hidden="true">
-                <span data-system-progress></span>
-              </div>
-
-              <div class="systems-rail" role="tablist" aria-label="选择要查看的系统">
-                <button
-                  id="system-tab-protocol"
-                  class="systems-tab is-active"
-                  type="button"
-                  role="tab"
-                  aria-selected="true"
-                  aria-controls="system-panel-protocol"
-                  data-system-tab="protocol"
-                  data-interactive-lens
-                  data-pointer-label="protocol"
-                  data-pointer-mode="scan"
-                >
-                  <span>01</span>
-                  <strong>动环协议</strong>
-                  <i>三份文件，一套参数</i>
-                </button>
-                <button
-                  id="system-tab-mcgs"
-                  class="systems-tab"
-                  type="button"
-                  role="tab"
-                  aria-selected="false"
-                  aria-controls="system-panel-mcgs"
-                  tabindex="-1"
-                  data-system-tab="mcgs"
-                  data-interactive-lens
-                  data-pointer-label="mcgs"
-                  data-pointer-mode="scan"
-                >
-                  <span>02</span>
-                  <strong>MCGS 装配台</strong>
-                  <i>只留下真正要改的地方</i>
-                </button>
-                <button
-                  id="system-tab-busbar"
-                  class="systems-tab"
-                  type="button"
-                  role="tab"
-                  aria-selected="false"
-                  aria-controls="system-panel-busbar"
-                  tabindex="-1"
-                  data-system-tab="busbar"
-                  data-interactive-lens
-                  data-pointer-label="busbar"
-                  data-pointer-mode="scan"
-                >
-                  <span>03</span>
-                  <strong>大小母线调试</strong>
-                  <i>把现场问题留在同一处</i>
-                </button>
-              </div>
-
-              <div
-                class="systems-stage"
-                data-systems-stage
-                data-interactive-lens
-                data-pointer-label="inspect"
-                data-pointer-mode="scan"
-              >
-                <div class="systems-stage-atmosphere" aria-hidden="true">
-                  <span class="systems-rift systems-rift--a"></span>
-                  <span class="systems-rift systems-rift--b"></span>
-                  <span class="systems-scanline"></span>
-                </div>
-
-                <article
-                  id="system-panel-protocol"
-                  class="system-panel system-panel--protocol is-active"
-                  role="tabpanel"
-                  aria-labelledby="system-tab-protocol"
-                  aria-hidden="false"
-                  data-system-panel="protocol"
-                >
-                  <div class="system-panel-copy">
-                    <p class="system-panel-kicker"><span>01</span> PROTOCOL LOOM</p>
-                    <h3>动环协议自动生成系统</h3>
-                    <p class="system-panel-lede">以前做一份新协议，要在旧表、地址、报警位和设备点之间来回核对。现在我先填项目和 A/B 路，系统会从同一份数据生成 Excel、MCGS 导入 CSV 和报警状态字代码。</p>
-                    <ul class="system-panel-list">
-                      <li>单列、双列和不同板卡组合都在一个入口里配置</li>
-                      <li>地址撞车或结构对不上时，先停下来提醒我</li>
-                      <li>三份文件来自同一份最终表，不再各改各的</li>
-                    </ul>
-                    <a class="system-panel-link" href="/lab-protocol-studio.html" data-interactive-lens data-pointer-label="open" data-pointer-mode="scan">看看这套协议系统 <span>↗</span></a>
-                  </div>
-
-                  <div class="system-visual system-visual--protocol" aria-hidden="true">
-                    <div class="protocol-input-stack">
-                      <span>A 路</span><span>B 路</span><span>板卡</span><span>地址</span>
-                    </div>
-                    <div class="protocol-matrix">
-                      <i style="--cell:0"></i><i style="--cell:1"></i><i style="--cell:2"></i><i style="--cell:3"></i>
-                      <i style="--cell:4"></i><i style="--cell:5"></i><i style="--cell:6"></i><i style="--cell:7"></i>
-                      <i style="--cell:8"></i><i style="--cell:9"></i><i style="--cell:10"></i><i style="--cell:11"></i>
-                      <i style="--cell:12"></i><i style="--cell:13"></i><i style="--cell:14"></i><i style="--cell:15"></i>
-                      <i style="--cell:16"></i><i style="--cell:17"></i><i style="--cell:18"></i><i style="--cell:19"></i>
-                      <i style="--cell:20"></i><i style="--cell:21"></i><i style="--cell:22"></i><i style="--cell:23"></i>
-                    </div>
-                    <div class="protocol-core">
-                      <span>统一母版</span>
-                      <strong>ONE SOURCE<br />THREE FILES</strong>
-                      <i></i>
-                    </div>
-                    <svg class="protocol-wires" viewBox="0 0 760 460" preserveAspectRatio="none">
-                      <path d="M72 108 C210 108 222 218 355 218 S522 92 684 92" />
-                      <path d="M72 186 C204 186 230 234 355 234 S520 218 684 218" />
-                      <path d="M72 264 C214 264 230 250 355 250 S526 344 684 344" />
-                      <path class="wire-hot" d="M72 342 C220 342 230 266 355 266 S520 218 684 218" />
-                    </svg>
-                    <div class="protocol-output-stack">
-                      <span><i></i>Excel</span><span><i></i>CSV</span><span><i></i>状态代码</span>
-                    </div>
-                    <div class="protocol-packet protocol-packet--a"></div>
-                    <div class="protocol-packet protocol-packet--b"></div>
-                  </div>
-                </article>
-
-                <article
-                  id="system-panel-mcgs"
-                  class="system-panel system-panel--mcgs"
-                  role="tabpanel"
-                  aria-labelledby="system-tab-mcgs"
-                  aria-hidden="true"
-                  data-system-panel="mcgs"
-                >
-                  <div class="system-panel-copy">
-                    <p class="system-panel-kicker"><span>02</span> MCGS ASSEMBLY ORBIT</p>
-                    <h3>MCGS 全链条辅助创造系统</h3>
-                    <p class="system-panel-lede">我不想每次换项目都重新翻一遍模板。现在先填箱型、机柜和回路，装配台会把配方、变量、设备、策略、报警和窗口接起来，只把这一单真正需要处理的内容留下。</p>
-                    <ul class="system-panel-list">
-                      <li>参数一改，下面的清单和代码会跟着刷新</li>
-                      <li>单屏单列会自动排除没有启用的第二列内容</li>
-                      <li>协议 Excel、设备 CSV 和报警代码也能从这里一起生成</li>
-                    </ul>
-                    <p class="system-panel-boundary">这套系统还在继续长。它能帮我整理和生成，但 MCGS 里的另存、编译、仿真和现场确认仍要认真做完。</p>
-                    <a class="system-panel-link" href="/lab-mcgs-chain.html" data-interactive-lens data-pointer-label="open" data-pointer-mode="scan">看看 MCGS 装配台 <span>↗</span></a>
-                  </div>
-
-                  <div class="system-visual system-visual--mcgs" aria-hidden="true">
-                    <div class="mcgs-orbit-ring mcgs-orbit-ring--outer"></div>
-                    <div class="mcgs-orbit-ring mcgs-orbit-ring--inner"></div>
-                    <svg class="mcgs-links" viewBox="0 0 760 460" preserveAspectRatio="none">
-                      <path d="M380 230 L168 96" /><path d="M380 230 L590 92" />
-                      <path d="M380 230 L650 238" /><path d="M380 230 L566 380" />
-                      <path d="M380 230 L198 382" /><path d="M380 230 L108 240" />
-                    </svg>
-                    <div class="mcgs-template-core">
-                      <span>固定模板</span>
-                      <strong>PROJECT<br />ASSEMBLY</strong>
-                      <i></i><i></i><i></i>
-                    </div>
-                    <span class="mcgs-node mcgs-node--recipe">配方</span>
-                    <span class="mcgs-node mcgs-node--database">数据库</span>
-                    <span class="mcgs-node mcgs-node--device">设备</span>
-                    <span class="mcgs-node mcgs-node--strategy">策略</span>
-                    <span class="mcgs-node mcgs-node--alarm">报警</span>
-                    <span class="mcgs-node mcgs-node--window">窗口</span>
-                    <div class="mcgs-trace mcgs-trace--one"></div>
-                    <div class="mcgs-trace mcgs-trace--two"></div>
-                    <div class="mcgs-trace mcgs-trace--three"></div>
-                  </div>
-                </article>
-
-                <article
-                  id="system-panel-busbar"
-                  class="system-panel system-panel--busbar"
-                  role="tabpanel"
-                  aria-labelledby="system-tab-busbar"
-                  aria-hidden="true"
-                  data-system-panel="busbar"
-                >
-                  <div class="system-panel-copy">
-                    <p class="system-panel-kicker"><span>03</span> BUSBAR FIELD MEMORY</p>
-                    <h3>大小母线调试问题平台</h3>
-                    <p class="system-panel-lede">现场问题以前散在 Excel、照片和聊天记录里，过一阵再找就很费劲。我把项目、问题、处理状态、照片和结论放到一个平台里，回来后还能接着查，也能翻出相似记录做参考。</p>
-                    <ul class="system-panel-list">
-                      <li>按项目记录问题现象、分析、处理方法和当前状态</li>
-                      <li>支持照片、分类、根因、搜索和历史记录</li>
-                      <li>能按时间导出 Excel 台账和汇报材料，也接了小程序接口</li>
-                    </ul>
-                    <a class="system-panel-link" href="/lab-busbar-debugging-platform.html" data-interactive-lens data-pointer-label="open" data-pointer-mode="scan">看看大小母线平台 <span>↗</span></a>
-                  </div>
-
-                  <div class="system-visual system-visual--busbar" aria-hidden="true">
-                    <div class="busbar-grid"></div>
-                    <div class="busbar-rail busbar-rail--a"><span>A / 大母线</span><i></i><i></i><i></i><i></i></div>
-                    <div class="busbar-rail busbar-rail--b"><span>B / 小母线</span><i></i><i></i><i></i><i></i></div>
-                    <div class="busbar-pulse busbar-pulse--a"></div>
-                    <div class="busbar-pulse busbar-pulse--b"></div>
-                    <div class="busbar-fault"><i></i><span>现场问题</span><strong>定位中</strong></div>
-                    <div class="busbar-flow">
-                      <span>现象</span><i></i><span>分析</span><i></i><span>处理</span><i></i><span>回看</span>
-                    </div>
-                    <div class="busbar-status-strip">
-                      <span><i class="is-open"></i>未解决</span>
-                      <span><i class="is-pending"></i>处理中</span>
-                      <span><i class="is-done"></i>已解决</span>
-                    </div>
-                  </div>
-                </article>
-
-                <div class="systems-stage-footer" aria-hidden="true">
-                  <span data-system-stage-index>01 / 03</span>
-                  <i></i>
-                  <span>SCROLL OR CHOOSE A SYSTEM</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         <section id="feed" class="section section-feed">
           <div class="section-head" data-reveal>
-            <p class="section-label">RECENTLY MADE</p>
-            <h2>最近做成的东西</h2>
-            <p>有些来自工作现场，有些只是自己想用。能公开的，我会把成品和来龙去脉一起放在这里。</p>
+            <p class="section-label">RECENT PROJECTS</p>
+            <h2>最近在做的东西</h2>
+            <p>我喜欢把日常工作和生活里反复遇到的事，做得更智能一点，也更容易看清。这里不只放名字，我想让你一眼看懂每样东西到底在做什么。</p>
           </div>
 
-          <div class="feed-list build-board">
-            <a class="feed-item feed-item--featured feed-item--system feed-item--mcgs" href="/lab-mcgs-chain.html" data-reveal data-interactive-lens data-pointer-label="scan" data-pointer-mode="scan" data-orbit-card="1">
-              <div class="feed-meta">
-                <time datetime="2026-07-21">2026-07-21</time>
-                <span>工程系统</span>
-                <strong class="feed-index">正在做</strong>
+          <div class="project-gallery" data-project-gallery>
+            <a
+              class="feed-item project-feature project-feature--mcgs"
+              href="/lab-mcgs-chain.html"
+              data-project-card
+              data-project-kind="mcgs"
+              data-interactive-lens
+              data-pointer-label="scan"
+              data-pointer-mode="scan"
+              data-orbit-card="1"
+            >
+              <div class="project-feature-meta">
+                <span>2026-07-21 · 工程系统</span><i></i><strong>正在做</strong>
               </div>
-              <div class="feed-copy">
+              <div class="project-feature-copy">
+                <p class="project-feature-number">01 / MCGS ASSEMBLY</p>
                 <h3>MCGS 全链条辅助创造系统</h3>
-                <p>填好箱型、机柜和回路后，装配台会把这一单要改的配方、设备、策略、报警和窗口整理出来。</p>
-                <div class="feed-proof">
-                  <span>这次解决什么</span>
-                  <p>不再每换一个项目，就从头翻模板、找变量、猜哪些脚本要跟着改。</p>
+                <p>填好箱型、机柜和回路后，装配台会列出这次要改的配方、设备、策略、报警和窗口。换项目时，不用再从头翻模板、逐段找脚本。</p>
+                <div class="project-feature-proof">
+                  <span>这次真正省下来的事</span>
+                  <p>固定模板和当前项目参数从同一个入口汇进来，再分到六个需要改动的地方。另存、编译、仿真和现场确认仍然要认真做完。</p>
                 </div>
-                <div class="feed-system-mini feed-system-mini--mcgs" aria-hidden="true">
-                  <span>配方</span><span>设备</span><strong>MCGS</strong><span>策略</span><span>窗口</span>
-                  <i></i><i></i><i></i>
+                <span class="project-feature-cta">看看装配台</span>
+              </div>
+              <div class="project-visual project-visual--mcgs" aria-hidden="true">
+                <span class="project-visual-label">模板与项目参数正在汇入</span>
+                <div class="assembly-map">
+                  <svg class="assembly-links" viewBox="0 0 760 480" preserveAspectRatio="none" focusable="false">
+                    <path class="assembly-link" data-project-motion d="M380 240 C288 220 224 130 112 112" />
+                    <path class="assembly-link" d="M380 240 C278 242 188 240 76 240" />
+                    <path class="assembly-link" d="M380 240 C288 272 224 370 120 394" />
+                    <path class="assembly-link" d="M380 240 C472 220 536 130 648 112" />
+                    <path class="assembly-link" d="M380 240 C482 242 572 240 684 240" />
+                    <path class="assembly-link" d="M380 240 C472 272 536 370 640 394" />
+                    <path class="assembly-link" d="M380 62 C380 112 380 154 380 190" />
+                  </svg>
+                  <div class="assembly-input"><i></i><span>固定模板 + 当前项目</span></div>
+                  <div class="assembly-core"><span>装配核心</span><strong>执行清单<br />已生成</strong><i></i></div>
+                  <span class="assembly-node assembly-node--left assembly-node--recipe">配方</span>
+                  <span class="assembly-node assembly-node--left assembly-node--database">数据库</span>
+                  <span class="assembly-node assembly-node--left assembly-node--device">设备</span>
+                  <span class="assembly-node assembly-node--right assembly-node--strategy">策略</span>
+                  <span class="assembly-node assembly-node--right assembly-node--alarm">报警</span>
+                  <span class="assembly-node assembly-node--right assembly-node--window">窗口</span>
+                  <div class="assembly-progress"><span>装配计划</span><i></i><strong>6 个区域</strong></div>
                 </div>
               </div>
-              <div class="feed-action" aria-hidden="true"><span>打开</span><strong>看装配台</strong></div>
             </a>
 
-            <a class="feed-item feed-item--featured feed-item--system feed-item--protocol" href="/lab-protocol-studio.html" data-reveal data-interactive-lens data-pointer-label="scan" data-pointer-mode="scan" data-orbit-card="2">
-              <div class="feed-meta">
-                <time datetime="2026-07-20">2026-07-20</time>
-                <span>协议系统</span>
-                <strong class="feed-index">可使用</strong>
+            <a
+              class="feed-item project-feature project-feature--protocol project-feature--reverse"
+              href="/lab-protocol-studio.html"
+              data-project-card
+              data-project-kind="protocol"
+              data-interactive-lens
+              data-pointer-label="scan"
+              data-pointer-mode="scan"
+              data-orbit-card="2"
+            >
+              <div class="project-feature-meta">
+                <span>2026-07-20 · 协议系统</span><i></i><strong>可使用</strong>
               </div>
-              <div class="feed-copy">
+              <div class="project-feature-copy">
+                <p class="project-feature-number">02 / PROTOCOL STUDIO</p>
                 <h3>动环协议自动生成系统</h3>
-                <p>项目参数只填一次，协议 Excel、MCGS 设备 CSV 和报警状态字代码从同一份数据一起生成。</p>
-                <div class="feed-proof">
+                <p>项目参数只填一次，A、B 两路地址先进入同一份母版，再一起生成协议 Excel、MCGS 设备 CSV 和报警状态字代码。</p>
+                <div class="project-feature-proof">
                   <span>最重要的变化</span>
-                  <p>历史表只负责提供规则，做新项目时不需要再猜该抄哪一张模板。</p>
+                  <p>历史表只负责提供规则，不再拿来反复复制。地址冲突会先被拦住，三份输出也能回到同一份数据核对。</p>
                 </div>
-                <div class="feed-system-mini feed-system-mini--protocol" aria-hidden="true">
-                  <span>A</span><span>B</span><strong>母版</strong><span>Excel</span><span>CSV</span><span>代码</span>
-                  <i></i><i></i>
-                </div>
+                <span class="project-feature-cta">看看协议系统</span>
               </div>
-              <div class="feed-action" aria-hidden="true"><span>打开</span><strong>看协议系统</strong></div>
+              <div class="project-visual project-visual--protocol" aria-hidden="true">
+                <span class="project-visual-label">一次填写，三份输出</span>
+                <svg class="protocol-rails" viewBox="0 0 760 480" preserveAspectRatio="none" focusable="false">
+                  <path class="protocol-rail" data-project-motion d="M100 156 C190 156 220 212 310 232" />
+                  <path class="protocol-rail" d="M100 324 C190 324 220 268 310 248" />
+                  <path class="protocol-rail protocol-rail--out" d="M445 240 C520 210 548 142 652 126" />
+                  <path class="protocol-rail protocol-rail--out" d="M445 240 C540 240 566 240 652 240" />
+                  <path class="protocol-rail protocol-rail--out" d="M445 240 C520 270 548 338 652 354" />
+                </svg>
+                <div class="protocol-inputs">
+                  <span class="protocol-input">A 路<small>地址与设备</small></span>
+                  <span class="protocol-input">B 路<small>地址与设备</small></span>
+                </div>
+                <div class="protocol-matrix">
+                  <i></i><i></i><i></i><i></i><i></i>
+                  <i></i><i></i><i></i><i></i><i></i>
+                  <i></i><i></i><i></i><i></i><i></i>
+                  <i></i><i></i><i></i><i></i><i></i>
+                </div>
+                <div class="protocol-outputs">
+                  <span class="protocol-output"><strong>协议 Excel</strong><span>READY</span><i></i></span>
+                  <span class="protocol-output"><strong>设备 CSV</strong><span>READY</span><i></i></span>
+                  <span class="protocol-output"><strong>报警代码</strong><span>READY</span><i></i></span>
+                </div>
+                <div class="protocol-status"><i></i><span>地址检查通过后再生成</span></div>
+              </div>
             </a>
 
-            <a class="feed-item feed-item--featured feed-item--system feed-item--busbar" href="/lab-busbar-debugging-platform.html" data-reveal data-interactive-lens data-pointer-label="scan" data-pointer-mode="scan" data-orbit-card="3">
-              <div class="feed-meta">
-                <time datetime="2026-07-16">2026-07-16</time>
-                <span>现场平台</span>
-                <strong class="feed-index">已上线</strong>
+            <a
+              class="feed-item project-feature project-feature--busbar"
+              href="/lab-busbar-debugging-platform.html"
+              data-project-card
+              data-project-kind="busbar"
+              data-interactive-lens
+              data-pointer-label="scan"
+              data-pointer-mode="scan"
+              data-orbit-card="3"
+            >
+              <div class="project-feature-meta">
+                <span>2026-07-16 · 现场平台</span><i></i><strong>已上线</strong>
               </div>
-              <div class="feed-copy">
+              <div class="project-feature-copy">
+                <p class="project-feature-number">03 / FIELD MEMORY</p>
                 <h3>大小母线调试问题平台</h3>
-                <p>把项目、现场问题、照片、分析、处理方法和状态放在一起，后面再遇到相似问题时能直接翻出来。</p>
-                <div class="feed-proof">
-                  <span>现在能做</span>
-                  <p>录入和检索问题、维护处理状态、导出时间段台账和汇报，也给小程序留了完整接口。</p>
+                <p>现场问题以前散在 Excel、照片和聊天记录里。我把现象、照片、分析、处理方法和状态放到一起，回来以后还能接着查。</p>
+                <div class="project-feature-proof">
+                  <span>现在能直接用的地方</span>
+                  <p>可以按项目录入、搜索和跟进问题，也能按时间导出台账和汇报。小程序使用的 v2 接口已经上线，目前还在继续联调。</p>
                 </div>
-                <div class="feed-system-mini feed-system-mini--busbar" aria-hidden="true">
-                  <span>现象</span><i></i><span>分析</span><i></i><span>处理</span><i></i><span>回看</span>
-                </div>
+                <span class="project-feature-cta">看看调试平台</span>
               </div>
-              <div class="feed-action" aria-hidden="true"><span>打开</span><strong>看调试平台</strong></div>
+              <div class="project-visual project-visual--busbar" aria-hidden="true">
+                <span class="project-visual-label">一次故障，从发现到回看</span>
+                <div class="busbar-scope"></div>
+                <div class="busbar-track busbar-track--large"></div>
+                <div class="busbar-track busbar-track--small"></div>
+                <div class="busbar-joint">现场问题<br />定位中</div>
+                <div class="busbar-record"><span>最近一条记录</span><strong>处理方法已补齐</strong><i></i></div>
+                <div class="busbar-replay"><span data-project-motion>现象</span><span>分析</span><span>处理</span><span>回看</span></div>
+              </div>
             </a>
 
-            <a class="feed-item" href="/lab-openai-node-probe.html" data-reveal data-interactive-lens data-pointer-label="scan" data-pointer-mode="scan" data-orbit-card="4">
-              <div class="feed-meta"><time datetime="2026-07-13">2026-07-13</time><span>网页工具</span><strong class="feed-index">Tool</strong></div>
-              <div class="feed-copy">
+            <a
+              class="feed-item project-feature project-feature--geo project-feature--reverse"
+              href="/lab-geo-star-engine.html"
+              data-project-card
+              data-project-kind="geo"
+              data-interactive-lens
+              data-pointer-label="scan"
+              data-pointer-mode="scan"
+              data-orbit-card="4"
+            >
+              <div class="project-feature-meta">
+                <span>2026-06-22 · 可见度与内容</span><i></i><strong>文章库可访问</strong>
+              </div>
+              <div class="project-feature-copy">
+                <p class="project-feature-number">04 / GEO VISIBILITY</p>
+                <h3>GEO 可见度工作台</h3>
+                <p>我在看一件很实际的事：别人问起一个品牌时，回答里有没有它，信息说得准不准，引用又来自哪里。</p>
+                <div class="project-feature-proof">
+                  <span>这套东西现在做到哪里</span>
+                  <p>工作台能分开查看 8 个平台的回答位置、竞品变化和引用来源。另有 50 篇平台稿已经放进公开文章库；外部账号仍需登录后人工发布。</p>
+                </div>
+                <span class="project-feature-cta">看看 GEO 工作台</span>
+              </div>
+              <div class="project-visual project-visual--geo" aria-hidden="true">
+                <span class="project-visual-label">问题、答案位置与引用来源</span>
+                <div class="geo-orbit" data-project-motion></div>
+                <div class="geo-orbit geo-orbit--inner"></div>
+                <i class="geo-citation geo-citation--one"></i>
+                <i class="geo-citation geo-citation--two"></i>
+                <i class="geo-citation geo-citation--three"></i>
+                <i class="geo-citation geo-citation--four"></i>
+                <div class="geo-answer"><span>一条回答里</span><strong>有没有被看见<br />有没有说清楚</strong><small>引用从哪里来</small></div>
+                <span class="geo-node geo-node--questions">用户问题</span>
+                <span class="geo-node geo-node--position">答案位置</span>
+                <span class="geo-node geo-node--sources">引用来源</span>
+                <span class="geo-node geo-node--changes">竞品变化</span>
+                <div class="geo-proofline"><span>8 个平台视图</span><strong>50 篇文章已进公开库</strong></div>
+              </div>
+            </a>
+
+            <div id="other-projects" class="project-shelf-head" data-reveal>
+              <p>OTHER BUILDS</p>
+              <h3>另外几件，也值得单独说说。</h3>
+            </div>
+
+            <div class="project-shelf">
+              <a
+                class="feed-item project-shelf-card project-shelf-card--busbar3d"
+                href="/lab-digital-busbar-chain.html"
+                data-project-card
+                data-interactive-lens
+                data-pointer-label="scan"
+                data-pointer-mode="scan"
+                data-orbit-card="5"
+              >
+                <div class="project-shelf-meta"><span>2026-07-10 · 三维工具</span><strong>还在核对</strong></div>
+                <h3>数字母线项目梳理</h3>
+                <p>我把这套现有项目的前后端梳理了一遍，理清了从网页画走势、后端分段到 GLB 三维预览的流程。STEP 输出和部分弯头细节还在核对。</p>
+                <div class="project-shelf-visual" aria-hidden="true">
+                  <i class="busbar3d-axis"></i>
+                  <span class="busbar3d-segment busbar3d-segment--one" data-project-motion></span>
+                  <span class="busbar3d-segment busbar3d-segment--two"></span>
+                  <span class="busbar3d-segment busbar3d-segment--three"></span>
+                  <i class="busbar3d-joint"></i>
+                  <span class="busbar3d-caption">路线 → 分段 → 三维预览</span>
+                </div>
+                <span class="project-shelf-cta">看项目</span>
+              </a>
+
+              <a
+                class="feed-item project-shelf-card project-shelf-card--atlas"
+                href="/lab-mcgs-atlas.html"
+                data-project-card
+                data-interactive-lens
+                data-pointer-label="scan"
+                data-pointer-mode="scan"
+                data-orbit-card="6"
+              >
+                <div class="project-shelf-meta"><span>2026-05-26 · 工程工具</span><strong>继续核对</strong></div>
+                <h3>MCGS 运行策略提取与索引</h3>
+                <p>我从一套既有 MCGS 工程里提取了 122 条运行策略，整理出 219 份脚本。和原来的人工目录对照时，还有 3 处内容需要回软件确认。</p>
+                <div class="project-shelf-visual" aria-hidden="true">
+                  <i class="atlas-scan"></i>
+                  <div class="atlas-stack">
+                    <span class="atlas-line" data-project-motion><b>01</b><i></i><em>启动策略</em></span>
+                    <span class="atlas-line"><b>02</b><i></i><em>循环脚本</em></span>
+                    <span class="atlas-line"><b>03</b><i></i><em>窗口事件</em></span>
+                    <span class="atlas-line"><b>04</b><i></i><em>设备命令</em></span>
+                    <span class="atlas-line"><b>05</b><i></i><em>报警处理</em></span>
+                  </div>
+                  <span class="atlas-caption">提取 → 脚本 → 索引</span>
+                </div>
+                <span class="project-shelf-cta">看目录怎么做</span>
+              </a>
+
+              <a
+                class="feed-item project-shelf-card project-shelf-card--node"
+                href="/lab-openai-node-probe.html"
+                data-project-card
+                data-interactive-lens
+                data-pointer-label="scan"
+                data-pointer-mode="scan"
+                data-orbit-card="7"
+              >
+                <div class="project-shelf-meta"><span>2026-07-13 · Windows 工具</span><strong>已开源</strong></div>
                 <h3>OpenAI 节点体检仪</h3>
-                <p>把一长串节点的可达性、速度和稳定性放到同一张报告里，先筛，再决定哪些值得继续测。</p>
-                <div class="feed-proof"><span>现在能做</span><p>批量检测、分层筛选和单文件报告。</p></div>
-              </div>
-              <div class="feed-action" aria-hidden="true"><span>打开</span><strong>看项目</strong></div>
-            </a>
+                <p>把一长串节点的可达性、速度和稳定性放进同一张报告。先快筛，再复测候选，最后还会恢复原来的节点。</p>
+                <div class="project-shelf-visual" aria-hidden="true">
+                  <div class="node-wave">
+                    <i data-project-motion style="--wave:.34;--index:1"></i><i style="--wave:.62;--index:2"></i><i style="--wave:.9;--index:3"></i><i style="--wave:.52;--index:4"></i><i style="--wave:.78;--index:5"></i><i style="--wave:.44;--index:6"></i><i style="--wave:.96;--index:7"></i><i style="--wave:.58;--index:8"></i>
+                  </div>
+                  <div class="node-rank"><span>原节点</span><span>候选复测</span><span>恢复完成</span></div>
+                  <span class="node-caption">切换 → 测速 → 恢复</span>
+                </div>
+                <span class="project-shelf-cta">看体检报告</span>
+              </a>
 
-            <a class="feed-item" href="https://blog.feian.online/eldritch/" target="_blank" rel="noopener noreferrer" data-reveal data-interactive-lens data-pointer-label="jump" data-pointer-mode="launch" data-orbit-card="5">
-              <div class="feed-meta"><time datetime="2026-06-04">2026-06-04</time><span>兴趣网站</span><strong class="feed-index">新站</strong></div>
-              <div class="feed-copy">
+              <a
+                class="feed-item project-shelf-card project-shelf-card--eldritch"
+                href="https://blog.feian.online/eldritch/"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-project-card
+                data-interactive-lens
+                data-pointer-label="jump"
+                data-pointer-mode="launch"
+                data-orbit-card="8"
+              >
+                <div class="project-shelf-meta"><span>2026-06-04 · 兴趣网站</span><strong>可访问</strong></div>
                 <h3>不可名状作品编年史</h3>
-                <p>把洛夫克拉夫特式怪奇作品做成一个可以慢慢逛、随时查的暗金文学档案馆。</p>
-                <div class="feed-proof"><span>里面有什么</span><p>35 篇作品、首次发表刊物、全文入口、译名对照和作品关系。</p></div>
-              </div>
-              <div class="feed-action" aria-hidden="true"><span>打开</span><strong>逛档案馆</strong></div>
-            </a>
+                <p>把洛夫克拉夫特式怪奇作品做成一个可以慢慢逛、随时查的暗金文学档案馆，连同译名、刊物和作品关系一起整理。</p>
+                <div class="project-shelf-visual" aria-hidden="true">
+                  <div class="eldritch-ring" data-project-motion></div>
+                  <div class="eldritch-pages"></div>
+                  <span class="eldritch-caption">35 works / first publications</span>
+                </div>
+                <span class="project-shelf-cta">逛档案馆</span>
+              </a>
 
-            <a class="feed-item" href="/lab-cad-automation.html" data-reveal data-interactive-lens data-pointer-label="scan" data-pointer-mode="scan" data-orbit-card="6">
-              <div class="feed-meta"><time datetime="2026-04-23">2026-04-23</time><span>自动化</span><strong class="feed-index">Experiment</strong></div>
-              <div class="feed-copy">
-                <h3>CAD 自动化实验</h3>
-                <p>试着把 CAD 里的批量处理和工程图生成做得更省事，目前还在继续打磨。</p>
-                <div class="feed-proof"><span>目前做到</span><p>基本流程、脚本边界和下一轮要继续验证的地方。</p></div>
-              </div>
-              <div class="feed-action" aria-hidden="true"><span>状态</span><strong>还在做</strong></div>
-            </a>
+              <a
+                class="feed-item project-shelf-card project-shelf-card--cad"
+                href="/lab-cad-automation.html"
+                data-project-card
+                data-interactive-lens
+                data-pointer-label="scan"
+                data-pointer-mode="scan"
+                data-orbit-card="9"
+              >
+                <div class="project-shelf-meta"><span>2026-04-23 · 自动化</span><strong>继续打磨</strong></div>
+                <h3>CAD 白框截图自动化</h3>
+                <p>把 CAD 全图导出、文本定位、局部裁切和运行清单接成一条批处理流程，少靠手工拖窗口截图。更多图纸和白框类型还要继续验证。</p>
+                <div class="project-shelf-visual" aria-hidden="true">
+                  <i class="cad-axis-x"></i><i class="cad-axis-y"></i>
+                  <div class="cad-shape" data-project-motion></div>
+                  <i class="cad-point cad-point--one"></i><i class="cad-point cad-point--two"></i><i class="cad-point cad-point--three"></i>
+                  <span class="cad-caption">全图 → 文本定位 → 局部裁切</span>
+                </div>
+                <span class="project-shelf-cta">看实验记录</span>
+              </a>
+
+              <a
+                class="feed-item project-shelf-card project-shelf-card--scp"
+                href="/lab-scp-containment-admin.html"
+                data-project-card
+                data-interactive-lens
+                data-pointer-label="scan"
+                data-pointer-mode="scan"
+                data-orbit-card="10"
+              >
+                <div class="project-shelf-meta"><span>2026-06-23 · 网页演示</span><strong>本地可运行</strong></div>
+                <h3>收容黑箱</h3>
+                <p>我用虚构资料搭了一套收容站管理演示。档案、异常事件、工单、搜索和权限都能串起来，不只是一张有气氛的大屏。</p>
+                <div class="project-shelf-visual" aria-hidden="true">
+                  <div class="scp-seal">档案<br />总览</div>
+                  <span class="scp-event scp-event--one" data-project-motion>档案更新</span>
+                  <span class="scp-event scp-event--two">异常记录</span>
+                  <span class="scp-event scp-event--three">工单待处理</span>
+                  <span class="scp-caption">档案 → 异常 → 工单</span>
+                </div>
+                <span class="project-shelf-cta">看演示怎么做</span>
+              </a>
+            </div>
+
+            <div class="project-gallery-end">
+              <span>完整项目页还会继续补。先把我已经梳理清楚，也适合公开讲的部分放上来。</span>
+              <a href="/lab.html" data-interactive-lens data-pointer-label="index" data-pointer-mode="index">查看全部项目 ↗</a>
+            </div>
           </div>
         </section>
 
@@ -703,7 +701,7 @@
         </div>
 
         <div class="footer-links" aria-label="页脚导航">
-          <a href="#signals" data-interactive-lens data-pointer-label="scan" data-pointer-mode="scan">最近做的</a>
+          <a href="#feed" data-interactive-lens data-pointer-label="scan" data-pointer-mode="scan">最近做的</a>
           <a href="https://blog.feian.online/eldritch/" target="_blank" rel="noopener noreferrer" data-interactive-lens data-pointer-label="jump" data-pointer-mode="launch">怪奇文献馆</a>
           <a href="/archive.html" data-interactive-lens data-pointer-label="index" data-pointer-mode="index">归档 / 时间线</a>
           <a href="/about.html" data-interactive-lens data-pointer-label="about">关于</a>

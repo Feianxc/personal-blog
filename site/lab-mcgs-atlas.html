@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="description" content="FEIAN 的 MCGS 运行策略提取与索引：把软件里的运行策略批量整理成脚本文件和可搜索目录。" />
+    <title>MCGS 运行策略提取与索引 - FEIAN</title>
+    <link rel="stylesheet" href="/src/entry.css" />
+    <link rel="stylesheet" href="/src/project-case.css" />
+    <style data-critical-reset>
+      html { color-scheme: dark; background: #070a0f; scroll-behavior: smooth; }
+      *, *::before, *::after { box-sizing: border-box; }
+      body { margin: 0; min-width: 320px; color: #edf1f5; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; line-height: 1.58; background: #070a0f; }
+      .entry-shell { position: relative; z-index: 2; overflow: clip; visibility: visible; }
+    </style>
+  </head>
+  <body class="entry-page entry-page--lab entry-page--enhanced">
+    <div class="entry-shell">
+      <header class="entry-topbar">
+        <a href="/index.html"><strong>FEIAN</strong><span>项目实验 / mcgs atlas</span></a>
+        <nav class="entry-nav" aria-label="页面导航"><a href="/index.html">首页</a><a href="/lab.html">项目实验</a><a href="/archive.html">归档</a></nav>
+      </header>
+
+      <header class="entry-header entry-header-feature">
+        <div class="entry-filebar" aria-label="项目状态">
+          <div class="entry-filebar-tag"><span>工程工具</span><strong>MCGS SCRIPT ATLAS</strong></div>
+          <div class="entry-filebar-route"><span>记录时间</span><span>2026-05-26 · 仍在核对</span></div>
+        </div>
+        <div class="entry-header-grid">
+          <div class="entry-header-copy">
+            <p class="entry-kicker">MCGS 运行策略提取与索引</p>
+            <h1>把一条条藏在软件里的运行策略，整理成能搜索的脚本目录</h1>
+            <p class="entry-subhead">MCGS 里的运行策略平时要逐项打开。我把它们批量提取成脚本文件，同时生成索引，后面查变量、找策略和回看旧代码都方便很多。</p>
+            <p class="entry-lede">我从一套既有 MCGS 工程里读取了 122 条运行策略，整理出 219 份脚本。和原来的人工目录对照时，还有 3 处内容需要回软件确认，所以这页仍然标着“核对中”。</p>
+            <div class="entry-meta"><span>122 条运行策略</span><span>219 份脚本</span><span>3 处差异待核</span></div>
+          </div>
+          <aside class="project-case-instrument project-case--atlas entry-filecard" aria-label="MCGS 运行策略被提取为脚本文件并整理成可搜索索引">
+            <span class="project-case-label">从软件提取，再生成索引</span>
+            <i class="case-atlas-scan"></i>
+            <div class="case-atlas-stack">
+              <span class="case-atlas-row"><b>01</b><i></i><em>启动策略</em></span>
+              <span class="case-atlas-row"><b>02</b><i></i><em>循环脚本</em></span>
+              <span class="case-atlas-row"><b>03</b><i></i><em>窗口事件</em></span>
+              <span class="case-atlas-row"><b>04</b><i></i><em>设备命令</em></span>
+              <span class="case-atlas-row"><b>05</b><i></i><em>报警处理</em></span>
+            </div>
+            <span class="project-case-foot">策略 → 脚本 → 索引 → 回查</span>
+          </aside>
+        </div>
+      </header>
+
+      <main class="entry-main">
+        <section class="entry-section" id="read">
+          <h2>先把策略从软件里完整读出来</h2>
+          <p>运行策略分散在工程里的不同位置，平时要逐项打开才能看见。我先按软件里的实际结构批量读取，再把策略名称和脚本正文分开保存。</p>
+          <div class="entry-quicklook">
+            <article class="entry-quicklook-card"><span class="entry-quicklook-label">01 / 提取</span><strong>122 条运行策略</strong><p>按软件里的实际结构逐项读取。</p></article>
+            <article class="entry-quicklook-card"><span class="entry-quicklook-label">02 / 整理</span><strong>219 份脚本文件</strong><p>策略名称和正文分开保存，方便搜索。</p></article>
+            <article class="entry-quicklook-card"><span class="entry-quicklook-label">03 / 回查</span><strong>3 处目录差异</strong><p>继续回到原软件逐项核对，不先抹平差异。</p></article>
+          </div>
+        </section>
+
+        <section class="entry-section" id="text">
+          <h2>脚本正文和索引分开留</h2>
+          <p>脚本按 UTF-8 文本落盘，索引负责把策略名称、文件和所在位置串起来。查到结果以后，还能回到对应脚本继续看，不用只靠一份汇总表。</p>
+          <div class="proof-grid">
+            <article class="proof-card"><h3>正文单独保存</h3><p>变量名、括号和符号保留在脚本文件里，搜索结果不会替代原文。</p></article>
+            <article class="proof-card"><h3>索引负责找路</h3><p>按策略名称、变量和文件位置查找，再回到脚本正文。</p></article>
+            <article class="proof-card"><h3>差异不偷偷抹掉</h3><p>旧人工目录对不上的 3 处内容单独留下，继续回软件确认。</p></article>
+          </div>
+        </section>
+
+        <section class="entry-section" id="boundary">
+          <h2>原工程不拿来反复试</h2>
+          <p>原工程保留不动，提取和核对都在工作副本上进行。旧人工目录里还有 3 处内容对不上，差异没有核完以前，这份索引不会写成最终版。</p>
+        </section>
+
+        <section class="entry-note"><p>工程文件和脚本正文不会公开下载。这页只记录提取和整理的方法。回到 <a href="/lab.html">项目实验</a> 可以继续看其他系统。</p></section>
+      </main>
+    </div>
+    <script type="module" src="/src/entry.ts"></script>
+  </body>
+</html>
