@@ -152,7 +152,7 @@ async function main() {
     interactionResults.push(await auditHomeInteractions())
     interactionResults.push(await auditPointerPersonaStates())
     interactionResults.push(await auditTouchProbeFeedback())
-    interactionResults.push(await auditSignalDashboardTabs())
+    interactionResults.push(await auditLiveSystemsTabs())
     interactionResults.push(await auditCommandPaletteKeyboard())
     interactionResults.push(await auditRouteTransitionSmoke())
     interactionResults.push(await auditReducedMotion())
@@ -260,7 +260,7 @@ async function auditRoute(route, viewport) {
     commandTrigger: page.commandTrigger,
     quickActions: page.quickActions,
     quickActionMetrics: page.quickActionMetrics,
-    signalDashboard: page.signalDashboard,
+    liveSystems: page.liveSystems,
     reactor: page.reactor,
     orbitCards: page.orbitCards,
     cursor: page.cursor,
@@ -511,7 +511,7 @@ async function auditTouchProbeFeedback() {
   }
 }
 
-async function auditSignalDashboardTabs() {
+async function auditLiveSystemsTabs() {
   runtimeEvents.length = 0
   networkEvents.length = 0
   await cdp.send('Emulation.setDeviceMetricsOverride', {
@@ -520,52 +520,228 @@ async function auditSignalDashboardTabs() {
     deviceScaleFactor: 1,
     mobile: false,
   })
+  await cdp.send('Emulation.setEmulatedMedia', { features: [] })
   await cdp.send('Page.navigate', { url: `${baseUrl}/` })
   await cdp.waitForEvent('Page.loadEventFired', () => true, 15_000).catch(() => {})
   await delay(550)
 
-  const before = await evalValue(`(() => ({
-    axisCount: document.querySelectorAll('button[data-signal-axis]').length,
-    activeAxis: document.querySelector('[data-signal-map]')?.dataset.activeAxis || '',
-    selectedCount: document.querySelectorAll('button[data-signal-axis][aria-selected="true"]').length,
-    hasDashboard: Boolean(document.querySelector('[data-signal-dashboard]')),
-    metrics: Array.from(document.querySelectorAll('.signal-metrics b')).map((item) => item.textContent?.trim()),
-  }))()`)
-  const states = []
+  const desktop = await evalValue(`(() => {
+    const keys = ['protocol', 'mcgs', 'busbar']
+    const root = document.querySelector('[data-live-systems]')
+    const tabs = Array.from(root?.querySelectorAll('button[data-system-tab]') || [])
+    const panels = Array.from(root?.querySelectorAll('[data-system-panel]') || [])
+    const stage = root?.querySelector('[data-systems-stage]')
 
-  for (const axis of ['field', 'tool', 'agent']) {
-    await evalValue(`(() => document.querySelector('button[data-signal-axis="${axis}"]')?.click())()`)
-    await delay(180)
-    states.push(await evalValue(`(() => ({
-      expected: '${axis}',
-      activeAxis: document.querySelector('[data-signal-map]')?.dataset.activeAxis || '',
-      selectedCount: document.querySelectorAll('button[data-signal-axis][aria-selected="true"]').length,
-      title: document.querySelector('[data-signal-detail-title]')?.textContent?.trim() || '',
-      dashboard: document.querySelector('[data-signal-dashboard-title]')?.textContent?.trim() || '',
-      metrics: Array.from(document.querySelectorAll('.signal-metrics b')).map((item) => item.textContent?.trim()),
+    const snapshot = (expected, action) => {
+      const selectedTabs = tabs.filter((tab) => tab.getAttribute('aria-selected') === 'true')
+      const selectedKey = selectedTabs[0]?.dataset.systemTab || ''
+      const selectedPanel = panels.find((panel) => panel.dataset.systemPanel === selectedKey)
+      const inactivePanels = panels.filter((panel) => panel !== selectedPanel)
+      const stageRect = stage?.getBoundingClientRect()
+
+      return {
+        action,
+        expected,
+        rootExists: Boolean(root),
+        tabCount: tabs.length,
+        panelCount: panels.length,
+        activeSystem: root?.dataset.systemActive || '',
+        selectedKey,
+        selectedCount: selectedTabs.length,
+        visiblePanelCount: panels.filter((panel) => panel.getAttribute('aria-hidden') === 'false').length,
+        selectedPanelHidden: selectedPanel?.getAttribute('aria-hidden') ?? null,
+        selectedPanelInert: Boolean(selectedPanel?.inert),
+        inactivePanelCount: inactivePanels.length,
+        inactiveInertCount: inactivePanels.filter((panel) => panel.inert).length,
+        tabStopCount: tabs.filter((tab) => tab.tabIndex === 0).length,
+        focusedKey: document.activeElement?.dataset?.systemTab || '',
+        stageWidth: Math.round(stageRect?.width || 0),
+        stageHeight: Math.round(stageRect?.height || 0),
+        viewportWidth: window.innerWidth,
+        viewportHeight: window.innerHeight,
+        overflow: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - window.innerWidth,
+      }
+    }
+
+    const before = snapshot('protocol', 'initial')
+    const clickStates = keys.map((key) => {
+      tabs.find((tab) => tab.dataset.systemTab === key)?.click()
+      return snapshot(key, 'click')
+    })
+
+    tabs.find((tab) => tab.dataset.systemTab === 'protocol')?.click()
+    tabs.find((tab) => tab.dataset.systemTab === 'protocol')?.focus()
+    const keyboardSequence = [
+      ['ArrowRight', 'mcgs'],
+      ['ArrowDown', 'busbar'],
+      ['ArrowRight', 'protocol'],
+      ['ArrowLeft', 'busbar'],
+      ['ArrowUp', 'mcgs'],
+      ['Home', 'protocol'],
+      ['End', 'busbar'],
+    ]
+    const keyboardStates = keyboardSequence.map(([key, expected]) => {
+      const current = tabs.find((tab) => tab.getAttribute('aria-selected') === 'true')
+      current?.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }))
+      return snapshot(expected, key)
+    })
+
+    return { before, clickStates, keyboardStates }
+  })()`)
+
+  await cdp.send('Emulation.setDeviceMetricsOverride', {
+    width: 390,
+    height: 844,
+    deviceScaleFactor: 2,
+    mobile: true,
+  })
+  await cdp.send('Page.navigate', { url: `${baseUrl}/` })
+  await cdp.waitForEvent('Page.loadEventFired', () => true, 15_000).catch(() => {})
+  await delay(550)
+
+  const mobile = await evalValue(`(async () => {
+    const keys = ['protocol', 'mcgs', 'busbar']
+    const root = document.querySelector('[data-live-systems]')
+    const rail = root?.querySelector('.systems-rail')
+    const tabs = Array.from(root?.querySelectorAll('button[data-system-tab]') || [])
+    const panels = Array.from(root?.querySelectorAll('[data-system-panel]') || [])
+
+    const snapshot = (expected) => {
+      const selectedTabs = tabs.filter((tab) => tab.getAttribute('aria-selected') === 'true')
+      const selectedKey = selectedTabs[0]?.dataset.systemTab || ''
+      const selectedPanel = panels.find((panel) => panel.dataset.systemPanel === selectedKey)
+      const inactivePanels = panels.filter((panel) => panel !== selectedPanel)
+      return {
+        expected,
+        activeSystem: root?.dataset.systemActive || '',
+        selectedKey,
+        selectedCount: selectedTabs.length,
+        visiblePanelCount: panels.filter((panel) => panel.getAttribute('aria-hidden') === 'false').length,
+        selectedPanelHidden: selectedPanel?.getAttribute('aria-hidden') ?? null,
+        selectedPanelInert: Boolean(selectedPanel?.inert),
+        inactivePanelCount: inactivePanels.length,
+        inactiveInertCount: inactivePanels.filter((panel) => panel.inert).length,
+        tabStopCount: tabs.filter((tab) => tab.tabIndex === 0).length,
+        overflow: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - window.innerWidth,
+      }
+    }
+
+    const railRect = rail?.getBoundingClientRect()
+    const overlapWithRail = (tab) => {
+      if (!railRect) return 0
+      const rect = tab.getBoundingClientRect()
+      return Math.max(0, Math.min(rect.right, railRect.right) - Math.max(rect.left, railRect.left))
+    }
+    const tabMetrics = tabs.map((tab) => {
+      const rect = tab.getBoundingClientRect()
+      const overlap = overlapWithRail(tab)
+      return {
+        key: tab.dataset.systemTab || '',
+        width: Math.round(rect.width),
+        height: Math.round(rect.height),
+        visibleInitially: overlap >= Math.min(rect.width * 0.25, 32),
+      }
+    })
+    const overflowX = rail ? window.getComputedStyle(rail).overflowX : ''
+    const maxScrollLeft = rail ? Math.max(0, rail.scrollWidth - rail.clientWidth) : 0
+
+    if (rail) rail.scrollLeft = maxScrollLeft
+    await new Promise((resolveFrame) => requestAnimationFrame(() => requestAnimationFrame(resolveFrame)))
+
+    const lastTab = tabs.at(-1)
+    const lastRect = lastTab?.getBoundingClientRect()
+    const lastOverlap = lastTab && railRect ? overlapWithRail(lastTab) : 0
+    const lastReachable = Boolean(lastRect && lastOverlap >= Math.min(lastRect.width * 0.4, 48))
+    const actualScrollLeft = Math.round(rail?.scrollLeft || 0)
+    const clickStates = keys.map((key) => {
+      tabs.find((tab) => tab.dataset.systemTab === key)?.click()
+      return snapshot(key)
+    })
+    if (rail) rail.scrollLeft = 0
+
+    return {
+      rootExists: Boolean(root),
+      tabCount: tabs.length,
+      panelCount: panels.length,
+      railWidth: Math.round(rail?.clientWidth || 0),
+      railScrollWidth: Math.round(rail?.scrollWidth || 0),
+      overflowX,
+      maxScrollLeft: Math.round(maxScrollLeft),
+      actualScrollLeft,
+      allVisibleInitially: tabMetrics.every((tab) => tab.visibleInitially),
+      lastReachable,
+      tabMetrics,
+      clickStates,
       overflow: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - window.innerWidth,
-    }))()`))
-  }
+    }
+  })()`)
 
   const failures = []
-  if (before.axisCount !== 3) failures.push(`expected 3 signal axes, got ${before.axisCount}`)
-  if (!before.hasDashboard) failures.push('signal dashboard panel is missing')
-  if (before.selectedCount !== 1) failures.push(`initial selected axis count is ${before.selectedCount}`)
+  const warnings = []
+  const validateState = (state, label, expectFocus = false) => {
+    if (!state) {
+      failures.push(`${label} did not return a state`)
+      return
+    }
+    if (state.activeSystem !== state.expected) failures.push(`${label} landed on ${state.activeSystem || 'empty'} instead of ${state.expected}`)
+    if (state.selectedKey !== state.expected) failures.push(`${label} selected ${state.selectedKey || 'empty'} instead of ${state.expected}`)
+    if (state.selectedCount !== 1) failures.push(`${label} selected tab count is ${state.selectedCount}`)
+    if (state.visiblePanelCount !== 1) failures.push(`${label} visible panel count is ${state.visiblePanelCount}`)
+    if (state.selectedPanelHidden !== 'false') failures.push(`${label} selected panel aria-hidden is ${state.selectedPanelHidden ?? 'missing'}`)
+    if (state.selectedPanelInert) failures.push(`${label} selected panel is inert`)
+    if (state.inactivePanelCount !== 2 || state.inactiveInertCount !== 2) {
+      failures.push(`${label} inactive inert panels are ${state.inactiveInertCount}/${state.inactivePanelCount}`)
+    }
+    if (state.tabStopCount !== 1) failures.push(`${label} tab stop count is ${state.tabStopCount}`)
+    if (expectFocus && state.focusedKey !== state.expected) failures.push(`${label} focus is on ${state.focusedKey || 'empty'}`)
+    if (state.overflow > 2) failures.push(`${label} overflow ${state.overflow}px`)
+  }
 
-  states.forEach((state) => {
-    if (state.activeAxis !== state.expected) failures.push(`axis switch ${state.expected} landed on ${state.activeAxis || 'empty'}`)
-    if (state.selectedCount !== 1) failures.push(`axis switch ${state.expected} selected count is ${state.selectedCount}`)
-    if (!state.title || !state.dashboard) failures.push(`axis switch ${state.expected} did not update visible title`)
-    if (!state.metrics || state.metrics.length < 3) failures.push(`axis switch ${state.expected} metrics are incomplete`)
-    if (state.overflow > 2) failures.push(`axis switch ${state.expected} overflow ${state.overflow}px`)
+  if (!desktop.before.rootExists) failures.push('live systems section is missing on desktop')
+  if (desktop.before.tabCount !== 3) failures.push(`expected 3 live system tabs, got ${desktop.before.tabCount}`)
+  if (desktop.before.panelCount !== 3) failures.push(`expected 3 live system panels, got ${desktop.before.panelCount}`)
+  validateState(desktop.before, 'desktop initial state')
+  desktop.clickStates.forEach((state) => validateState(state, `desktop click ${state.expected}`))
+  desktop.keyboardStates.forEach((state) => validateState(state, `desktop key ${state.action}`, true))
+
+  const minDesktopStageWidth = Math.min(620, desktop.before.viewportWidth * 0.48)
+  const minDesktopStageHeight = Math.min(560, desktop.before.viewportHeight * 0.62)
+  if (desktop.before.stageWidth < minDesktopStageWidth) {
+    failures.push(`desktop live systems stage is too narrow (${desktop.before.stageWidth}px)`)
+  }
+  if (desktop.before.stageHeight < minDesktopStageHeight) {
+    failures.push(`desktop live systems stage is too short (${desktop.before.stageHeight}px)`)
+  }
+  if (desktop.before.stageHeight > desktop.before.viewportHeight * 1.2) {
+    failures.push(`desktop live systems stage is excessively tall (${desktop.before.stageHeight}px)`)
+  }
+
+  if (!mobile.rootExists) failures.push('live systems section is missing on mobile')
+  if (mobile.tabCount !== 3) failures.push(`mobile live system tabs are ${mobile.tabCount}/3`)
+  if (mobile.panelCount !== 3) failures.push(`mobile live system panels are ${mobile.panelCount}/3`)
+  const mobileTabsSized = mobile.tabMetrics.every((tab) => tab.width > 0 && tab.height >= 40)
+  const mobileRailScrollable = /auto|scroll/.test(mobile.overflowX) && mobile.maxScrollLeft > 2 && mobile.actualScrollLeft > 2 && mobile.lastReachable
+  if (!mobileTabsSized) failures.push(`mobile live system tabs are not usable ${JSON.stringify(mobile.tabMetrics)}`)
+  if (!mobile.allVisibleInitially && !mobileRailScrollable) {
+    failures.push(`mobile live system tabs are neither all visible nor horizontally reachable (overflow-x=${mobile.overflowX}, max=${mobile.maxScrollLeft}px, actual=${mobile.actualScrollLeft}px)`)
+  }
+  mobile.clickStates.forEach((state) => validateState(state, `mobile click ${state.expected}`))
+  if (mobile.overflow > 2) failures.push(`mobile live systems overflow ${mobile.overflow}px`)
+
+  const capturedRuntimeEvents = runtimeEvents.slice(0, 8)
+  capturedRuntimeEvents.forEach((event) => {
+    const message = `${event.type}: ${event.text || ''}`
+    if (event.type.includes('error') || event.type === 'exception' || event.type === 'navigation') failures.push(`live systems runtime ${message}`)
+    else warnings.push(`live systems runtime ${message}`)
   })
 
   return {
-    name: 'signal dashboard tabs',
-    before,
-    states,
+    name: 'live systems tabs',
+    desktop,
+    mobile,
     failures,
-    runtimeEvents: runtimeEvents.slice(0, 8),
+    warnings,
+    runtimeEvents: capturedRuntimeEvents,
   }
 }
 
@@ -1119,10 +1295,17 @@ async function evaluatePage() {
     const reactorCanvas = reactor?.querySelector('.signal-reactor-canvas')
     const reactorRect = reactor?.getBoundingClientRect()
     const reactorCanvasRect = reactorCanvas?.getBoundingClientRect()
-    const signalMap = document.querySelector('[data-signal-map]')
-    const signalDashboard = document.querySelector('[data-signal-dashboard]')
-    const signalDashboardRect = signalDashboard?.getBoundingClientRect()
-    const signalAxes = Array.from(document.querySelectorAll('button[data-signal-axis]'))
+    const liveSystemsRoot = document.querySelector('[data-live-systems]')
+    const liveSystemTabs = Array.from(liveSystemsRoot?.querySelectorAll('button[data-system-tab]') || [])
+    const liveSystemPanels = Array.from(liveSystemsRoot?.querySelectorAll('[data-system-panel]') || [])
+    const selectedLiveSystemTabs = liveSystemTabs.filter((tab) => tab.getAttribute('aria-selected') === 'true')
+    const selectedLiveSystemKey = selectedLiveSystemTabs[0]?.dataset.systemTab || ''
+    const selectedLiveSystemPanel = liveSystemPanels.find((panel) => panel.dataset.systemPanel === selectedLiveSystemKey)
+    const inactiveLiveSystemPanels = liveSystemPanels.filter((panel) => panel !== selectedLiveSystemPanel)
+    const liveSystemsStage = liveSystemsRoot?.querySelector('[data-systems-stage]')
+    const liveSystemsStageRect = liveSystemsStage?.getBoundingClientRect()
+    const liveSystemsRail = liveSystemsRoot?.querySelector('.systems-rail')
+    const liveSystemsRailStyle = liveSystemsRail ? window.getComputedStyle(liveSystemsRail) : null
     const pointerProbe = document.querySelector('.pointer-probe')
     const pointerProbeRect = pointerProbe?.getBoundingClientRect()
     const pointerProbeStyle = pointerProbe ? window.getComputedStyle(pointerProbe) : null
@@ -1167,14 +1350,28 @@ async function evaluatePage() {
       commandTrigger: Boolean(document.querySelector('.command-palette-trigger')),
       quickActions: Array.from(document.querySelectorAll('.signal-quick-action')).map((button) => button.textContent?.trim()),
       quickActionMetrics,
-      signalDashboard: {
-        axes: signalAxes.length,
-        activeAxis: signalMap?.dataset.activeAxis || '',
-        selectedTabs: signalAxes.filter((axis) => axis.getAttribute('aria-selected') === 'true').length,
-        exists: Boolean(signalDashboard),
-        width: Math.round(signalDashboardRect?.width || 0),
-        height: Math.round(signalDashboardRect?.height || 0),
-        metrics: Array.from(document.querySelectorAll('.signal-metrics b')).map((item) => item.textContent?.trim()),
+      liveSystems: {
+        exists: Boolean(liveSystemsRoot),
+        tabs: liveSystemTabs.length,
+        panels: liveSystemPanels.length,
+        activeSystem: liveSystemsRoot?.dataset.systemActive || '',
+        selectedKey: selectedLiveSystemKey,
+        selectedTabs: selectedLiveSystemTabs.length,
+        visiblePanels: liveSystemPanels.filter((panel) => panel.getAttribute('aria-hidden') === 'false').length,
+        selectedPanelHidden: selectedLiveSystemPanel?.getAttribute('aria-hidden') ?? null,
+        selectedPanelInert: Boolean(selectedLiveSystemPanel?.inert),
+        inactivePanels: inactiveLiveSystemPanels.length,
+        inactiveInertPanels: inactiveLiveSystemPanels.filter((panel) => panel.inert).length,
+        tabStops: liveSystemTabs.filter((tab) => tab.tabIndex === 0).length,
+        stageWidth: Math.round(liveSystemsStageRect?.width || 0),
+        stageHeight: Math.round(liveSystemsStageRect?.height || 0),
+        railWidth: Math.round(liveSystemsRail?.clientWidth || 0),
+        railScrollWidth: Math.round(liveSystemsRail?.scrollWidth || 0),
+        railOverflowX: liveSystemsRailStyle?.overflowX || '',
+        tabMetrics: liveSystemTabs.map((tab) => {
+          const rect = tab.getBoundingClientRect()
+          return { key: tab.dataset.systemTab || '', width: Math.round(rect.width), height: Math.round(rect.height) }
+        }),
       },
       reactor: {
         exists: Boolean(reactor),
@@ -1273,17 +1470,48 @@ function collectFindings(result, failureList, warningList) {
     if (result.orbitCards < 4) {
       failureList.push(`${label}: feed orbit cards not wired (${result.orbitCards}/4)`)
     }
-    if (result.signalDashboard?.axes !== 3) {
-      failureList.push(`${label}: signal axes not wired (${result.signalDashboard?.axes || 0}/3)`)
+    if (!result.liveSystems?.exists) {
+      failureList.push(`${label}: live systems section is missing`)
     }
-    if (!result.signalDashboard?.exists) {
-      failureList.push(`${label}: signal dashboard is missing`)
+    if (result.liveSystems?.tabs !== 3) {
+      failureList.push(`${label}: live system tabs not wired (${result.liveSystems?.tabs || 0}/3)`)
     }
-    if (result.signalDashboard?.selectedTabs !== 1) {
-      failureList.push(`${label}: signal dashboard selected tab count is ${result.signalDashboard?.selectedTabs || 0}`)
+    if (result.liveSystems?.panels !== 3) {
+      failureList.push(`${label}: live system panels not wired (${result.liveSystems?.panels || 0}/3)`)
     }
-    if (result.viewport === 'desktop' && result.signalDashboard?.height < 220) {
-      failureList.push(`${label}: signal dashboard is too small (${result.signalDashboard.height}px)`)
+    if (result.liveSystems?.selectedTabs !== 1) {
+      failureList.push(`${label}: live systems selected tab count is ${result.liveSystems?.selectedTabs || 0}`)
+    }
+    if (result.liveSystems?.visiblePanels !== 1) {
+      failureList.push(`${label}: live systems visible panel count is ${result.liveSystems?.visiblePanels || 0}`)
+    }
+    if (result.liveSystems?.activeSystem !== result.liveSystems?.selectedKey) {
+      failureList.push(`${label}: active live system ${result.liveSystems?.activeSystem || 'empty'} does not match selected ${result.liveSystems?.selectedKey || 'empty'}`)
+    }
+    if (result.liveSystems?.selectedPanelHidden !== 'false') {
+      failureList.push(`${label}: selected live system panel aria-hidden is ${result.liveSystems?.selectedPanelHidden ?? 'missing'}`)
+    }
+    if (result.liveSystems?.selectedPanelInert) {
+      failureList.push(`${label}: selected live system panel is inert`)
+    }
+    if (result.liveSystems?.inactivePanels !== 2 || result.liveSystems?.inactiveInertPanels !== 2) {
+      failureList.push(`${label}: inactive live system panels are not inert (${result.liveSystems?.inactiveInertPanels || 0}/${result.liveSystems?.inactivePanels || 0})`)
+    }
+    if (result.liveSystems?.tabStops !== 1) {
+      failureList.push(`${label}: live systems tab stop count is ${result.liveSystems?.tabStops || 0}`)
+    }
+    if (result.viewport === 'desktop' && (result.liveSystems?.stageWidth < 620 || result.liveSystems?.stageHeight < 560)) {
+      failureList.push(`${label}: live systems stage is too small (${result.liveSystems?.stageWidth || 0}x${result.liveSystems?.stageHeight || 0}px)`)
+    }
+    if (result.viewport.startsWith('mobile')) {
+      const tabsSized = result.liveSystems?.tabMetrics?.every((tab) => tab.width > 0 && tab.height >= 40)
+      if (!tabsSized) {
+        failureList.push(`${label}: live systems mobile tabs are not usable ${JSON.stringify(result.liveSystems?.tabMetrics || [])}`)
+      }
+      const railNeedsScroll = (result.liveSystems?.railScrollWidth || 0) > (result.liveSystems?.railWidth || 0) + 2
+      if (railNeedsScroll && !/auto|scroll/.test(result.liveSystems?.railOverflowX || '')) {
+        failureList.push(`${label}: live systems mobile tabs overflow without a horizontal scroller`)
+      }
     }
     if (result.viewport === 'desktop' && !result.cursor?.hasNativeImageCursor) {
       failureList.push(`${label}: native IMAGE2 cursor fallback is not active (${result.cursor?.bodyCursor || 'empty'})`)

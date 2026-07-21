@@ -51,18 +51,18 @@ const modes: Array<{
 }> = [
   {
     key: 'work',
-    title: '把重复的工作，变成一眼能看懂的系统',
-    copy: '橙色线路代表日常工作：网页、工具和自动化，会在这里把步骤重新接起来。',
+    title: '让日常工作更智能，也更直观',
+    copy: '橙色这条线代表我最近在做的系统：重复步骤交给工具，关键信息直接看得见。',
   },
   {
     key: 'field',
-    title: '让现场的问题，从黑箱里浮出来',
-    copy: '青色线路代表工程现场：通信状态、排查过程和关键变化，都尽量变得可见。',
+    title: '先把现场状态看清楚，再动手处理',
+    copy: '青色这条线代表工程现场：通信状态、排查顺序和前后变化，都尽量留得清楚。',
   },
   {
     key: 'life',
-    title: '给生活里的好奇心，留一个可以继续生长的地方',
-    copy: '金色线路代表生活兴趣：网站、研究和随手做的小东西，也值得被认真保存。',
+    title: '工作之外，也给兴趣留一块认真做东西的地方',
+    copy: '金色这条线代表生活兴趣：喜欢的网站、研究和小工具，做完以后也想继续留着。',
   },
 ]
 
@@ -90,6 +90,7 @@ export function setupSignalReactor(options: ReactorOptions) {
   const interactionSurface = (root.closest('.cover') as HTMLElement | null) ?? root
   const feedItems = Array.from(document.querySelectorAll<HTMLElement>('.feed-item'))
   const pointer: PointerState = { x: 0.5, y: 0.5, energy: 0.24 }
+  const pointerTarget: PointerState = { x: 0.5, y: 0.5, energy: 0.24 }
   const particles = buildParticles(profile.particleCount)
   const modeListeners = new Map<HTMLButtonElement, () => void>()
   const feedListeners = new Map<HTMLElement, { enter: () => void; leave: () => void }>()
@@ -140,6 +141,9 @@ export function setupSignalReactor(options: ReactorOptions) {
   function renderStaticFrame() {
     if (width < 1 || height < 1) return
     selectedMode = targetMode
+    pointer.x = pointerTarget.x
+    pointer.y = pointerTarget.y
+    pointer.energy = pointerTarget.energy
     activeRenderer.render({
       width,
       height,
@@ -158,12 +162,19 @@ export function setupSignalReactor(options: ReactorOptions) {
 
   const setPointer = (clientX: number, clientY: number, energy = 0.68) => {
     const rect = root.getBoundingClientRect()
-    pointer.x = clamp((clientX - rect.left) / Math.max(rect.width, 1), 0, 1)
-    pointer.y = clamp((clientY - rect.top) / Math.max(rect.height, 1), 0, 1)
-    pointer.energy = Math.max(pointer.energy, energy)
-    root.style.setProperty('--reactor-x', `${(pointer.x * 100).toFixed(2)}%`)
-    root.style.setProperty('--reactor-y', `${(pointer.y * 100).toFixed(2)}%`)
-    root.style.setProperty('--reactor-energy', pointer.energy.toFixed(3))
+    pointerTarget.x = clamp((clientX - rect.left) / Math.max(rect.width, 1), 0, 1)
+    pointerTarget.y = clamp((clientY - rect.top) / Math.max(rect.height, 1), 0, 1)
+    pointerTarget.energy = Math.max(pointerTarget.energy, energy)
+
+    if (isStatic) {
+      pointer.x = pointerTarget.x
+      pointer.y = pointerTarget.y
+      pointer.energy = pointerTarget.energy
+      root.style.setProperty('--reactor-x', `${(pointer.x * 100).toFixed(2)}%`)
+      root.style.setProperty('--reactor-y', `${(pointer.y * 100).toFixed(2)}%`)
+      root.style.setProperty('--reactor-energy', pointer.energy.toFixed(3))
+      renderStaticFrame()
+    }
   }
 
   const applyMode = (index: number, announce = true) => {
@@ -175,7 +186,7 @@ export function setupSignalReactor(options: ReactorOptions) {
     root.dataset.reactorLane = String(nextIndex + 1)
     if (!isStatic) {
       root.classList.add('is-reactor-burst')
-      pointer.energy = Math.max(pointer.energy, 1.16)
+      pointerTarget.energy = Math.max(pointerTarget.energy, 1.16)
 
       window.clearTimeout(burstTimer)
       burstTimer = window.setTimeout(() => root.classList.remove('is-reactor-burst'), 920)
@@ -203,9 +214,10 @@ export function setupSignalReactor(options: ReactorOptions) {
 
   const onPointerMove = (event: PointerEvent) => setPointer(event.clientX, event.clientY)
   const onPointerLeave = () => {
-    pointer.energy = 0.26
+    pointerTarget.x = 0.5
+    pointerTarget.y = 0.48
+    pointerTarget.energy = 0.26
     activeLane = targetMode
-    root.style.setProperty('--reactor-energy', '0.26')
   }
   const onScroll = () => {
     const coverRect = interactionSurface.getBoundingClientRect()
@@ -213,7 +225,7 @@ export function setupSignalReactor(options: ReactorOptions) {
     root.style.setProperty('--reactor-scroll', scrollEnergy.toFixed(3))
   }
   const onBurst = () => {
-    pointer.energy = Math.max(pointer.energy, 1.22)
+    pointerTarget.energy = Math.max(pointerTarget.energy, 1.22)
     root.classList.add('is-reactor-burst')
     window.clearTimeout(burstTimer)
     burstTimer = window.setTimeout(() => root.classList.remove('is-reactor-burst'), 920)
@@ -249,7 +261,7 @@ export function setupSignalReactor(options: ReactorOptions) {
       activeLane = index % modes.length
       item.classList.add('is-orbit-linked')
       root.dataset.reactorLane = String(activeLane + 1)
-      pointer.energy = Math.max(pointer.energy, 0.72)
+      pointerTarget.energy = Math.max(pointerTarget.energy, 0.72)
     }
     const leave = () => {
       activeLane = targetMode
@@ -273,8 +285,17 @@ export function setupSignalReactor(options: ReactorOptions) {
 
   const loop = createFrameLoop(
     (time, delta) => {
-      pointer.energy = pointer.energy * 0.925 + 0.18 * 0.075
+      const pointerFollow = 1 - Math.exp(-Math.max(delta, 1) / 118)
+      const energyFollow = 1 - Math.exp(-Math.max(delta, 1) / 170)
+      pointer.x += (pointerTarget.x - pointer.x) * pointerFollow
+      pointer.y += (pointerTarget.y - pointer.y) * pointerFollow
+      pointer.energy += (pointerTarget.energy - pointer.energy) * energyFollow
+      pointerTarget.energy += (0.18 - pointerTarget.energy) * Math.min(0.12, Math.max(delta / 1200, 0.018))
       selectedMode += (targetMode - selectedMode) * Math.min(0.14, Math.max(delta / 120, 0.045))
+
+      root.style.setProperty('--reactor-x', `${(pointer.x * 100).toFixed(2)}%`)
+      root.style.setProperty('--reactor-y', `${(pointer.y * 100).toFixed(2)}%`)
+      root.style.setProperty('--reactor-energy', pointer.energy.toFixed(3))
 
       activeRenderer.render({
         width,
@@ -386,6 +407,27 @@ function createWebGLRenderer(canvas: HTMLCanvasElement): ReactorRenderer | null 
       return fract(point.x * point.y);
     }
 
+    float noise21(vec2 point) {
+      vec2 cell = floor(point);
+      vec2 local = fract(point);
+      local = local * local * (3.0 - 2.0 * local);
+      float a = hash21(cell);
+      float b = hash21(cell + vec2(1.0, 0.0));
+      float c = hash21(cell + vec2(0.0, 1.0));
+      float d = hash21(cell + vec2(1.0, 1.0));
+      return mix(mix(a, b, local.x), mix(c, d, local.x), local.y);
+    }
+
+    vec2 organicField(vec2 point, float time) {
+      float angle = noise21(point * 1.35 + vec2(time * 0.045, -time * 0.032)) * PI * 2.0;
+      vec2 flow = vec2(cos(angle), sin(angle));
+      flow += vec2(
+        sin(point.y * 2.7 - time * 0.12),
+        cos(point.x * 2.3 + time * 0.1)
+      ) * 0.32;
+      return flow;
+    }
+
     vec3 modeColor(float mode) {
       vec3 work = vec3(1.0, 0.255, 0.045);
       vec3 field = vec3(0.12, 0.78, 0.9);
@@ -415,28 +457,30 @@ function createWebGLRenderer(canvas: HTMLCanvasElement): ReactorRenderer | null 
       float pointerX = (uPointer.x - 0.5) * 0.64;
       float pointerY = (uPointer.y - 0.5) * 0.48;
       float drift = uTime * 0.08 + uMode * 0.38 + uScroll * 0.74;
-      point.xz *= rotate2d(pointerX + drift * 0.22);
-      point.yz *= rotate2d(pointerY - 0.22 + sin(drift) * 0.09);
+      float breath = sin(uTime * 0.37 + point.y * 1.8) * 0.035;
+      point.xz *= rotate2d(pointerX + drift * 0.22 + breath);
+      point.yz *= rotate2d(pointerY - 0.22 + sin(drift) * 0.09 + breath * 0.7);
       return point;
     }
 
     vec4 shapeDistances(vec3 sourcePoint) {
       vec3 point = orient(sourcePoint);
-      float core = sphereDistance(point, 0.31 + sin(uTime * 1.6) * 0.01 * uEnergy);
+      float coreBreath = sin(uTime * 1.08) * 0.008 + sin(uTime * 0.41 + 1.7) * 0.006;
+      float core = sphereDistance(point, 0.31 + coreBreath * (0.72 + uEnergy * 0.28));
 
       vec3 ringA = point;
-      ringA.xy *= rotate2d(0.72 + uMode * 0.17);
-      float orbitA = torusDistance(ringA, vec2(0.88, 0.018));
+      ringA.xy *= rotate2d(0.72 + uMode * 0.17 + sin(uTime * 0.23) * 0.035);
+      float orbitA = torusDistance(ringA, vec2(0.88 + sin(uTime * 0.34) * 0.012, 0.018));
 
       vec3 ringB = point;
-      ringB.yz *= rotate2d(-0.96 + uMode * 0.12);
+      ringB.yz *= rotate2d(-0.96 + uMode * 0.12 - sin(uTime * 0.19 + 1.1) * 0.04);
       ringB.xy *= rotate2d(0.36);
-      float orbitB = torusDistance(ringB, vec2(1.08, 0.014));
+      float orbitB = torusDistance(ringB, vec2(1.08 + sin(uTime * 0.27 + 0.8) * 0.014, 0.014));
 
       vec3 ringC = point;
-      ringC.xz *= rotate2d(1.12 - uMode * 0.1);
+      ringC.xz *= rotate2d(1.12 - uMode * 0.1 + sin(uTime * 0.16 + 2.4) * 0.045);
       ringC.yz *= rotate2d(0.58);
-      float orbitC = torusDistance(ringC, vec2(1.28, 0.011));
+      float orbitC = torusDistance(ringC, vec2(1.28 + sin(uTime * 0.21 + 2.1) * 0.016, 0.011));
 
       return vec4(core, orbitA, orbitB, orbitC);
     }
@@ -463,8 +507,14 @@ function createWebGLRenderer(canvas: HTMLCanvasElement): ReactorRenderer | null 
       vec2 parallax = (uPointer - 0.5) * vec2(0.22, -0.16);
       uv -= parallax;
 
+      vec2 livingFlow = organicField(uv * 1.15 + vec2(uMode * 0.31), uTime);
+      uv += livingFlow * (0.008 + uEnergy * 0.0035);
+
       vec2 riftSpace = rotate2d(-0.13 + uMode * 0.045) * uv;
-      float riftBend = sin(riftSpace.y * 3.1 + uTime * 0.24) * (0.028 + uEnergy * 0.006);
+      float riftBend =
+        sin(riftSpace.y * 3.1 + uTime * 0.24) * (0.027 + uEnergy * 0.006) +
+        sin(riftSpace.y * 8.7 - uTime * 0.17 + uMode) * 0.009 +
+        livingFlow.x * 0.012;
       float riftDistance = abs(riftSpace.x - riftBend);
       float riftLens = exp(-riftDistance * 7.5) * (1.0 - smoothstep(0.18, 1.5, abs(riftSpace.y)));
       uv.x += sign(riftSpace.x - riftBend) * riftLens * (0.035 + uScroll * 0.03);
@@ -472,6 +522,12 @@ function createWebGLRenderer(canvas: HTMLCanvasElement): ReactorRenderer | null 
       float modePulse = 0.5 + 0.5 * sin(uTime * 0.72 + uMode * 1.7);
       vec3 primary = modeColor(uMode);
       vec3 secondary = secondaryColor(uMode);
+      vec2 filamentSpaceA = rotate2d(0.36 + uMode * 0.08) * uv;
+      vec2 filamentSpaceB = rotate2d(-0.52 + uMode * 0.04) * uv;
+      float filamentA = exp(-abs(filamentSpaceA.y - sin(filamentSpaceA.x * 3.4 + uTime * 0.31) * 0.1) * 44.0);
+      float filamentB = exp(-abs(filamentSpaceB.y - cos(filamentSpaceB.x * 4.1 - uTime * 0.22) * 0.08) * 52.0);
+      filamentA *= 1.0 - smoothstep(0.34, 1.55, abs(filamentSpaceA.x));
+      filamentB *= 1.0 - smoothstep(0.28, 1.48, abs(filamentSpaceB.x));
       vec3 rayOrigin = vec3(0.0, 0.0, 3.34 - uScroll * 0.3);
       vec3 rayDirection = normalize(vec3(uv * (0.94 + uScroll * 0.14), -1.95));
 
@@ -538,11 +594,13 @@ function createWebGLRenderer(canvas: HTMLCanvasElement): ReactorRenderer | null 
       color += secondary * halo * (0.025 + uEnergy * 0.014);
       color += mix(primary, secondary, 0.5) * horizon * (0.08 + uEnergy * 0.06);
       color += vec3(1.0, 0.72, 0.42) * flare * (0.025 + uEnergy * 0.018);
+      color += primary * filamentA * (0.032 + uEnergy * 0.018);
+      color += secondary * filamentB * (0.025 + modePulse * 0.012);
       color *= 1.0 - riftCore * 0.72;
       color += mix(primary, secondary, smoothstep(-0.9, 0.9, riftSpace.y)) * riftEdge * (0.72 + uEnergy * 0.24) * riftPulse;
       color += vec3(1.0, 0.92, 0.78) * riftEdge * riftEdge * 0.34;
 
-      vec2 starCell = floor((uv + vec2(uTime * 0.005, -uTime * 0.003)) * 92.0);
+      vec2 starCell = floor((uv + livingFlow * 0.018 + vec2(uTime * 0.005, -uTime * 0.003)) * 92.0);
       float starNoise = hash21(starCell);
       float star = smoothstep(0.992, 1.0, starNoise) * (0.18 + 0.22 * sin(uTime * 1.8 + starNoise * 12.0));
       color += mix(primary, vec3(0.88, 0.96, 1.0), 0.72) * star;

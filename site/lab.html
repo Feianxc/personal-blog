@@ -6,9 +6,9 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta
       name="description"
-      content="FEIAN 的项目 / 实验线：把这几个月留下的项目、交付和小实验收成可回看的记录。"
+      content="FEIAN 做过的网页、工程系统和小工具，包括 MCGS 装配台、动环协议自动生成系统与大小母线调试问题平台。"
     />
-    <title>项目和实验，先放在一处 - FEIAN</title>
+    <title>我做过的系统、网页和小工具 - FEIAN</title>
     <link rel="stylesheet" href="/src/entry.css" />
     <style>
       .lab-grid,
@@ -149,7 +149,7 @@
         <nav class="entry-nav" aria-label="页面导航">
           <a href="/index.html">首页</a>
           <a href="/archive.html">归档</a>
-          <a href="/archive.html#month-2026-04">时间线</a>
+          <a href="/archive.html#month-2026-07">时间线</a>
           <a href="/about.html">关于</a>
           <a href="https://github.com/Feianxc" target="_blank" rel="noopener noreferrer">GitHub</a>
         </nav>
@@ -163,22 +163,22 @@
           </div>
           <div class="entry-filebar-route">
             <span>个人站 → lab</span>
-            <span>更新 2026-04-23</span>
+            <span>更新 2026-07-21</span>
           </div>
         </div>
 
         <div class="entry-header-grid">
           <div class="entry-header-copy">
-            <p class="entry-kicker">项目 / 交付 / 实验</p>
-            <h1>项目和实验，先放在一处</h1>
-            <p class="entry-subhead">这里不按技术栈分类，只放我做过的一些东西：工作台、平台、截图脚本、客户包。</p>
+            <p class="entry-kicker">系统 / 网页 / 小工具</p>
+            <h1>我做过的东西，都放在这里</h1>
+            <p class="entry-subhead">有工程现场会用到的系统，也有网页、脚本和自己想做的小工具。</p>
             <p class="entry-lede">
-              工作流偏方法，现场偏问题，项目实验就放东西本身：平台、工作台、压缩包、批处理脚本，还有一些不好只用仓库名概括的小项目。
+              我更愿意按“它解决了什么”来整理，而不是先列一排技术名词。能公开的成品、使用过程和还没做完的地方，都会慢慢补进来。
             </p>
             <div class="entry-meta">
-              <span>项目 / 交付 / 实验</span>
-              <span>2026-01 → 2026-04</span>
-              <span>真实仓库 / 运行产物 / 交付物</span>
+              <span>工程系统 / 网页 / 实验</span>
+              <span>2026-01 → 现在</span>
+              <span>持续更新</span>
             </div>
           </div>
 
@@ -234,21 +234,33 @@
         <section class="entry-section">
           <h2>项目文章</h2>
           <div class="lab-links">
+            <a class="lab-link" href="/lab-mcgs-chain.html">
+              <time datetime="2026-07-21">2026-07-21 / engineering system</time>
+              <strong>MCGS 全链条辅助创造系统：先把这一单真正要改的内容找出来</strong>
+              <p>固定模板保留成熟结构，装配台根据箱型、机柜和回路刷新配方、设备、策略、报警与窗口清单。</p>
+            </a>
+
+            <a class="lab-link" href="/lab-protocol-studio.html">
+              <time datetime="2026-07-20">2026-07-20 / protocol system</time>
+              <strong>动环协议自动生成系统：一次填参，生成三份文件</strong>
+              <p>从同一份项目数据生成协议 Excel、MCGS 设备 CSV 和报警状态字代码，地址冲突会在生成前拦下来。</p>
+            </a>
+
+            <a class="lab-link" href="/lab-busbar-debugging-platform.html">
+              <time datetime="2026-07-16">2026-07-16 / field platform</time>
+              <strong>大小母线调试问题平台：把现场问题、照片和处理过程留在一起</strong>
+              <p>按项目记录现象、分析、解决方法和状态，后来再遇到相似问题时可以直接搜索和回看。</p>
+            </a>
+
             <a class="lab-link" href="/lab-openai-node-probe.html">
               <time datetime="2026-07-13">2026-07-13 / open source</time>
               <strong>OpenAI 节点体检仪：把全节点选线、恢复和可视化报告放进一个入口</strong>
               <p>面向 Windows 与 Mihomo 的开源工具，先快筛全部节点，再复测候选，并把可信边界写进报告。</p>
             </a>
 
-            <a class="lab-link" href="/lab-protocol-studio.html">
-              <time datetime="2026-04-23">2026-04-23 / lab</time>
-              <strong>动环协议工作台：四种出表场景、校验和交付状态</strong>
-              <p>模板族、校验、源模板对比、交付状态 和交付包被放进同一条链。</p>
-            </a>
-
             <a class="lab-link" href="/lab-busbar-platform.html">
               <time datetime="2026-04-23">2026-04-23 / lab</time>
-              <strong>母线铜排平台这一轮：旧公式、parity 和公网启动</strong>
+              <strong>母线铜排计算平台：旧公式、对照验证和公网启动</strong>
               <p>规则事实源、FastAPI、Vite、parity、Cloudflare Tunnel 和一键启动脚本已经放进同一条启动链。</p>
             </a>
 

@@ -18,6 +18,8 @@ export default defineConfig({
         homepageLab: resolve(__dirname, 'homepage-lab.html'),
         lab: resolve(__dirname, 'lab.html'),
         labBusbarPlatform: resolve(__dirname, 'lab-busbar-platform.html'),
+        labBusbarDebuggingPlatform: resolve(__dirname, 'lab-busbar-debugging-platform.html'),
+        labMcgsChain: resolve(__dirname, 'lab-mcgs-chain.html'),
         labProtocolStudio: resolve(__dirname, 'lab-protocol-studio.html'),
         labCadAutomation: resolve(__dirname, 'lab-cad-automation.html'),
         labOpenclawDelivery: resolve(__dirname, 'lab-openclaw-delivery.html'),

@@ -1,8 +1,10 @@
 import './index.css'
 import './impact.css'
+import './system-triptych.css'
 import { setupGlobalEffects } from './global-effects'
 import { setupImpactChoreography } from './impact-choreography'
 import { createRainBackground } from './rain-background'
+import { setupSystemTriptych } from './system-triptych'
 import { setupSignalReactor } from './visual-runtime/reactor/signal-reactor'
 
 document.documentElement.classList.add('js', 'impact-edition')
@@ -202,6 +204,10 @@ setupGlobalEffects({
 })
 
 let impactChoreography = setupImpactChoreography({
+  reducedMotion: prefersReducedMotion,
+})
+
+const systemTriptych = setupSystemTriptych({
   reducedMotion: prefersReducedMotion,
 })
 
@@ -1611,6 +1617,7 @@ window.addEventListener('beforeunload', () => {
   }
 
   stopInteractiveBeat()
+  systemTriptych.destroy()
   impactChoreography.destroy()
   signalReactor?.destroy()
   rainBackground?.destroy()

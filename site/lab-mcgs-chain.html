@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta
+      name="description"
+      content="FEIAN 的 MCGS 全链条辅助创造系统：用固定模板和当前项目参数，整理配方、数据库、设备、策略、报警与窗口装配清单。"
+    />
+    <title>MCGS 全链条辅助创造系统：把项目准备放到一张装配台上 - FEIAN</title>
+    <link rel="stylesheet" href="/src/entry.css" />
+    <link rel="stylesheet" href="/src/system-story.css" />
+    <style data-critical-reset>
+      html { color-scheme: dark; background: #070a0f; scroll-behavior: smooth; }
+      *, *::before, *::after { box-sizing: border-box; }
+      body { margin: 0; min-width: 320px; color: #edf1f5; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; line-height: 1.58; background: #070a0f; }
+      .rain-canvas, .fx-layer { position: fixed; inset: 0; pointer-events: none; }
+      .rain-canvas { display: block; width: 100%; height: 100%; }
+      .fx-layer { z-index: 48; }
+      .page-shell { position: relative; z-index: 2; overflow: clip; visibility: hidden; }
+      .entry-shell { position: relative; z-index: 2; overflow: clip; }
+    </style>
+    <style>
+      .entry-page--system-mcgs .mcgs-assembly-visual {
+        min-height: 27rem;
+        background:
+          radial-gradient(circle at 50% 51%, rgb(85 220 232 / 18%), transparent 26%),
+          radial-gradient(circle at 18% 16%, rgb(255 113 49 / 10%), transparent 24%),
+          linear-gradient(145deg, rgb(7 20 22 / 98%), rgb(3 8 10 / 99%));
+      }
+
+      .mcgs-assembly-map,
+      .mcgs-assembly-rails {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .mcgs-assembly-rails {
+        z-index: 2;
+        overflow: visible;
+      }
+
+      .mcgs-assembly-rail {
+        fill: none;
+        stroke: rgb(85 220 232 / 22%);
+        stroke-linecap: round;
+        stroke-width: 1.25;
+        vector-effect: non-scaling-stroke;
+      }
+
+      .mcgs-assembly-rail--input {
+        stroke: rgb(255 113 49 / 42%);
+      }
+
+      .mcgs-assembly-packet {
+        fill: #b8f7f8;
+        filter: url('#mcgs-packet-glow');
+      }
+
+      .mcgs-assembly-packet--input {
+        fill: #ff9b62;
+      }
+
+      .mcgs-assembly-core {
+        z-index: 5;
+        width: 34%;
+        min-width: 7.2rem;
+        max-width: 9.2rem;
+        background:
+          radial-gradient(circle, rgb(85 220 232 / 28%), transparent 24%),
+          radial-gradient(circle, rgb(255 113 49 / 10%), rgb(3 13 15 / 96%) 68%);
+      }
+
+      .mcgs-assembly-core strong {
+        letter-spacing: 0.04em;
+      }
+
+      .mcgs-assembly-node {
+        position: absolute;
+        z-index: 6;
+        display: grid;
+        min-width: 4.5rem;
+        min-height: 2.35rem;
+        place-content: center;
+        padding: 0.42rem 0.58rem;
+        color: rgb(239 248 246 / 78%);
+        font-size: 0.62rem;
+        font-weight: 700;
+        line-height: 1.2;
+        text-align: center;
+        border: 1px solid rgb(85 220 232 / 25%);
+        border-radius: 0.58rem;
+        background: rgb(4 13 15 / 88%);
+        box-shadow:
+          0 12px 24px rgb(0 0 0 / 24%),
+          inset 0 1px 0 rgb(255 255 255 / 4%);
+        backdrop-filter: blur(10px);
+        animation: mcgs-node-breathe 5.6s cubic-bezier(0.77, 0, 0.175, 1) infinite;
+      }
+
+      .mcgs-assembly-node::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        width: 0.34rem;
+        height: 0.34rem;
+        border-radius: 50%;
+        background: var(--story-accent);
+        box-shadow: 0 0 0.9rem rgb(85 220 232 / 72%);
+        transform: translateY(-50%);
+      }
+
+      .mcgs-assembly-node--left::before { right: -0.22rem; }
+      .mcgs-assembly-node--right::before { left: -0.22rem; }
+
+      .mcgs-assembly-node--source {
+        top: 7%;
+        width: 31%;
+        min-height: 3.1rem;
+        border-color: rgb(255 113 49 / 28%);
+        background: rgb(20 12 9 / 84%);
+      }
+
+      .mcgs-assembly-node--source::before {
+        top: auto;
+        bottom: -0.22rem;
+        left: 50%;
+        background: var(--story-secondary);
+        box-shadow: 0 0 0.9rem rgb(255 113 49 / 72%);
+        transform: translateX(-50%);
+      }
+
+      .mcgs-assembly-node--source small {
+        display: block;
+        margin-bottom: 0.25rem;
+        color: rgb(255 158 103 / 76%);
+        font: 700 0.48rem/1 var(--mono);
+        letter-spacing: 0.12em;
+      }
+
+      .mcgs-assembly-node--template { left: 6%; animation-delay: -1.2s; }
+      .mcgs-assembly-node--project { right: 6%; animation-delay: -3.9s; }
+      .mcgs-assembly-node--recipe { top: 32%; left: 4%; animation-delay: -0.7s; }
+      .mcgs-assembly-node--database { top: 53%; left: 2%; animation-delay: -2.1s; }
+      .mcgs-assembly-node--device { bottom: 8%; left: 7%; animation-delay: -4.4s; }
+      .mcgs-assembly-node--strategy { top: 32%; right: 4%; animation-delay: -1.5s; }
+      .mcgs-assembly-node--alarm { top: 53%; right: 2%; animation-delay: -3.2s; }
+      .mcgs-assembly-node--window { right: 7%; bottom: 8%; animation-delay: -5s; }
+
+      .mcgs-assembly-caption {
+        position: absolute;
+        z-index: 7;
+        right: 1rem;
+        bottom: 0.8rem;
+        color: rgb(184 247 248 / 48%);
+        font: 650 0.5rem/1.4 var(--mono);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .mcgs-chain-row {
+        display: grid;
+        grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr);
+        gap: 0.85rem;
+        margin-top: 1.1rem;
+      }
+
+      .mcgs-chain-row .story-card:first-child {
+        background:
+          linear-gradient(145deg, rgb(255 113 49 / 8%), transparent 58%),
+          var(--panel-soft);
+      }
+
+      @media (max-width: 760px) {
+        .entry-page--system-mcgs .mcgs-assembly-visual {
+          min-height: 24rem;
+        }
+
+        .mcgs-chain-row {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+
+      @media (max-width: 520px) {
+        .entry-page--system-mcgs .mcgs-assembly-visual {
+          min-height: 21rem;
+        }
+
+        .mcgs-assembly-node {
+          min-width: 3.65rem;
+          min-height: 2rem;
+          padding: 0.34rem 0.42rem;
+          font-size: 0.52rem;
+          border-radius: 0.45rem;
+        }
+
+        .mcgs-assembly-node--source {
+          min-height: 2.72rem;
+        }
+
+        .mcgs-assembly-core {
+          min-width: 6.5rem;
+        }
+
+        .mcgs-assembly-caption {
+          right: 0.55rem;
+          bottom: 0.45rem;
+          font-size: 0.42rem;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .mcgs-assembly-node {
+          animation: none !important;
+        }
+
+        .mcgs-assembly-packet {
+          display: none;
+        }
+      }
+
+      @media (forced-colors: active) {
+        .mcgs-assembly-rail {
+          stroke: CanvasText;
+        }
+
+        .mcgs-assembly-packet,
+        .mcgs-assembly-caption {
+          display: none;
+        }
+
+        .mcgs-assembly-node {
+          color: CanvasText;
+          border: 1px solid CanvasText;
+          background: Canvas;
+        }
+
+        .mcgs-assembly-node::before {
+          background: CanvasText;
+          box-shadow: none;
+        }
+      }
+
+      @keyframes mcgs-node-breathe {
+        0%, 100% { transform: translateY(0); border-color: rgb(85 220 232 / 22%); }
+        50% { transform: translateY(-0.18rem); border-color: rgb(85 220 232 / 45%); }
+      }
+    </style>
+  </head>
+  <body class="entry-page entry-page--lab entry-page--system-story entry-page--system-mcgs entry-page--enhanced">
+    <div class="entry-shell">
+      <header class="entry-topbar">
+        <a href="/index.html">
+          <strong>FEIAN</strong>
+          <span>最近做的系统 / mcgs</span>
+        </a>
+        <nav class="entry-nav" aria-label="页面导航">
+          <a href="/index.html">首页</a>
+          <a href="/lab.html">项目实验</a>
+          <a href="/archive.html">归档</a>
+        </nav>
+      </header>
+
+      <header class="entry-header entry-header-feature">
+        <div class="entry-filebar" aria-label="文章状态">
+          <div class="entry-filebar-tag">
+            <span>工程系统 / mcgs</span>
+            <strong>固定模板 · 项目装配台</strong>
+          </div>
+          <div class="entry-filebar-route">
+            <span>最近更新</span>
+            <span>2026-07-21</span>
+          </div>
+        </div>
+
+        <div class="entry-header-grid">
+          <div class="entry-header-copy">
+            <p class="entry-kicker">MCGS 全链条辅助创造系统</p>
+            <h1>把一份固定模板，装成当前项目真正需要的样子</h1>
+            <p class="entry-lede">
+              我把 MCGS 项目里最容易漏的几段准备工作放到了一张装配台上。先选固定模板，再填这一次项目真正会变的参数，配方、数据库、设备、策略、报警和窗口计划就会一起跟着更新。
+            </p>
+            <div class="entry-meta">
+              <span>2026-07-21</span>
+              <span>MCGS Pro / Python</span>
+              <span>项目装配与检查</span>
+            </div>
+          </div>
+
+          <aside class="story-visual mcgs-assembly-visual entry-filecard" aria-label="固定模板和项目参数汇入装配核心，再连接到配方、数据库、设备、策略、报警和窗口的动态装配轨道">
+            <div class="mcgs-assembly-map" aria-hidden="true">
+              <svg class="mcgs-assembly-rails" viewBox="0 0 420 360" preserveAspectRatio="none" focusable="false">
+                <defs>
+                  <filter id="mcgs-packet-glow" x="-250%" y="-250%" width="600%" height="600%">
+                    <feGaussianBlur stdDeviation="2.4" result="blur" />
+                    <feMerge>
+                      <feMergeNode in="blur" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                </defs>
+                <path class="mcgs-assembly-rail mcgs-assembly-rail--input" d="M82 52 C122 58 160 104 210 178" />
+                <path class="mcgs-assembly-rail mcgs-assembly-rail--input" d="M338 52 C298 58 260 104 210 178" />
+                <path class="mcgs-assembly-rail" d="M210 178 C162 165 118 132 55 132" />
+                <path class="mcgs-assembly-rail" d="M210 178 C154 182 112 204 48 204" />
+                <path class="mcgs-assembly-rail" d="M210 178 C164 218 122 278 68 305" />
+                <path class="mcgs-assembly-rail" d="M210 178 C258 165 302 132 365 132" />
+                <path class="mcgs-assembly-rail" d="M210 178 C266 182 308 204 372 204" />
+                <path class="mcgs-assembly-rail" d="M210 178 C256 218 298 278 352 305" />
+
+                <circle class="mcgs-assembly-packet mcgs-assembly-packet--input" r="3.5">
+                  <animateMotion dur="4.4s" repeatCount="indefinite" path="M82 52 C122 58 160 104 210 178" />
+                </circle>
+                <circle class="mcgs-assembly-packet mcgs-assembly-packet--input" r="3.5">
+                  <animateMotion begin="-2.2s" dur="4.4s" repeatCount="indefinite" path="M338 52 C298 58 260 104 210 178" />
+                </circle>
+                <circle class="mcgs-assembly-packet" r="3">
+                  <animateMotion begin="-0.6s" dur="5.2s" repeatCount="indefinite" path="M210 178 C162 165 118 132 55 132" />
+                </circle>
+                <circle class="mcgs-assembly-packet" r="3">
+                  <animateMotion begin="-2.1s" dur="5.6s" repeatCount="indefinite" path="M210 178 C154 182 112 204 48 204" />
+                </circle>
+                <circle class="mcgs-assembly-packet" r="3">
+                  <animateMotion begin="-3.8s" dur="6s" repeatCount="indefinite" path="M210 178 C164 218 122 278 68 305" />
+                </circle>
+                <circle class="mcgs-assembly-packet" r="3">
+                  <animateMotion begin="-1.5s" dur="5.2s" repeatCount="indefinite" path="M210 178 C258 165 302 132 365 132" />
+                </circle>
+                <circle class="mcgs-assembly-packet" r="3">
+                  <animateMotion begin="-3s" dur="5.6s" repeatCount="indefinite" path="M210 178 C266 182 308 204 372 204" />
+                </circle>
+                <circle class="mcgs-assembly-packet" r="3">
+                  <animateMotion begin="-4.7s" dur="6s" repeatCount="indefinite" path="M210 178 C256 218 298 278 352 305" />
+                </circle>
+              </svg>
+
+              <div class="story-visual-core mcgs-assembly-core">
+                <span>当前项目</span>
+                <strong>ASSEMBLY<br />READY</strong>
+              </div>
+              <div class="mcgs-assembly-node mcgs-assembly-node--source mcgs-assembly-node--template">
+                <small>BASE</small>
+                固定模板
+              </div>
+              <div class="mcgs-assembly-node mcgs-assembly-node--source mcgs-assembly-node--project">
+                <small>INPUT</small>
+                项目参数
+              </div>
+              <div class="mcgs-assembly-node mcgs-assembly-node--left mcgs-assembly-node--recipe">配方</div>
+              <div class="mcgs-assembly-node mcgs-assembly-node--left mcgs-assembly-node--database">数据库</div>
+              <div class="mcgs-assembly-node mcgs-assembly-node--left mcgs-assembly-node--device">设备</div>
+              <div class="mcgs-assembly-node mcgs-assembly-node--right mcgs-assembly-node--strategy">策略</div>
+              <div class="mcgs-assembly-node mcgs-assembly-node--right mcgs-assembly-node--alarm">报警</div>
+              <div class="mcgs-assembly-node mcgs-assembly-node--right mcgs-assembly-node--window">窗口</div>
+              <span class="mcgs-assembly-caption">template + project / six linked areas</span>
+            </div>
+          </aside>
+        </div>
+      </header>
+
+      <main class="entry-main">
+        <section class="entry-section" id="why">
+          <h2>我不想每个项目都靠记忆重新拼一遍</h2>
+          <p class="story-intro">
+            一个 MCGS 项目真正动起来，牵涉的不只是几个画面。配方字段变了，数据库、设备、策略、报警和窗口里的对应内容也可能要跟着变。以前这些关系散在不同文件和操作里，少改一处，往往要到后面才发现。
+          </p>
+          <div class="story-note">
+            我现在保留一份固定模板，把每个项目会变化的内容单独拿出来。装配台只问这一次项目需要什么，其余内容从模板里接上。
+          </div>
+        </section>
+
+        <section class="entry-section" id="workflow">
+          <h2>从模板到项目，我按这四步走</h2>
+          <div class="story-path">
+            <article class="story-step proof-card">
+              <span>01 / 模板</span>
+              <strong>先选固定模板</strong>
+              <p>公共结构留在模板里，不再为每个新项目从头搭一次。</p>
+            </article>
+            <article class="story-step proof-card">
+              <span>02 / 参数</span>
+              <strong>只填这次真正会变的内容</strong>
+              <p>屏数、列数、箱型和现场差异放在同一个入口里确认。</p>
+            </article>
+            <article class="story-step proof-card">
+              <span>03 / 装配</span>
+              <strong>让六块清单一起更新</strong>
+              <p>配方、数据库、设备、策略、报警和窗口计划同步刷新。</p>
+            </article>
+            <article class="story-step proof-card">
+              <span>04 / 确认</span>
+              <strong>再回到 MCGS 完成验证</strong>
+              <p>另存、回读、编译和仿真仍在正式软件里完成。</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="entry-section" id="assembly">
+          <h2>一张装配清单，接住六块容易漏的内容</h2>
+          <div class="story-grid">
+            <article class="story-card proof-card">
+              <span>配方 + 数据库</span>
+              <h3>先把对象和字段排清楚</h3>
+              <p>需要新增、沿用或调整的内容会落在清单里，避免在不同窗口之间来回找名字。</p>
+            </article>
+            <article class="story-card proof-card">
+              <span>设备 + 策略</span>
+              <h3>设备结构一变，相关代码跟着换</h3>
+              <p>哪些策略沿用，哪些脚本要生成，都会按当前项目重新列出来。</p>
+            </article>
+            <article class="story-card proof-card">
+              <span>报警 + 窗口</span>
+              <h3>报警和画面不再留到最后补</h3>
+              <p>对应的报警内容、窗口安排和需要检查的位置，会和前面的参数放在一起看。</p>
+            </article>
+            <article class="story-card proof-card">
+              <span>动环三件套</span>
+              <h3>协议、设备导入表和状态代码一起接进来</h3>
+              <p>动环协议 Excel、MCGS 设备导入 CSV 和报警状态字代码可以继续沿用同一份项目数据。</p>
+            </article>
+          </div>
+
+          <div class="story-number-line" aria-label="当前整理规模">
+            <div class="story-number"><strong>130</strong><span>当前已整理的运行策略</span></div>
+            <div class="story-number"><strong>396</strong><span>当前已整理的脚本</span></div>
+            <div class="story-number"><strong>6</strong><span>同步查看的装配区域</span></div>
+          </div>
+        </section>
+
+        <section class="entry-section" id="changes">
+          <h2>改一个参数，后面的内容不用逐项翻找</h2>
+          <p class="story-intro">
+            装配台最实用的地方，是我能立刻看见一个改动会影响什么。参数变化以后，相关清单、代码和窗口计划会马上刷新，而不是等我打开几个文件以后才想起还有一处没改。
+          </p>
+          <div class="mcgs-chain-row">
+            <article class="story-card proof-card">
+              <span>一个具体例子</span>
+              <h3>单屏单列，不再带出第二物理列</h3>
+              <p>当项目选成单屏单列时，第二条物理列会从清单、代码和窗口安排里一起排除，不需要我再到各处手动删除。</p>
+            </article>
+            <article class="story-card proof-card">
+              <span>我真正想省下的时间</span>
+              <h3>不是少点几下鼠标，而是少做几轮重复核对</h3>
+              <p>参数和结果放在同一个视图里，我可以先把变化看明白，再进入 MCGS 做正式操作。这样更快，也更容易发现不合理的组合。</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="entry-section" id="boundary">
+          <h2>它把准备工作做齐，但不会替我完成最后确认</h2>
+          <p class="story-intro">
+            装配台不会直接改写原始 MCP 工程。每次都从固定模板、副本和输出清单开始，原版始终保留。它能整理该改什么、生成需要的代码和安排，但正式工程仍要在 MCGS 里一步一步确认。
+          </p>
+          <div class="story-grid">
+            <article class="story-card proof-card">
+              <span>仍要完成</span>
+              <h3>另存为、回读、重新提取、编译和仿真</h3>
+              <p>生成内容进入工程后，我还会在 MCGS 里另存为（Save As）、通过软件界面回读，再做重新提取、编译和仿真。</p>
+            </article>
+            <article class="story-card proof-card">
+              <span>最终边界</span>
+              <h3>现场确认不能被一张清单代替</h3>
+              <p>画面、通讯和实际设备能不能按预期工作，最后仍要通过现场确认。新的箱型也还在继续接入模板。</p>
+            </article>
+          </div>
+          <div class="story-note">
+            <strong>当前状态：</strong>装配台已经能把项目参数和主要改造内容连起来；更多箱型正在陆续接入，MCGS 内的正式验证流程不会省略。
+          </div>
+          <div class="story-links">
+            <a href="/lab-protocol-studio.html">继续看动环协议系统</a>
+            <a href="/lab-busbar-debugging-platform.html">继续看大小母线平台</a>
+            <a href="/index.html#signals">回到三套系统</a>
+          </div>
+        </section>
+
+        <section class="entry-note">
+          <p>我不是想让它替人点完所有按钮，而是想让每次打开 MCGS 之前，该准备的内容已经整齐地摆在面前。</p>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="/src/entry.ts"></script>
+  </body>
+</html>
