@@ -25,16 +25,21 @@ const viewportMatrix = [
 ]
 
 const requiredHomePhrases = [
-  '个人操作系统',
   '个人数字实验室',
-  '构建物',
-  '持续运行',
-  '工作流',
+  '把日常工作',
+  '生活里的事',
+  '更智能',
+  '更直观',
   '现场',
-  '项目实验',
 ]
 
 const forbiddenPublicCopy = [
+  'AI-native',
+  '个人操作系统',
+  '证据工程',
+  'Evidence',
+  'evidence slice',
+  '喜欢把麻烦做成能点开的东西',
   '作为AI',
   '作为一个AI',
   '当然可以',
@@ -151,6 +156,7 @@ async function main() {
     interactionResults.push(await auditCommandPaletteKeyboard())
     interactionResults.push(await auditRouteTransitionSmoke())
     interactionResults.push(await auditReducedMotion())
+    interactionResults.push(await auditReactorContextLoss())
     interactionResults.push(await auditCodeConsoleCollapse())
     interactionResults.forEach((result) => collectInteractionFindings(result, failures, warnings))
   } finally {
@@ -775,22 +781,47 @@ async function auditReducedMotion() {
     const rainStyle = rain ? window.getComputedStyle(rain) : null
     const hyperRoot = document.querySelector('.hyper-signal-canvas-root')
     const reactor = document.querySelector('[data-signal-reactor]')
+    const reactorCanvas = reactor?.querySelector('.signal-reactor-canvas')
+    const reactorCanvasRect = reactorCanvas?.getBoundingClientRect()
+    const fieldMode = document.querySelector('button[data-reactor-mode="field"]')
+    fieldMode?.click()
+    await wait(80)
     const pixiResourceLoaded = performance.getEntriesByType('resource').some((item) => /signal-canvas-layer|pixi/i.test(item.name))
     const motionReduce = document.documentElement.classList.contains('motion-reduce')
     const rainHidden = !rain || rainStyle.display === 'none' || Number(rainStyle.opacity) === 0
     const heavyCanvasReady = hyperRoot?.dataset.canvasReady === 'true' || hyperRoot?.dataset.canvasLoading === 'true'
     const reactorReduced = reactor?.dataset.reactorReady === 'static' || reactor?.dataset.reactorQuality === 'calm'
+    const reactorStaticFrame = reactor?.dataset.reactorFrame === 'static'
+    const reactorCanvasVisible = Boolean(
+      reactorCanvas &&
+      reactorCanvasRect &&
+      reactorCanvasRect.width > 1 &&
+      reactorCanvasRect.height > 1 &&
+      reactorCanvas.width > 1 &&
+      reactorCanvas.height > 1 &&
+      window.getComputedStyle(reactorCanvas).display !== 'none'
+    )
+    const fieldModeWorks =
+      reactor?.dataset.reactorMode === 'field' &&
+      fieldMode?.getAttribute('aria-pressed') === 'true' &&
+      document.querySelector('[data-reactor-title]')?.textContent?.includes('现场')
     if (!motionReduce) failures.push('html.motion-reduce was not set under reduced motion')
     if (!rainHidden) failures.push('rain canvas remained visible under reduced motion')
     if (heavyCanvasReady) failures.push('hyper canvas loaded under reduced motion')
     if (pixiResourceLoaded) failures.push('Pixi/signal canvas chunk loaded under reduced motion')
     if (!reactorReduced) failures.push('Signal Reactor did not downgrade under reduced motion')
+    if (!reactorStaticFrame) failures.push('Signal Reactor did not publish a rendered static frame')
+    if (!reactorCanvasVisible) failures.push('Signal Reactor static canvas is not visibly sized under reduced motion')
+    if (!fieldModeWorks) failures.push('Signal Reactor mode controls stopped working under reduced motion')
     return {
       motionReduce,
       rainHidden,
       heavyCanvasReady,
       pixiResourceLoaded,
       reactorReduced,
+      reactorStaticFrame,
+      reactorCanvasVisible,
+      fieldModeWorks,
       overflow: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - window.innerWidth,
       failures,
     }
@@ -804,6 +835,88 @@ async function auditReducedMotion() {
 
   return {
     name: 'reduced motion',
+    ...result,
+    runtimeEvents: runtimeEvents.slice(0, 8),
+  }
+}
+
+async function auditReactorContextLoss() {
+  runtimeEvents.length = 0
+  networkEvents.length = 0
+  await cdp.send('Emulation.setDeviceMetricsOverride', {
+    width: 1440,
+    height: 960,
+    deviceScaleFactor: 1,
+    mobile: false,
+  })
+  await cdp.send('Emulation.setEmulatedMedia', { features: [] })
+  await cdp.send('Page.navigate', { url: `${baseUrl}/` })
+  await cdp.waitForEvent('Page.loadEventFired', () => true, 15_000).catch(() => {})
+  await delay(650)
+
+  const result = await evalValue(`(async () => {
+    const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms))
+    const failures = []
+    const reactor = document.querySelector('[data-signal-reactor]')
+    const canvas = reactor?.querySelector('.signal-reactor-canvas')
+    const shell = reactor?.querySelector('.signal-reactor-shell')
+    const before = {
+      engine: reactor?.dataset.reactorEngine || '',
+      ready: reactor?.dataset.reactorReady || '',
+      frame: reactor?.dataset.reactorFrame || '',
+    }
+
+    const gl = canvas?.getContext('webgl2') || canvas?.getContext('webgl')
+    const loseContext = gl?.getExtension('WEBGL_lose_context')
+    if (!reactor || !canvas) failures.push('Signal Reactor canvas was not mounted')
+    if (!gl) failures.push('Signal Reactor did not expose a WebGL context')
+    if (!loseContext) failures.push('WEBGL_lose_context extension is unavailable')
+
+    loseContext?.loseContext()
+    await wait(180)
+
+    const canvasStyle = canvas ? window.getComputedStyle(canvas) : null
+    const shellStyle = shell ? window.getComputedStyle(shell) : null
+    const shellRect = shell?.getBoundingClientRect()
+    const after = {
+      contextLostClass: reactor?.classList.contains('is-context-lost') || false,
+      engine: reactor?.dataset.reactorEngine || '',
+      ready: reactor?.dataset.reactorReady || '',
+      frame: reactor?.dataset.reactorFrame || '',
+      canvasOpacity: Number(canvasStyle?.opacity || 0),
+      shellOpacity: Number(shellStyle?.opacity || 0),
+      shellVisible: Boolean(
+        shell &&
+        shellRect &&
+        shellRect.width > 1 &&
+        shellRect.height > 1 &&
+        shellStyle?.display !== 'none' &&
+        Number(shellStyle?.opacity || 0) > 0.5
+      ),
+    }
+
+    if (!after.contextLostClass) failures.push('context-loss class was not applied')
+    if (after.engine !== 'css') failures.push(\`context-loss engine remained \${after.engine || 'unset'}\`)
+    if (after.ready !== 'static') failures.push(\`context-loss ready state remained \${after.ready || 'unset'}\`)
+    if (after.frame !== 'static') failures.push(\`context-loss frame state remained \${after.frame || 'unset'}\`)
+    if (after.canvasOpacity > 0.01) failures.push(\`context-loss canvas opacity remained \${after.canvasOpacity}\`)
+    if (!after.shellVisible) failures.push('CSS reactor fallback was not visibly sized')
+
+    return {
+      extensionAvailable: Boolean(loseContext),
+      before,
+      after,
+      overflow: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - window.innerWidth,
+      failures,
+    }
+  })()`)
+
+  if (result.overflow > 2) {
+    result.failures.push(`context-loss overflow ${result.overflow}px`)
+  }
+
+  return {
+    name: 'reactor context loss fallback',
     ...result,
     runtimeEvents: runtimeEvents.slice(0, 8),
   }
@@ -1285,7 +1398,7 @@ function runCriticalFallbackCheck() {
   if (!/\.pointer-label\s*\{[^}]*opacity:\s*0\b/i.test(criticalStyle)) {
     failures.push('critical fallback must suppress pointer-label text before enhanced CSS loads')
   }
-  if (!html.includes('把 AI、工程现场') || !html.includes('个人操作系统。')) {
+  if (!html.includes('把日常工作') || !html.includes('也更直观。')) {
     warnings.push('homepage critical fallback copy may no longer expose the expected hero content')
   }
 
