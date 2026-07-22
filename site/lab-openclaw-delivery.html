@@ -6,9 +6,9 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta
       name="description"
-      content="一次正式客户交付：把复杂安装流程封成一键安装包，不只交脚本，还交最新版本目录、ZIP、SHA256 和安装 / 卸载入口。"
+      content="OPENCLAW 客户包 V0.31：客户打开文件夹就能找到安装、版本校验和卸载入口。"
     />
-    <title>OPENCLAW 客户包 V0.31：目录、校验值和卸载入口一起交出去 - FEIAN</title>
+    <title>OPENCLAW 客户包 V0.31：打开就知道怎么装、怎么卸 - FEIAN</title>
     <link rel="stylesheet" href="/src/entry.css" />
     <style>
       .proof-badges,
@@ -213,12 +213,10 @@
 
         <div class="entry-header-grid">
           <div class="entry-header-copy">
-            <p class="entry-kicker">交付记录 / version folder → zip → sha256</p>
-            <h1>OPENCLAW 客户包 V0.31：目录、校验值和卸载入口一起交出去</h1>
-            <p class="entry-subhead">客户包的第一层信息是目录、脚本、SHA256 校验和完整卸载。</p>
-            <p class="entry-lede">
-              真到客户交付的时候，不能只看“我本机上能跑”。更重要的是：最新版目录在哪、ZIP 在哪、校验值在哪、安装向导和卸载入口是不是都摆清楚。OPENCLAW 这一类现在至少把这些东西收成了一套正式包。
-            </p>
+            <p class="entry-kicker">交付记录 / 版本包 / 安装 / 卸载</p>
+            <h1>OPENCLAW 客户包 V0.31：打开就知道怎么装、怎么卸</h1>
+            <p class="entry-subhead">最新版放在最前面，ZIP 和校验值跟在旁边，安装与卸载各有一个明确入口。</p>
+            <p class="entry-lede">真正交给客户以后，“我电脑上能跑”没有用。客户需要知道先看什么、点哪个文件、安装失败后去哪里找记录，以及不用时怎样完整退出。我把这些入口收进同一个版本包里，也把还没解决的摩擦留在问题记录中。</p>
             <div class="entry-meta">
               <span>2026-04-23 整理</span>
               <span>Windows 安装包 / 交付目录</span>
@@ -227,174 +225,68 @@
           </div>
 
           <aside class="entry-filecard entry-signalcard" aria-label="交付速览">
-            <p class="entry-filecard-label">固定下来的交付对象</p>
+            <p class="entry-filecard-label">客户最先会碰到的四件事</p>
             <div class="entry-signalgrid">
-              <div>
-                <span>版本目录</span>
-                <strong><code>OPENCLAW一键安装脚本_V0.31</code> 已作为最新客户包固定下来</strong>
-              </div>
-              <div>
-                <span>打包</span>
-                <strong>ZIP 与 SHA256 并存，不再只给一个裸目录</strong>
-              </div>
-              <div>
-                <span>入口</span>
-                <strong>安装向导、完整卸载、Claude only 卸载都各有入口</strong>
-              </div>
-              <div>
-                <span>目标</span>
-                <strong>优先保证：能安装、能打开、能聊天、尽量稳定</strong>
-              </div>
+              <div><span>版本</span><strong>当前版本目录单独放在最前面</strong></div>
+              <div><span>下载</span><strong>ZIP 可以分发，SHA256 用来核对文件</strong></div>
+              <div><span>安装</span><strong>一键向导负责检查环境并开始安装</strong></div>
+              <div><span>卸载</span><strong>完整卸载和单独退出都有入口</strong></div>
             </div>
-            <p class="entry-filecard-note">
-              这类事情难点不在写脚本本身，而在目录、版本、校验、安装和卸载路径是否清楚。
-            </p>
+            <p class="entry-filecard-note">目标不花哨：能装、能打开、能正常使用，出问题也有退路。</p>
           </aside>
         </div>
       </header>
 
       <main class="entry-main">
-        <section class="entry-section">
-          <h2>先把客户第一步看什么排清楚</h2>
-          <p>
-          这类包最怕“我这边能跑，但客户打开目录不知道点哪个”。V0.31 把入口排清楚：项目说明、最新版本目录、分发 ZIP、SHA256、安装脚本和卸载脚本各就各位。
-          </p>
-          
+        <section class="entry-section" id="first-look" data-reading-label="客户先看">
+<h2>客户打开文件夹，第一眼要知道点哪里</h2>
+          <p>以前最怕的是我把脚本都准备好了，客户却面对一排文件不知道从哪里开始。V0.31 把版本说明、安装包、校验值、安装向导和卸载入口按使用顺序放好。历史版本不会和当前版本挤在一起。</p>
         </section>
 
-        <section class="entry-section" id="objects">
-          <h2>交付目录和入口</h2>
+        <section class="entry-section" id="objects" data-reading-label="交付目录">
+<h2>目录里的每样东西，都有固定位置</h2>
           <table class="proof-table">
-            <thead>
-              <tr>
-                <th scope="col">对象</th>
-                <th scope="col">现在放在哪</th>
-                <th scope="col">这次为什么不能少</th>
-              </tr>
-            </thead>
+            <thead><tr><th scope="col">内容</th><th scope="col">文件</th><th scope="col">客户什么时候会用</th></tr></thead>
             <tbody>
-              <tr>
-                <td><strong>项目入口说明</strong></td>
-                <td><code>01_项目文档/11_项目入口说明.md</code></td>
-                <td>任何新线程 / 新接手都先从这里进，不再靠口头交代。</td>
-              </tr>
-              <tr>
-                <td><strong>最新版本目录</strong></td>
-                <td><code>.../06_输出成品/OPENCLAW一键安装脚本_V0.31</code></td>
-                <td>最新客户包要有明确主入口，不再让历史版本一起挤在最前面。</td>
-              </tr>
-              <tr>
-                <td><strong>ZIP</strong></td>
-                <td><code>OPENCLAW一键安装脚本_V0.31.zip</code></td>
-                <td>交付不只给目录，还要给可发、可存档、可回传的正式包。</td>
-              </tr>
-              <tr>
-                <td><strong>SHA256</strong></td>
-                <td><code>OPENCLAW一键安装脚本_V0.31_SHA256.txt</code></td>
-                <td>这让“是不是同一个包”不再靠猜。</td>
-              </tr>
-              <tr>
-                <td><strong>安装 / 卸载入口</strong></td>
-                <td><code>10_一键安装向导.ps1</code> / <code>20_一键卸载向导.ps1</code> / <code>21_claude_only_uninstall_launcher.ps1</code></td>
-                <td>交付回路不只包括怎么装，还包括怎么退。</td>
-              </tr>
+              <tr><td><strong>入口说明</strong></td><td><code>11_项目入口说明.md</code></td><td>第一次打开时先看，里面写了推荐顺序和当前版本。</td></tr>
+              <tr><td><strong>版本目录</strong></td><td><code>OPENCLAW一键安装脚本_V0.31</code></td><td>需要展开检查或现场调试时，从这里进入。</td></tr>
+              <tr><td><strong>分发 ZIP</strong></td><td><code>OPENCLAW一键安装脚本_V0.31.zip</code></td><td>发给客户、存档或回传时使用。</td></tr>
+              <tr><td><strong>SHA256</strong></td><td><code>OPENCLAW一键安装脚本_V0.31_SHA256.txt</code></td><td>确认收到的 ZIP 没有损坏或拿错版本。</td></tr>
+              <tr><td><strong>安装与卸载</strong></td><td><code>10_一键安装向导.ps1</code> / <code>20_一键卸载向导.ps1</code></td><td>一个负责开始，一个负责完整退出。</td></tr>
             </tbody>
           </table>
         </section>
 
-        <section class="entry-section" id="evidence">
-          <h2>材料：ZIP、SHA256、安装和卸载</h2>
+        <section class="entry-section" id="evidence" data-reading-label="装卸完整">
+<h2>安装、校验和卸载，缺一项都不算交付</h2>
           <div class="proof-grid">
-            <article class="proof-card">
-              <h3>入口说明固定了目录顺序</h3>
-              <pre class="proof-pre">先读这些文件：
-1. AGENTS.md
-2. 10_工作区说明.md
-3. 11_项目入口说明.md
-4. 12_新线程接续说明.md
-...
-8. 包内说明文件
-9. 10_一键安装向导.ps1
-10. 20_一键卸载向导.ps1</pre>
-              <p>关键点在这里。能交付的不是一堆文件，而是目录顺序、版本、校验和安装 / 卸载路径都摆清楚。</p>
-            </article>
-
-            <article class="proof-card">
-              <h3>版本目录、ZIP、SHA256 同时存在</h3>
-              <p>
-                它已经不只是一个本地脚本项目。目录负责展开检查，ZIP 负责分发，SHA256 负责完整性确认，交付范围由这三个对象撑住。
-              </p>
-            </article>
-
-            <article class="proof-card">
-              <h3>目标被写得很实际</h3>
-              <p>
-                入口说明里没有写漂亮口号，只写了四件事：能安装、能打开、能聊天、尽量稳定。目标很朴素，也更接近客户真正会遇到的第一步。
-              </p>
-            </article>
-
-            <article class="proof-card">
-              <h3>旧路径被正式迁移并收口</h3>
-              <p>
-                这一类已经从旧路径迁移到新的标准化工作区，且明确要求后续正式输出默认只保留“最新版本目录 + 最新 ZIP + 最新 SHA256”。这说明这次不只是在改脚本，也在改交付秩序。
-              </p>
-            </article>
-
-            <article class="proof-card">
-              <h3>问题记录和版本文件把“还没稳定的地方”留了下来</h3>
-              <p>
-                这次不是只留下一个能发出去的包，还把 <code>20_进度记录.md</code>、<code>21_问题发现.md</code> 和
-                <code>VERSION.txt</code> 一起留在交付记录里。复查时直接沿着版本、遗留问题和进度记录收尾，不从“看起来能跑”重新猜。
-              </p>
-            </article>
+            <article class="proof-card"><h3>入口顺序写给第一次使用的人</h3><pre class="proof-pre">1. 先看版本说明和安装须知
+2. 运行 10_一键安装向导.ps1
+3. 按向导检查环境并完成安装
+4. 需要退出时运行 20_一键卸载向导.ps1
+5. 文件有疑问时，用 SHA256 核对 ZIP</pre><p>这段说明解决的是最普通的问题：客户不用先猜哪个脚本才是入口。</p></article>
+            <article class="proof-card"><h3>目录、ZIP 和校验值一起提供</h3><p>目录方便现场查看，ZIP 方便传输，SHA256 负责确认文件是否完整。三样东西承担不同用途。</p></article>
+            <article class="proof-card"><h3>目标写得很朴素</h3><p>能安装、能打开、能正常使用，并尽量少打扰客户现有环境。先把这些基础体验做稳。</p></article>
+            <article class="proof-card"><h3>问题没有被藏起来</h3><p><code>20_进度记录.md</code>、<code>21_问题发现.md</code> 和 <code>VERSION.txt</code> 继续记录没做完的地方。下一版从这些真实摩擦往下改。</p></article>
           </div>
-          <p class="proof-note">
-            如果只看代码，这件事并不显眼；但把目录、版本、校验、安装 / 卸载入口，再加上进度和问题记录一起看，它已经具备客户侧交付整理的基本形态。
-          </p>
+          <p class="proof-note">交付包不是把脚本压成 ZIP 就结束。客户能找到入口，也能安全退出，这个包才算完整。</p>
         </section>
 
-        <section class="entry-section" id="boundary">
-          <h2>范围：先保安装和回滚</h2>
-          <div class="proof-badges" aria-label="范围对象">
-            <span class="proof-badge">最新版本目录</span>
-            <span class="proof-badge">ZIP</span>
-            <span class="proof-badge">SHA256</span>
-            <span class="proof-badge">install / uninstall</span>
-          </div>
-          <p>
-            不把它写成“安装体验已经完美”。现有材料只说明：交付对象已经收整，入口和版本范围成立，安装 / 卸载各自有脚本，遗留问题继续挂在 <code>20_进度记录.md</code> 和
-            <code>21_问题发现.md</code> 里。更多能力留给后续版本，不提前夸大。
-          </p>
+        <section class="entry-section" id="boundary" data-reading-label="先保退路">
+<h2>先保证装得上，也退得回去</h2>
+          <div class="proof-badges" aria-label="当前交付内容"><span class="proof-badge">当前版本</span><span class="proof-badge">ZIP</span><span class="proof-badge">SHA256</span><span class="proof-badge">安装</span><span class="proof-badge">卸载</span></div>
+          <p>V0.31 还在继续打磨，我不会把它写成零摩擦安装。现在能确认的是版本入口已经收好，安装和卸载各有脚本，已知问题也有地方继续记录。</p>
         </section>
 
-        <section class="entry-section" id="next">
-          <h2>后续接手的文件范围</h2>
+        <section class="entry-section" id="next" data-reading-label="接手入口">
+<h2>以后继续维护，从这几个文件开始</h2>
           <div class="proof-grid">
-            <article class="proof-card">
-              <h3>还没做完</h3>
-              <ul>
-                <li>项目目标仍写着“继续调试优化 Windows 客户一键安装包”，说明它还在持续打磨，不是已经封箱。</li>
-                <li>当前材料集中在目录规范、交付物范围和问题留痕；安装摩擦细节还没有逐条展开成案例。</li>
-                <li>如果后面再出新版本，仍需要维持“最新目录 + 最新 ZIP + 最新 SHA256”的单入口习惯。</li>
-              </ul>
-            </article>
-
-            <article class="proof-card">
-              <h3>后续对象</h3>
-              <ul>
-                <li><code>20_进度记录.md</code> 和 <code>21_问题发现.md</code>：记录交付后的稳定性问题。</li>
-                <li><code>VERSION.txt</code> 与校验说明：确认版本范围。</li>
-                <li>安装逻辑：在目录规范和完整性校验稳定后再改。</li>
-              </ul>
-            </article>
+            <article class="proof-card"><h3>还在改的地方</h3><ul><li>Windows 环境差异仍会带来安装摩擦。</li><li>真实客户遇到的问题要继续补进问题记录。</li><li>出新版本时，目录、ZIP 和 SHA256 必须一起更新。</li></ul></article>
+            <article class="proof-card"><h3>接手顺序</h3><ul><li>先看 <code>VERSION.txt</code> 确认当前版本。</li><li>再看进度和问题记录，了解剩余摩擦。</li><li>最后才改安装逻辑，并重新走一遍卸载。</li></ul></article>
           </div>
         </section>
 
-        <section class="entry-note">
-          <p>
-            重点不是“我写了个安装脚本”，而是版本、入口、校验和回滚路径已经按正式交付摆在台面上。
-          </p>
-        </section>
+        <section class="entry-note"><p>写安装脚本只是开始。把版本、入口、校验和退出方式一起交清楚，客户才敢真的用。</p></section>
       </main>
     </div>
     <script type="module" src="/src/entry.ts"></script>

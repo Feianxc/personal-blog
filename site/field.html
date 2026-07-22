@@ -6,9 +6,9 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta
       name="description"
-      content="FEIAN 的现场档案：一次 MCGS / MODBUS 轮询冻结事件，按交接说法保留现象、材料和判断。"
+      content="一次 MCGS 轮询冻结的现场记录：同一屏里有些数据还在跳，有些已经卡住，我怎样一步步缩小范围。"
     />
-    <title>IR-485-0419：一次 MCGS 轮询冻结现场记录 - FEIAN</title>
+    <title>一次 MCGS 轮询冻结的现场记录 - FEIAN</title>
     <link rel="stylesheet" href="/src/entry.css" />
     <style>
       .entry-anchor-nav,
@@ -286,11 +286,9 @@
         <div class="entry-header-grid">
           <div class="entry-header-copy">
             <p class="entry-kicker">现场记录 / modbus rtu / rs-485</p>
-            <h1>IR-485-0419：一次 MCGS 轮询冻结，现场记录怎样从杂音里显出来</h1>
-            <p class="entry-subhead">现场不像演示页，先留报障原话、禁做项、变量组、串口记录和轮询前后差异。</p>
-            <p class="entry-lede">
-              这页按现场交接单写。站号、组名、地址已脱敏，但处理顺序保留：先听原话，再看影响范围，再把串口、寄存器段和轮询节奏摆出来。有些问题不在一句“通讯不稳定”里，而在几次读数的先后顺序里。
-            </p>
+            <h1>一组数据还在跳，另一组却卡住了</h1>
+            <p class="entry-subhead">这次不是整站断线。有人看到旧值不动，旁边几组却还在更新，问题就藏在这点差别里。</p>
+            <p class="entry-lede">我把站号、组名和地址做了脱敏，但保留了排查顺序。先听现场怎么描述，再看变量组和串口记录，最后才决定要不要碰映射或工程文件。很多时候，真正有用的不是一句“通讯不稳定”，而是几次读写谁先超时、谁又在重试后回来。</p>
             <div class="entry-meta">
               <span>事件日期 2026-04-19</span>
               <span>MCGS / MODBUS / RS-485</span>
@@ -332,10 +330,10 @@
       </header>
 
       <main class="entry-main">
-        <section class="entry-section">
-          <h2>到场先记三件事：谁报的、哪里卡、哪些动作不能碰</h2>
+        <section class="entry-section" id="arrival" data-reading-label="先问清楚">
+          <h2>到场先问清楚：哪里卡住，哪些动作不能碰</h2>
           <p>
-            现场第一步没写“结论”，先写受理抬头。因为这次不是整站断通讯，而是同屏里有组继续跳、有组卡旧值。先把原话、影响范围、操作范围写清楚，后面每一步才知道哪些动作不能碰。
+            我到现场后没有急着下结论。先把报障人的原话记下来，再确认哪些画面受影响、哪些操作现在不能碰。因为这次不是整站断线，同一屏里仍有数据在更新。这个差别一旦写清楚，后面的排查就不会一上来把整个工程都翻一遍。
           </p>
           <div class="entry-quicklook" aria-label="现场抬头">
             <article class="entry-quicklook-card">
@@ -386,10 +384,10 @@
           </p>
         </section>
 
-        <section class="entry-section" id="objects">
-          <h2>材料 01：变量组、站号、寄存器段先落表</h2>
+        <section class="entry-section" id="objects" data-reading-label="先列变量组">
+          <h2>动手前，我先把变量组和地址段列成表</h2>
           <p>
-            先落对象表，再动手。组名虽然匿名，但拆组方式、站号关系、功能码和段长度按现场原结构保留；问题往往不在某一个点，而在某一组的轮询位置。
+            动手前，我先把变量组、站号、功能码和地址长度列成表。组名虽然做了匿名处理，分组关系和轮询位置没有改。这样才能看出问题落在单个点，还是整组请求的节奏上。
           </p>
           <table class="proof-table">
             <thead>
@@ -437,10 +435,10 @@
           </p>
         </section>
 
-        <section class="entry-section" id="slices">
-          <h2>现场物证切片 / 变量组、寄存器段、串口记录分开记</h2>
+        <section class="entry-section" id="slices" data-reading-label="看读写顺序">
+          <h2>真正有用的线索，藏在几次读写的先后里</h2>
           <p>
-            以下切片来自现场手记，保留原始格式；关键在记录和时间顺序。
+            下面几段来自当时的现场手记。我保留了读写顺序，因为首包超时、重试成功和持续无返回是三种完全不同的情况。
           </p>
           <div class="proof-grid">
             <article class="proof-card">
@@ -518,10 +516,10 @@ window   = 旧值保持 2~4 周期</pre>
           </p>
         </section>
 
-        <section class="entry-section" id="hypothesis">
-          <h2>verification_record / 这轮退掉了哪些错误动作</h2>
+        <section class="entry-section" id="hypothesis" data-reading-label="排除误判">
+          <h2>有几种看似省事的处理，我没有碰</h2>
           <p>
-            现场里耗时的地方，往往是太早动了错误对象。表里记录本次没有采用的动作和理由。
+            现场最容易浪费时间的，是还没看清范围就先改变量、换串口参数或整包下载。我把这次没有采用的做法也记下来，免得下一班又从同一个弯路开始。
           </p>
           <table class="proof-table">
             <thead>
@@ -566,8 +564,8 @@ window   = 旧值保持 2~4 周期</pre>
           </div>
         </section>
 
-        <section class="entry-section" id="handoff">
-          <h2>交接和残留风险</h2>
+        <section class="entry-section" id="handoff" data-reading-label="留给下一班">
+          <h2>交接时，我只留下下一步该查什么</h2>
           <table class="proof-table">
             <thead>
               <tr>
@@ -626,7 +624,7 @@ window   = 旧值保持 2~4 周期</pre>
             </article>
           </div>
           <p class="proof-note">
-            交接说法：核查 04 / 05 段记录和全量周期，再决定是否碰映射和整包工程；不靠“重新下载试试”来试错。
+            交给下一班时，我只留了一个明确顺序：先复查 04 / 05 段的读写记录和完整轮询周期，再决定要不要动映射或整包工程。不要用“重新下载试试”代替判断。
           </p>
         </section>
       </main>

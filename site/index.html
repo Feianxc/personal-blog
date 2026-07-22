@@ -84,7 +84,7 @@
     <canvas id="rain-canvas" class="rain-canvas" aria-hidden="true"></canvas>
 
     <div class="fx-layer" aria-hidden="true">
-      <div class="pointer-shell" data-pointer-state="idle">
+      <div class="pointer-shell" data-pointer-state="idle" data-pointer-rest="moving">
         <img
           class="pointer-probe"
           src="/cursors/feian-signal-probe-cursor-96.png"
@@ -93,6 +93,12 @@
           alt=""
           decoding="async"
         />
+        <span class="pointer-afterglow">
+          <i class="pointer-afterglow-orbit pointer-afterglow-orbit--cyan"></i>
+          <i class="pointer-afterglow-orbit pointer-afterglow-orbit--orange"></i>
+          <i class="pointer-afterglow-scan"></i>
+          <i class="pointer-afterglow-node"></i>
+        </span>
         <span class="pointer-aura"></span>
         <span class="pointer-ring"></span>
         <span class="pointer-core"></span>
@@ -188,9 +194,6 @@
                     <section
                       class="cover-object"
                       data-reveal
-                      data-interactive-lens
-                      data-pointer-label="inspect"
-                      data-pointer-mode="scan"
                       aria-labelledby="cover-object-title"
                     >
                       <div class="cover-object-sheet reactor-stage">
@@ -224,7 +227,7 @@
                     </div>
                   </div>
 
-                  <div class="reactor-legend" aria-label="切换信号线路">
+                  <div class="reactor-legend" data-stable-control aria-label="切换信号线路">
                     <button type="button" class="reactor-mode is-active" data-reactor-mode="work" aria-pressed="true"><i></i>工作</button>
                     <button type="button" class="reactor-mode" data-reactor-mode="field" aria-pressed="false"><i></i>现场</button>
                     <button type="button" class="reactor-mode" data-reactor-mode="life" aria-pressed="false"><i></i>生活</button>
@@ -465,13 +468,38 @@
                 <div class="project-shelf-meta"><span>2026-07-10 · 三维工具</span><strong>还在核对</strong></div>
                 <h3>数字母线项目梳理</h3>
                 <p>我把这套现有项目的前后端梳理了一遍，理清了从网页画走势、后端分段到 GLB 三维预览的流程。STEP 输出和部分弯头细节还在核对。</p>
-                <div class="project-shelf-visual" aria-hidden="true">
-                  <i class="busbar3d-axis"></i>
-                  <span class="busbar3d-segment busbar3d-segment--one" data-project-motion></span>
-                  <span class="busbar3d-segment busbar3d-segment--two"></span>
-                  <span class="busbar3d-segment busbar3d-segment--three"></span>
-                  <i class="busbar3d-joint"></i>
-                  <span class="busbar3d-caption">路线 → 分段 → 三维预览</span>
+                <div class="project-shelf-visual busbar-forge" data-busbar-forge aria-hidden="true">
+                  <span class="busbar-forge-kicker">ROUTE / ASSEMBLY</span>
+                  <svg class="busbar-forge-route" viewBox="0 0 260 180" preserveAspectRatio="none">
+                    <path class="busbar-forge-route-guide" d="M18 142 C48 118 54 56 98 62 S142 132 180 93 S216 39 244 54" pathLength="1"></path>
+                    <path class="busbar-forge-route-live" d="M18 142 C48 118 54 56 98 62 S142 132 180 93 S216 39 244 54" pathLength="1"></path>
+                    <circle cx="18" cy="142" r="4"></circle>
+                    <circle cx="98" cy="62" r="4"></circle>
+                    <circle cx="180" cy="93" r="4"></circle>
+                    <circle cx="244" cy="54" r="4"></circle>
+                  </svg>
+                  <span class="busbar-forge-packet" data-project-motion></span>
+
+                  <div class="busbar-forge-stage">
+                    <i class="busbar-forge-grid"></i>
+                    <i class="busbar-forge-scanner"></i>
+                    <span class="busbar-forge-rail busbar-forge-rail--entry"></span>
+                    <span class="busbar-forge-rail busbar-forge-rail--elbow"></span>
+                    <span class="busbar-forge-rail busbar-forge-rail--main"></span>
+                    <span class="busbar-forge-rail busbar-forge-rail--branch"></span>
+                    <i class="busbar-forge-joint busbar-forge-joint--one"></i>
+                    <i class="busbar-forge-joint busbar-forge-joint--two"></i>
+                    <span class="busbar-forge-axis">三维装配</span>
+                  </div>
+
+                  <div class="busbar-forge-outputs">
+                    <span class="busbar-forge-output is-ready"><small>GLB</small><strong>三维预览</strong><i></i></span>
+                    <span class="busbar-forge-output is-reviewing"><small>STEP</small><strong>继续核对</strong><i></i></span>
+                  </div>
+
+                  <div class="busbar-forge-flow">
+                    <span>网页画走势</span><i></i><span>后端分段</span><i></i><span>装配预览</span>
+                  </div>
                 </div>
                 <span class="project-shelf-cta">看项目</span>
               </a>

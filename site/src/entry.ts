@@ -44,12 +44,13 @@ if (entryPage.classList.contains('entry-page')) {
 
       const heading = section.querySelector<HTMLHeadingElement>('h2')
       const title = heading?.textContent?.trim() ?? `section ${index + 1}`
+      const authoredLabel = section.dataset.readingLabel?.trim()
 
       return {
         section,
         id: section.id,
         title,
-        label: pickShortLabel(title, index),
+        label: authoredLabel || title,
         number: index + 1,
       }
     })
@@ -600,7 +601,7 @@ function buildReadingBar(sectionMeta: SectionMeta[]) {
 
   const metaLabel = document.createElement('span')
   metaLabel.className = 'entry-readingbar-label'
-  metaLabel.textContent = 'reading state'
+  metaLabel.textContent = '文章进度'
 
   const metaCurrent = document.createElement('strong')
   metaCurrent.className = 'entry-readingbar-current'
@@ -653,6 +654,7 @@ function buildReadingBar(sectionMeta: SectionMeta[]) {
     link.className = 'entry-readinglink'
     link.href = `#${metaItem.id}`
     link.dataset.readingLink = metaItem.id
+    link.setAttribute('aria-label', `第 ${metaItem.number} 节：${metaItem.title}`)
 
     index.className = 'entry-readinglink-index'
     index.textContent = pad(metaItem.number)
@@ -669,46 +671,6 @@ function buildReadingBar(sectionMeta: SectionMeta[]) {
   readingBar.append(meta, nav)
 
   return readingBar
-}
-
-function pickShortLabel(title: string, index: number) {
-  const directMap: Array<[string, string]> = [
-    ['run ledger', '总览'],
-    ['incident header', '总览'],
-    ['chain', '链路'],
-    ['source slices', '回执'],
-    ['decision delta', '判断'],
-    ['next run', '下轮'],
-    ['对象与约束', '对象'],
-    ['现场物证', '物证'],
-    ['假设排除树', '排除树'],
-    ['交接和残留风险', '交接'],
-  ]
-
-  const mapped = directMap.find(([needle]) => title.includes(needle))
-
-  if (mapped) {
-    return mapped[1]
-  }
-
-  if (index === 0) {
-    return '总览'
-  }
-
-  const afterSlash = title.includes('/')
-    ? title.split('/').slice(-1)[0]?.trim() ?? title
-    : title
-  const beforePunctuation = afterSlash
-    .split(/[：:，。,.、]/)[0]
-    ?.trim() ?? afterSlash
-  const chineseOnly = beforePunctuation.replace(/[^\u4e00-\u9fa5]/g, '')
-
-  if (chineseOnly.length >= 2) {
-    return chineseOnly.slice(0, Math.min(4, chineseOnly.length))
-  }
-
-  const compact = beforePunctuation.replace(/\s+/g, ' ').trim()
-  return compact.slice(0, 10)
 }
 
 function pad(value: number) {

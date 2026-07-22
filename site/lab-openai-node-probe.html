@@ -69,14 +69,14 @@
       </header>
 
       <main class="entry-main">
-        <section class="entry-section" id="result">
-          <h2>先看最终报告</h2>
+        <section class="entry-section" id="result" data-reading-label="先看结果">
+          <h2>第一屏先回答：推荐谁，为什么</h2>
           <p>第一屏只回答是否可信、推荐哪个节点、为什么以及下一步。场景判断、节点明细和统计口径默认折叠。</p>
           <figure class="probe-figure"><img src="/case-media/openai-node-probe-report.png" alt="OpenAI 节点体检仪的桌面版 HTML 报告，首屏展示可信度、推荐节点、原因和下一步。" loading="lazy" decoding="async" /><figcaption>单文件报告不依赖外部图表库；搜索、排序、完整列和移动端卡片视图都保留。</figcaption></figure>
         </section>
 
-        <section class="entry-section" id="efficiency">
-          <h2>效率不是把检测做浅，而是把深测留给候选</h2>
+        <section class="entry-section" id="efficiency" data-reading-label="先筛后测">
+          <h2>先快筛全部节点，再深测前几名</h2>
           <div class="probe-metrics">
             <article class="probe-metric"><span>示例节点</span><strong>30 个</strong></article>
             <article class="probe-metric"><span>公共目标</span><strong>4 个</strong></article>
@@ -86,8 +86,8 @@
           <p class="probe-note">336 / 1200 / 72% 是默认参数下的理论请求计划，不是固定耗时或真实网络成绩。最终速度仍取决于节点数量、失败超时和本机网络。</p>
         </section>
 
-        <section class="entry-section" id="build">
-          <h2>我是怎么把它收成工具的</h2>
+        <section class="entry-section" id="build" data-reading-label="怎样体检">
+          <h2>每个节点都要真的切过去</h2>
           <div class="entry-quicklook">
             <article class="entry-quicklook-card"><span class="entry-quicklook-label">01 / switch</span><strong>真实切换，而不是只读历史延迟</strong><p>逐节点验证选择器是否真的切换；切换失败的节点不能进入可信推荐。</p></article>
             <article class="entry-quicklook-card"><span class="entry-quicklook-label">02 / adaptive</span><strong>全节点快筛，再复测候选</strong><p>首轮偶发失败但切换成功的节点还有救援复测机会，避免一次抖动直接淘汰。</p></article>
@@ -95,8 +95,8 @@
           </div>
         </section>
 
-        <section class="entry-section" id="boundary">
-          <h2>它能证明什么，也明确不证明什么</h2>
+        <section class="entry-section" id="boundary" data-reading-label="报告边界">
+          <h2>报告能说明网络表现，不能保证哪个节点永远最快</h2>
           <div class="proof-grid">
             <article class="proof-card"><h3>公共路径证据</h3><p>可以观察 DNS、TCP、TLS、HTTP 可达性、响应时间和样本稳定性。</p></article>
             <article class="proof-card"><h3>登录态复核</h3><p>可选浏览器伴侣只观察页面可见区域的时间和计数，不读取账号凭据或正文。</p></article>

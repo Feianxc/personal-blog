@@ -15,6 +15,7 @@ const reportPath = join(runRoot, 'full-site-qa-report.json')
 const reportMdPath = join(runRoot, 'full-site-qa-report.md')
 const screenshotDesktop = join(mediaRoot, 'homepage-desktop.png')
 const screenshotMobile = join(mediaRoot, 'homepage-mobile.png')
+const screenshotArticleReading = join(mediaRoot, 'article-reading-nav-humanized.png')
 
 const viewportMatrix = [
   { name: 'desktop', width: 1440, height: 960, deviceScaleFactor: 1 },
@@ -211,6 +212,7 @@ async function main() {
     screenshots: {
       desktop: screenshotDesktop,
       mobile: screenshotMobile,
+      articleReading: screenshotArticleReading,
     },
     warnings,
     failures,
@@ -223,7 +225,7 @@ async function main() {
   console.log(`Routes: ${routes.length}; checks: ${results.length}; warnings: ${warnings.length}; failures: ${failures.length}`)
   console.log(`Report: ${reportPath}`)
   console.log(`Markdown: ${reportMdPath}`)
-  console.log(`Screenshots: ${screenshotDesktop}; ${screenshotMobile}`)
+  console.log(`Screenshots: ${screenshotDesktop}; ${screenshotMobile}; ${screenshotArticleReading}`)
 
   if (failures.length > 0) {
     console.error(JSON.stringify(failures.slice(0, 12), null, 2))
@@ -264,6 +266,16 @@ async function auditRoute(route, viewport) {
   if (route === '/' && viewport.name === 'mobile') {
     await saveScreenshot(screenshotMobile)
   }
+  if (route === '/lab-busbar-debugging-platform.html' && viewport.name === 'desktop') {
+    await evalValue(`(() => {
+      document.querySelector('.entry-readingbar')?.scrollIntoView({ block: 'center' })
+      return window.scrollY
+    })()`)
+    await delay(180)
+    await saveScreenshot(screenshotArticleReading)
+    await evalValue('(() => { window.scrollTo(0, 0); return window.scrollY })()')
+    await delay(180)
+  }
 
   const page = await evaluatePage()
   const documentStatus = networkEvents.find((event) => event.type === 'Document' && normalizeUrl(event.url) === normalizeUrl(url))?.status ?? 0
@@ -293,6 +305,7 @@ async function auditRoute(route, viewport) {
     orbitCards: page.orbitCards,
     cursor: page.cursor,
     clarity: page.clarity,
+    entryReading: page.entryReading,
     forbiddenCopyHits: page.forbiddenCopyHits,
     navLinks: page.navLinks,
     navDurationMs: Math.round(page.navDurationMs),
@@ -305,15 +318,376 @@ async function auditRoute(route, viewport) {
 async function auditHomeInteractions() {
   runtimeEvents.length = 0
   networkEvents.length = 0
+  const failures = []
+  // The route matrix ends on a touch viewport. Reset the input environment
+  // before auditing trusted desktop mouse clicks and fine-pointer ambience.
+  await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: false })
   await cdp.send('Emulation.setDeviceMetricsOverride', {
     width: 1440,
     height: 960,
     deviceScaleFactor: 1,
     mobile: false,
   })
+  await cdp.send('Emulation.setEmulatedMedia', {
+    features: [
+      { name: 'pointer', value: 'fine' },
+      { name: 'hover', value: 'hover' },
+      { name: 'any-pointer', value: 'fine' },
+      { name: 'any-hover', value: 'hover' },
+      { name: 'prefers-reduced-motion', value: 'no-preference' },
+    ],
+  })
   await cdp.send('Page.navigate', { url: `${baseUrl}/` })
   await cdp.waitForEvent('Page.loadEventFired', () => true, 15_000).catch(() => {})
-  await delay(550)
+  await delay(900)
+
+  const originalScrollBehavior = await evalValue(`document.documentElement.style.scrollBehavior`)
+  await evalValue(`(() => {
+    document.documentElement.style.scrollBehavior = 'auto'
+    window.scrollTo(0, 0)
+    window.__feianReactorTrustedClicks = []
+    document.querySelectorAll('button[data-reactor-mode]').forEach((button) => {
+      button.addEventListener('click', (event) => {
+        window.__feianReactorTrustedClicks.push({
+          mode: button.dataset.reactorMode || '',
+          trusted: event.isTrusted,
+        })
+      }, { capture: true })
+    })
+  })()`)
+  await delay(100)
+
+  const clickReactorMode = async (mode) => {
+    const point = await evalValue(`(() => {
+      const button = document.querySelector('button[data-reactor-mode="${mode}"]')
+      const rect = button?.getBoundingClientRect()
+      return rect ? {
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+        scrollY: window.scrollY,
+        rect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom },
+      } : null
+    })()`)
+
+    if (!point) return { mode, missing: true }
+
+    await cdp.send('Input.dispatchMouseEvent', {
+      type: 'mouseMoved',
+      x: point.x,
+      y: point.y,
+      buttons: 0,
+    })
+    await delay(140)
+
+    const hitAfterHover = await evalValue(`(async () => {
+      const waitFrame = () => new Promise((resolve) => {
+        let settled = false
+        let watchdog = 0
+        const finish = () => {
+          if (settled) return
+          settled = true
+          window.clearTimeout(watchdog)
+          resolve()
+        }
+        watchdog = window.setTimeout(finish, 34)
+        window.requestAnimationFrame(finish)
+      })
+      const sample = () => {
+        /* elementsFromPoint forces Chromium to publish the latest compositor
+           hit-test tree before elementFromPoint reads its single winner. */
+        const elements = document.elementsFromPoint(${point.x}, ${point.y})
+        const target = document.elementFromPoint(${point.x}, ${point.y})
+        const button = document.querySelector('button[data-reactor-mode="${mode}"]')
+        const rect = button?.getBoundingClientRect()
+        return {
+          tag: target?.tagName || '',
+          className: typeof target?.className === 'string' ? target.className : '',
+          mode: target?.closest?.('button[data-reactor-mode]')?.dataset.reactorMode || '',
+          stackMode: elements[0]?.closest?.('button[data-reactor-mode]')?.dataset.reactorMode || '',
+          stack: elements.slice(0, 6).map((element) => ({
+            tag: element.tagName,
+            className: typeof element.className === 'string' ? element.className : '',
+            pointerEvents: getComputedStyle(element).pointerEvents,
+          })),
+          scrollY: window.scrollY,
+          buttonRect: rect ? { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom } : null,
+          pointInsideButton: Boolean(rect && ${point.x} >= rect.left && ${point.x} <= rect.right && ${point.y} >= rect.top && ${point.y} <= rect.bottom),
+        }
+      }
+      const started = performance.now()
+      let stableSamples = 0
+      let result = sample()
+      while (performance.now() - started < 800) {
+        result = sample()
+        if (result.mode === '${mode}' && result.stackMode === '${mode}' && result.pointInsideButton) {
+          stableSamples += 1
+          if (stableSamples >= 2) return { ...result, ready: true, stableSamples }
+        } else {
+          stableSamples = 0
+        }
+        await waitFrame()
+      }
+      return { ...result, ready: false, stableSamples }
+    })()`)
+
+    await cdp.send('Input.dispatchMouseEvent', {
+      type: 'mousePressed',
+      x: point.x,
+      y: point.y,
+      button: 'left',
+      buttons: 1,
+      clickCount: 1,
+    })
+    await delay(90)
+    await cdp.send('Input.dispatchMouseEvent', {
+      type: 'mouseReleased',
+      x: point.x,
+      y: point.y,
+      button: 'left',
+      buttons: 0,
+      clickCount: 1,
+    })
+    await delay(240)
+
+    return evalValue(`(() => {
+      const reactor = document.querySelector('[data-signal-reactor]')
+      const button = document.querySelector('button[data-reactor-mode="${mode}"]')
+      const surface = document.querySelector('.cover-object')
+      return {
+        requested: '${mode}',
+        point: ${JSON.stringify(point)},
+        actual: reactor?.dataset.reactorMode || '',
+        pressed: button?.getAttribute('aria-pressed') || '',
+        hitAfterHover: ${JSON.stringify(hitAfterHover)},
+        surfaceClasses: surface?.className || '',
+        surfaceTransform: surface ? getComputedStyle(surface).transform : '',
+        trustedClicks: window.__feianReactorTrustedClicks || [],
+      }
+    })()`)
+  }
+
+  const fieldClick = await clickReactorMode('field')
+  const workClick = await clickReactorMode('work')
+  const reactorClicks = { fieldClick, workClick }
+
+  for (const click of [fieldClick, workClick]) {
+    if (click.missing) {
+      failures.push(`reactor ${click.mode} button is missing`)
+      continue
+    }
+    if (!click.hitAfterHover?.ready || click.hitAfterHover?.mode !== click.requested) {
+      failures.push(`reactor ${click.requested} moved out from under the physical pointer`)
+    }
+    if (click.actual !== click.requested || click.pressed !== 'true') {
+      failures.push(`reactor physical click requested ${click.requested} but remained ${click.actual || 'unset'}`)
+    }
+    if (click.surfaceClasses?.includes('is-pressed') || click.surfaceClasses?.includes('is-surfing')) {
+      failures.push(`reactor parent surface moved while clicking ${click.requested}`)
+    }
+  }
+  const trustedClickCount = workClick.trustedClicks?.filter((item) => item.trusted).length || 0
+  if (trustedClickCount < 2) failures.push(`reactor physical audit captured only ${trustedClickCount}/2 trusted clicks`)
+
+  const scrollRoundTrip = await evalValue(`(async () => {
+    const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms))
+    const waitUntil = async (predicate, timeout = 600) => {
+      const started = performance.now()
+      while (performance.now() - started < timeout) {
+        if (predicate()) return true
+        await wait(32)
+      }
+      return predicate()
+    }
+    const pose = (element) => {
+      if (!element) return null
+      const style = getComputedStyle(element)
+      const matrix = style.transform === 'none' ? null : new DOMMatrixReadOnly(style.transform)
+      const transformError = matrix
+        ? Math.abs(matrix.m41) + Math.abs(matrix.m42) + Math.abs(matrix.m43) +
+          Math.abs(matrix.m11 - 1) + Math.abs(matrix.m22 - 1) + Math.abs(matrix.m33 - 1)
+        : 0
+      return {
+        opacity: Number(style.opacity || 1),
+        visibility: style.visibility,
+        transform: style.transform,
+        transformError,
+      }
+    }
+    const feed = document.querySelector('#feed')
+    const targetY = Math.min(
+      Math.max((feed?.offsetTop || window.innerHeight) + 160, window.innerHeight),
+      Math.max(0, document.documentElement.scrollHeight - window.innerHeight),
+    )
+    window.scrollTo(0, targetY)
+    await waitUntil(() => window.scrollY > 400)
+    const deepY = window.scrollY
+    window.scrollTo(0, 0)
+    const topPoseReady = await waitUntil(() => {
+      const panel = pose(document.querySelector('.cover-panel'))
+      const reactorLayer = pose(document.querySelector('.impact-reactor-scroll'))
+      return Boolean(
+        window.scrollY <= 2 &&
+        document.querySelector('.cover')?.classList.contains('is-impact-top') &&
+        panel && panel.opacity >= 0.98 && panel.visibility === 'visible' && panel.transformError <= 0.04 &&
+        reactorLayer && reactorLayer.opacity >= 0.98 && reactorLayer.visibility === 'visible' && reactorLayer.transformError <= 0.04
+      )
+    })
+
+    return {
+      deepY,
+      returnedY: window.scrollY,
+      topPoseReady,
+      coverClass: document.querySelector('.cover')?.className || '',
+      panel: pose(document.querySelector('.cover-panel')),
+      reactorLayer: pose(document.querySelector('.impact-reactor-scroll')),
+    }
+  })()`)
+
+  if (scrollRoundTrip.deepY < 400) failures.push(`homepage round-trip did not scroll deeply enough (${scrollRoundTrip.deepY}px)`)
+  if (scrollRoundTrip.returnedY > 2) failures.push(`homepage round-trip returned to ${scrollRoundTrip.returnedY}px instead of the top`)
+  if (!scrollRoundTrip.panel || scrollRoundTrip.panel.opacity < 0.98 || scrollRoundTrip.panel.visibility !== 'visible' || scrollRoundTrip.panel.transformError > 0.04) {
+    failures.push(`homepage left panel did not hard-reset after returning to top ${JSON.stringify(scrollRoundTrip.panel)}`)
+  }
+  if (!scrollRoundTrip.reactorLayer || scrollRoundTrip.reactorLayer.opacity < 0.98 || scrollRoundTrip.reactorLayer.visibility !== 'visible' || scrollRoundTrip.reactorLayer.transformError > 0.04) {
+    failures.push(`homepage reactor layer did not hard-reset after returning to top ${JSON.stringify(scrollRoundTrip.reactorLayer)}`)
+  }
+
+  const pointerPoint = await evalValue(`(() => {
+    const candidates = [
+      [Math.round(window.innerWidth * 0.5), Math.round(window.innerHeight * 0.44)],
+      [Math.round(window.innerWidth * 0.48), Math.round(window.innerHeight * 0.76)],
+      [Math.round(window.innerWidth * 0.5), Math.round(window.innerHeight * 0.6)],
+    ]
+    const point = candidates.find(([x, y]) => !document.elementFromPoint(x, y)?.closest('a, button, input, textarea, select, [data-stable-control], [data-interactive-lens]'))
+    return point ? { x: point[0], y: point[1] } : { x: Math.round(window.innerWidth * 0.5), y: Math.round(window.innerHeight * 0.44) }
+  })()`)
+  await cdp.send('Input.dispatchMouseEvent', {
+    type: 'mouseMoved',
+    x: Math.max(4, pointerPoint.x - 8),
+    y: pointerPoint.y,
+    buttons: 0,
+    pointerType: 'mouse',
+  })
+  await delay(40)
+  await cdp.send('Input.dispatchMouseEvent', {
+    type: 'mouseMoved',
+    x: pointerPoint.x,
+    y: pointerPoint.y,
+    buttons: 0,
+    pointerType: 'mouse',
+  })
+  const pointerSettled = await evalValue(`(async () => {
+    const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms))
+    const waitUntil = async (predicate, timeout = 1800) => {
+      const started = performance.now()
+      while (performance.now() - started < timeout) {
+        if (predicate()) return true
+        await wait(32)
+      }
+      return predicate()
+    }
+    const shell = document.querySelector('.pointer-shell')
+    const afterglow = document.querySelector('.pointer-afterglow')
+    const orbit = document.querySelector('.pointer-afterglow-orbit--cyan')
+    const visuallyReady = await waitUntil(() => {
+      const style = afterglow ? getComputedStyle(afterglow) : null
+      return shell?.dataset.pointerRest === 'settled' &&
+        shell?.dataset.pointerState === 'idle' &&
+        Number(style?.opacity || 0) >= 0.7
+    })
+    const afterglowStyle = afterglow ? getComputedStyle(afterglow) : null
+    const orbitStyle = orbit ? getComputedStyle(orbit) : null
+    return {
+      visuallyReady,
+      rest: shell?.dataset.pointerRest || '',
+      state: shell?.dataset.pointerState || '',
+      bodyClass: document.body.className,
+      htmlClass: document.documentElement.className,
+      selectorMatched: Boolean(afterglow?.matches('.has-pointer-fx .pointer-shell[data-pointer-rest="settled"][data-pointer-state="idle"] .pointer-afterglow')),
+      finePointer: matchMedia('(pointer: fine)').matches,
+      hoverPointer: matchMedia('(hover: hover)').matches,
+      reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
+      shellOpacity: Number(shell ? getComputedStyle(shell).opacity : 0),
+      opacity: Number(afterglowStyle?.opacity || 0),
+      clipPath: afterglowStyle?.clipPath || '',
+      filter: afterglowStyle?.filter || '',
+      transitionProperty: afterglowStyle?.transitionProperty || '',
+      pointerEvents: afterglowStyle?.pointerEvents || '',
+      animationName: orbitStyle?.animationName || '',
+      animationPlayState: orbitStyle?.animationPlayState || '',
+    }
+  })()`)
+  await cdp.send('Input.dispatchMouseEvent', {
+    type: 'mouseMoved',
+    x: Math.min(pointerPoint.x + 56, 1380),
+    y: pointerPoint.y,
+    buttons: 0,
+    pointerType: 'mouse',
+  })
+  const pointerMovingImmediate = await evalValue(`document.querySelector('.pointer-shell')?.dataset.pointerRest || ''`)
+  await delay(240)
+  const pointerMovingOpacity = await evalValue(`Number(getComputedStyle(document.querySelector('.pointer-afterglow')).opacity || 0)`)
+  const pointerRest = { pointerPoint, settled: pointerSettled, movingImmediate: pointerMovingImmediate, movingOpacity: pointerMovingOpacity }
+
+  if (pointerSettled.rest !== 'settled' || pointerSettled.state !== 'idle') failures.push(`pointer rest state is ${pointerSettled.rest}/${pointerSettled.state}`)
+  if (!pointerSettled.visuallyReady || pointerSettled.opacity < 0.7 || pointerSettled.pointerEvents !== 'none') failures.push(`pointer afterglow is not visibly non-blocking ${JSON.stringify(pointerSettled)}`)
+  if (pointerSettled.animationName === 'none' || pointerSettled.animationPlayState !== 'running') failures.push(`pointer afterglow animation is ${pointerSettled.animationName}/${pointerSettled.animationPlayState}`)
+  if (pointerMovingImmediate !== 'moving' || pointerMovingOpacity > 0.08) failures.push(`pointer afterglow did not retract after movement (${pointerMovingImmediate}/${pointerMovingOpacity})`)
+
+  const busbarForge = await evalValue(`(async () => {
+    const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms))
+    const waitUntil = async (predicate, timeout = 1800) => {
+      const started = performance.now()
+      while (performance.now() - started < timeout) {
+        if (predicate()) return true
+        await wait(50)
+      }
+      return predicate()
+    }
+    const forge = document.querySelector('[data-busbar-forge]')
+    const card = forge?.closest('[data-project-card]')
+    card?.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'auto' })
+    const sentinel = forge?.querySelector('[data-project-motion]')
+    window.dispatchEvent(new Event('scroll'))
+    const motionReady = await waitUntil(() => Boolean(
+      card?.classList.contains('is-in-view') &&
+      sentinel &&
+      getComputedStyle(sentinel).animationPlayState === 'running'
+    ))
+    const sentinelStyle = sentinel ? getComputedStyle(sentinel) : null
+    const routeStyle = forge?.querySelector('.busbar-forge-route-live')
+      ? getComputedStyle(forge.querySelector('.busbar-forge-route-live'))
+      : null
+    return {
+      exists: Boolean(forge),
+      motionReady,
+      inView: Boolean(card?.classList.contains('is-in-view')),
+      routePaths: forge?.querySelectorAll('.busbar-forge-route path').length || 0,
+      routeNodes: forge?.querySelectorAll('.busbar-forge-route circle').length || 0,
+      rails: forge?.querySelectorAll('.busbar-forge-rail').length || 0,
+      outputs: Array.from(forge?.querySelectorAll('.busbar-forge-output') || []).map((item) => item.textContent?.trim().replace(/\\s+/g, ' ')),
+      flow: Array.from(forge?.querySelectorAll('.busbar-forge-flow span') || []).map((item) => item.textContent?.trim()),
+      sentinelAnimation: sentinelStyle?.animationName || '',
+      sentinelPlayState: sentinelStyle?.animationPlayState || '',
+      routePlayState: routeStyle?.animationPlayState || '',
+    }
+  })()`)
+  if (!busbarForge.exists || busbarForge.routePaths < 2 || busbarForge.routeNodes < 4 || busbarForge.rails < 4) {
+    failures.push(`digital busbar forge structure is incomplete ${JSON.stringify(busbarForge)}`)
+  }
+  if (!busbarForge.outputs.some((item) => item?.includes('GLB') && item?.includes('三维预览')) || !busbarForge.outputs.some((item) => item?.includes('STEP') && item?.includes('继续核对'))) {
+    failures.push(`digital busbar export states are incomplete ${JSON.stringify(busbarForge.outputs)}`)
+  }
+  if (busbarForge.flow.join(' > ') !== '网页画走势 > 后端分段 > 装配预览') failures.push(`digital busbar flow is ${busbarForge.flow.join(' > ')}`)
+  if (!busbarForge.inView || busbarForge.sentinelAnimation === 'none' || busbarForge.sentinelPlayState !== 'running' || busbarForge.routePlayState !== 'running') {
+    failures.push(`digital busbar motion is not running in view ${JSON.stringify(busbarForge)}`)
+  }
+
+  await evalValue(`(() => {
+    window.scrollTo(0, 0)
+    document.documentElement.style.scrollBehavior = ${JSON.stringify(originalScrollBehavior || '')}
+  })()`)
+  await delay(260)
 
   const before = await evalValue(`(() => Array.from(document.querySelectorAll('.signal-quick-action')).map((button) => button.textContent?.trim()))()`)
   await evalValue(`(() => {
@@ -334,10 +708,17 @@ async function auditHomeInteractions() {
     overflow: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - window.innerWidth,
   }))()`)
 
+  await cdp.send('Emulation.setEmulatedMedia', { features: [] })
+
   return {
     name: 'homepage visual controls',
     before,
     after,
+    reactorClicks,
+    scrollRoundTrip,
+    pointerRest,
+    busbarForge,
+    failures,
     runtimeEvents: runtimeEvents.slice(0, 8),
   }
 }
@@ -822,8 +1203,11 @@ async function auditProjectGalleryMotion() {
       const rect = card.getBoundingClientRect()
       const absoluteTop = window.scrollY + rect.top
       const targetTop = Math.max(0, absoluteTop - Math.max(0, (window.innerHeight - rect.height) / 2))
-      window.scrollTo({ top: targetTop, behavior: 'auto' })
+      const scrollingElement = document.scrollingElement || document.documentElement
+      scrollingElement.scrollTop = targetTop
+      window.scrollTo(0, targetTop)
       window.dispatchEvent(new Event('scroll'))
+      return targetTop
     }
     const failures = []
     const gallery = document.querySelector('[data-project-gallery]')
@@ -839,12 +1223,18 @@ async function auditProjectGalleryMotion() {
     })
     if (!first) return { failures, cards: cards.length }
 
-    const originalScrollBehavior = document.documentElement.style.scrollBehavior
-    document.documentElement.style.scrollBehavior = 'auto'
+    const originalScrollBehavior = document.documentElement.style.getPropertyValue('scroll-behavior')
+    const originalScrollPriority = document.documentElement.style.getPropertyPriority('scroll-behavior')
+    document.documentElement.style.setProperty('scroll-behavior', 'auto', 'important')
+    void window.getComputedStyle(document.documentElement).scrollBehavior
     for (let index = 0; index < cards.length; index += 1) {
       const card = cards[index]
       const part = motionParts[index]
-      centerCard(card)
+      const targetTop = centerCard(card)
+      const geometryReady = await waitUntil(() => {
+        const rect = card.getBoundingClientRect()
+        return Math.abs(window.scrollY - targetTop) <= 2 && rect.bottom > 0 && rect.top < window.innerHeight
+      }, 1200)
       await waitFrames(2)
       const activated = await waitUntil(() => {
         const rect = card.getBoundingClientRect()
@@ -858,6 +1248,7 @@ async function auditProjectGalleryMotion() {
       const rect = card.getBoundingClientRect()
       const playState = part ? window.getComputedStyle(part).animationPlayState : ''
       const animationName = part ? window.getComputedStyle(part).animationName : ''
+      if (!geometryReady) failures.push('project card ' + (index + 1) + ' did not reach the viewport before motion audit')
       if (!activated) failures.push('project card ' + (index + 1) + ' did not activate in the viewport')
       if (part && animationName === 'none') failures.push('project card ' + (index + 1) + ' motion sentinel has no animation')
       if (part && playState !== 'running') failures.push('project card ' + (index + 1) + ' animation is ' + (playState || 'unset') + ' in view')
@@ -866,6 +1257,8 @@ async function auditProjectGalleryMotion() {
         activated,
         animationName,
         playState,
+        geometryReady,
+        targetTop: Math.round(targetTop),
         scrollY: Math.round(window.scrollY),
         rect: { top: Math.round(rect.top), bottom: Math.round(rect.bottom) },
       })
@@ -961,7 +1354,11 @@ async function auditProjectGalleryMotion() {
     } else {
       delete document.hidden
     }
-    document.documentElement.style.scrollBehavior = originalScrollBehavior
+    if (originalScrollBehavior) {
+      document.documentElement.style.setProperty('scroll-behavior', originalScrollBehavior, originalScrollPriority)
+    } else {
+      document.documentElement.style.removeProperty('scroll-behavior')
+    }
 
     if (!allPaused) failures.push('project animations did not all pause after leaving the gallery')
     if (!visibilityCardActivated) failures.push('visibility lifecycle card did not activate')
@@ -1262,6 +1659,8 @@ async function auditMotionPreferenceLifecycle() {
       const hyper = document.querySelector('[data-signal-action="hyper"]')
       const reactor = document.querySelector('[data-signal-reactor]')
       const localFailures = []
+      const originalScrollBehavior = document.documentElement.style.scrollBehavior
+      document.documentElement.style.scrollBehavior = 'auto'
 
       window.__reactorLoopLifecycleAudit?.observer?.disconnect()
       const reactorLoopTransitions = []
@@ -1309,6 +1708,7 @@ async function auditMotionPreferenceLifecycle() {
       ), 3500)
 
       first?.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'auto' })
+      window.dispatchEvent(new Event('scroll'))
       const galleryReady = await waitUntil(() => Boolean(
           first?.classList.contains('is-in-view') &&
           parts[0] &&
@@ -1322,6 +1722,7 @@ async function auditMotionPreferenceLifecycle() {
       hyper?.click()
       const hyperStarted = await waitUntil(() => document.body.classList.contains('is-hyperstorm'), 1200)
       const animationNames = parts.map((part) => part ? window.getComputedStyle(part).animationName : '')
+      document.documentElement.style.scrollBehavior = originalScrollBehavior
 
       if (!root) localFailures.push('project gallery root is missing before preference switch')
       if (cards.length !== 10) localFailures.push('project gallery card count is ' + cards.length + '/10 before preference switch')
@@ -2006,6 +2407,13 @@ async function auditReducedMotion() {
       reactorCanvas.height > 1 &&
       window.getComputedStyle(reactorCanvas).display !== 'none'
     )
+    const pointerAfterglow = document.querySelector('.pointer-afterglow')
+    const pointerOrbit = document.querySelector('.pointer-afterglow-orbit--cyan')
+    const pointerAfterglowStyle = pointerAfterglow ? window.getComputedStyle(pointerAfterglow) : null
+    const pointerOrbitStyle = pointerOrbit ? window.getComputedStyle(pointerOrbit) : null
+    const pointerAfterglowStopped =
+      !pointerAfterglow ||
+      (Number(pointerAfterglowStyle?.opacity || 0) === 0 && pointerOrbitStyle?.animationName === 'none')
     const fieldModeWorks =
       reactor?.dataset.reactorMode === 'field' &&
       fieldMode?.getAttribute('aria-pressed') === 'true' &&
@@ -2027,6 +2435,7 @@ async function auditReducedMotion() {
     if (!reactorStaticFrame) failures.push('Signal Reactor did not publish a rendered static frame')
     if (!reactorCanvasVisible) failures.push('Signal Reactor static canvas is not visibly sized under reduced motion')
     if (!fieldModeWorks) failures.push('Signal Reactor mode controls stopped working under reduced motion')
+    if (!pointerAfterglowStopped) failures.push('pointer afterglow remained active under reduced motion')
     if (projectCards.length !== 10) failures.push('project gallery card count is ' + projectCards.length + '/10 under reduced motion')
     if (animatedProjectParts.length > 0) failures.push('project gallery animations remained active under reduced motion')
     if (projectCardsVisible !== projectCards.length) failures.push('project cards became hidden under reduced motion')
@@ -2039,6 +2448,7 @@ async function auditReducedMotion() {
       reactorStaticFrame,
       reactorCanvasVisible,
       fieldModeWorks,
+      pointerAfterglowStopped,
       animatedProjectParts: animatedProjectParts.length,
       projectCardsVisible,
       projectCards: projectCards.length,
@@ -2699,6 +3109,11 @@ async function evaluatePage() {
     )
     const bodyCursor = window.getComputedStyle(document.body).cursor
     const clarityMap = document.querySelector('[data-clarity-map]')
+    const entrySections = Array.from(document.querySelectorAll('.entry-main .entry-section'))
+    const readingBar = document.querySelector('.entry-readingbar')
+    const readingLinks = Array.from(readingBar?.querySelectorAll('[data-reading-link]') || [])
+    const authoredReadingLabels = entrySections.map((section) => section.dataset.readingLabel || '')
+    const renderedReadingLabels = readingLinks.map((link) => link.querySelector('.entry-readinglink-label')?.textContent?.trim() || '')
     const personaTargets = Array.from(document.querySelectorAll('[data-pointer-mode]')).map((element) => ({
       tag: element.tagName.toLowerCase(),
       mode: element.getAttribute('data-pointer-mode') || '',
@@ -2794,6 +3209,17 @@ async function evaluatePage() {
         text: clarityMap?.textContent?.trim().replace(/\\s+/g, ' ') || '',
         firstRunLinks: clarityMap?.querySelectorAll('a[href]').length || 0,
       },
+      entryReading: {
+        isEntryPage: body.classList.contains('entry-page'),
+        exists: Boolean(readingBar),
+        metaLabel: readingBar?.querySelector('.entry-readingbar-label')?.textContent?.trim() || '',
+        currentLabel: readingBar?.querySelector('[data-reading-current]')?.textContent?.trim() || '',
+        sectionCount: entrySections.length,
+        linkCount: readingLinks.length,
+        authoredLabels: authoredReadingLabels,
+        renderedLabels: renderedReadingLabels,
+        fullAriaLabels: readingLinks.filter((link) => /^第 \\d+ 节：.+/.test(link.getAttribute('aria-label') || '')).length,
+      },
       forbiddenCopyHits: forbiddenPublicCopy.filter((term) => text.includes(term)),
       navLinks: Array.from(document.querySelectorAll('a[href]')).length,
       navDurationMs: nav?.duration || 0,
@@ -2827,6 +3253,26 @@ function collectFindings(result, failureList, warningList) {
   }
   if (result.forbiddenCopyHits?.length > 0) {
     failureList.push(`${label}: forbidden public copy ${result.forbiddenCopyHits.join(', ')}`)
+  }
+  if (result.entryReading?.isEntryPage) {
+    if (!result.entryReading.exists) {
+      failureList.push(`${label}: article reading navigation is missing`)
+    }
+    if (result.entryReading.metaLabel !== '文章进度') {
+      failureList.push(`${label}: article reading navigation label is ${result.entryReading.metaLabel || '<empty>'}`)
+    }
+    if (result.entryReading.sectionCount !== result.entryReading.linkCount) {
+      failureList.push(`${label}: article reading navigation count ${result.entryReading.linkCount}/${result.entryReading.sectionCount}`)
+    }
+    if (result.entryReading.fullAriaLabels !== result.entryReading.linkCount) {
+      failureList.push(`${label}: article reading links missing full aria labels ${result.entryReading.fullAriaLabels}/${result.entryReading.linkCount}`)
+    }
+    if (JSON.stringify(result.entryReading.authoredLabels) !== JSON.stringify(result.entryReading.renderedLabels)) {
+      failureList.push(`${label}: authored and rendered article summaries differ`)
+    }
+    if (!result.entryReading.currentLabel || !result.entryReading.authoredLabels.includes(result.entryReading.currentLabel)) {
+      failureList.push(`${label}: current article summary is invalid ${result.entryReading.currentLabel || '<empty>'}`)
+    }
   }
   if (result.viewport.startsWith('mobile')) {
     const visibleActions = result.quickActionMetrics?.filter((item) => item.visible) || []

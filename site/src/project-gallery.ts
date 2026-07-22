@@ -26,6 +26,7 @@ export function setupProjectGallery(options: ProjectGalleryOptions) {
   let refreshFrame = 0
   let visibilityFrame = 0
   let visibilityTimer = 0
+  let hiddenAnimations: Animation[] = []
   const cleanups: Array<() => void> = []
   const visuals = cards
     .map((card) =>
@@ -158,6 +159,26 @@ export function setupProjectGallery(options: ProjectGalleryOptions) {
     pausedCardTweens.forEach((tween) => tween.pause())
   }
 
+  const pauseGalleryAnimations = () => {
+    hiddenAnimations = root
+      .getAnimations({ subtree: true })
+      .filter((animation) => animation.playState === 'running')
+    hiddenAnimations.forEach((animation) => animation.pause())
+  }
+
+  const resumeGalleryAnimations = () => {
+    const animations = hiddenAnimations
+    hiddenAnimations = []
+    animations.forEach((animation) => {
+      try {
+        animation.play()
+      } catch {
+        // A CSS animation can be replaced while hidden; the current style is
+        // already authoritative, so a detached Animation needs no recovery.
+      }
+    })
+  }
+
   const resumeCardMotion = () => {
     cardTriggers.forEach((trigger) => trigger.enable(false, false))
     pausedCardTweens.forEach((tween) => tween.resume())
@@ -223,30 +244,39 @@ export function setupProjectGallery(options: ProjectGalleryOptions) {
 
   const handleVisibility = () => {
     pageHidden = document.hidden
-    root.classList.toggle('is-page-hidden', pageHidden)
 
     if (pageHidden) {
+      /* Capture the animations that were genuinely running before the CSS
+         hidden-state rule pauses the whole gallery. */
+      pauseGalleryAnimations()
+      root.classList.add('is-page-hidden')
       pauseCardMotion()
       clearPointerDepth()
       return
     }
 
+    root.classList.remove('is-page-hidden')
+
     if (reducedMotion) {
+      hiddenAnimations = []
       cards.forEach((card) => card.classList.add('is-in-view'))
       return
     }
 
     if (cardTriggers.length === 0) {
       startCardMotion()
+      resumeGalleryAnimations()
       return
     }
 
     resumeCardMotion()
+    resumeGalleryAnimations()
   }
 
   const applyMotionPreference = (nextReducedMotion: boolean) => {
     reducedMotion = nextReducedMotion
     root.classList.toggle('is-motion-reduced', reducedMotion)
+    hiddenAnimations = []
     stopCardMotion()
     clearPointerDepth()
 

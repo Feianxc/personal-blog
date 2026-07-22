@@ -191,7 +191,7 @@
               </div>
               <div>
                 <span>交付</span>
-                <strong>最新版本目录、ZIP、SHA256、启动入口一起成立</strong>
+                <strong>当前版本、ZIP、校验值和安装入口都能找到</strong>
               </div>
               <div>
                 <span>实验</span>
@@ -210,8 +210,8 @@
       </header>
 
       <main class="entry-main">
-        <section class="entry-section">
-          <h2>这里怎么整理</h2>
+        <section class="entry-section" id="how" data-reading-label="怎么整理">
+          <h2>我按它解决了什么来整理</h2>
           <div class="entry-quicklook">
             <article class="entry-quicklook-card">
               <span class="entry-quicklook-label">不按技术栈贴标签</span>
@@ -231,8 +231,8 @@
           </div>
         </section>
 
-        <section class="entry-section">
-          <h2>项目文章</h2>
+        <section class="entry-section" id="projects" data-reading-label="项目文章">
+          <h2>想看完整过程，就从这些项目文章开始</h2>
           <div class="lab-links">
             <a class="lab-link" href="/lab-mcgs-chain.html">
               <time datetime="2026-07-21">2026-07-21 / engineering system</time>
@@ -290,20 +290,20 @@
 
             <a class="lab-link" href="/lab-busbar-platform.html">
               <time datetime="2026-04-23">2026-04-23 / lab</time>
-              <strong>母线铜排计算平台：旧公式、对照验证和公网启动</strong>
-              <p>规则事实源、FastAPI、Vite、parity、Cloudflare Tunnel 和一键启动脚本已经放进同一条启动链。</p>
+              <strong>母线铜排平台：把散在 Excel 里的算法收进网页</strong>
+              <p>旧公式继续保留，网页负责选择、计算和导出，每次改动都和旧结果对一遍。</p>
             </a>
 
             <a class="lab-link" href="/lab-cad-automation.html">
               <time datetime="2026-04-23">2026-04-23 / lab</time>
-              <strong>CAD 白框截图自动化：从手拖窗口到 run manifest</strong>
-              <p>full extents、文本锚点、局部裁切和发布清单被接成一条能重复运行的流程。</p>
+              <strong>CAD 截图自动化：不用再一张张拖窗口</strong>
+              <p>先导出全图，再按文字位置自动裁切，最终 PNG 和结果清单会一起保存。</p>
             </a>
 
             <a class="lab-link" href="/lab-openclaw-delivery.html">
               <time datetime="2026-04-23">2026-04-23 / lab</time>
-              <strong>OPENCLAW 客户包 V0.31：目录、ZIP、SHA256 和卸载入口</strong>
-              <p>版本目录、压缩包、校验值和安装 / 卸载入口一起成立，客户包才算有第一步。</p>
+              <strong>OPENCLAW 客户包 V0.31：打开就知道怎么装、怎么卸</strong>
+              <p>版本目录、压缩包、校验值和安装 / 卸载入口都放清楚，客户拿到文件就知道从哪里开始。</p>
             </a>
 
             <a class="lab-link" href="/lab-html-canvas-signal.html">
@@ -320,8 +320,8 @@
           </div>
         </section>
 
-        <section class="entry-section">
-          <h2>这一类后续会长什么</h2>
+        <section class="entry-section" id="future" data-reading-label="继续补什么">
+          <h2>没有写完的，也会把边界标出来</h2>
           <div class="lab-grid">
             <article class="lab-card">
               <span class="lab-card-label">project</span>
@@ -366,8 +366,6 @@
     <script type="module" src="/src/entry.ts"></script>
   </body>
 </html>
-
-
 
 
 

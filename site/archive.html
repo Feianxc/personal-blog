@@ -155,8 +155,8 @@
       </header>
 
       <main class="entry-main">
-        <section class="entry-section" id="lines">
-          <h2>三条方向</h2>
+        <section class="entry-section" id="lines" data-reading-label="按方向找">
+          <h2>第一次来，可以先按方向看</h2>
           <div class="entry-grid">
             <a class="entry-card" href="/workflow.html">
               <time datetime="2026-04-20">2026-04-20 / workflow</time>
@@ -178,8 +178,8 @@
           </div>
         </section>
 
-        <section class="entry-section" id="timeline">
-          <h2>按月时间线</h2>
+        <section class="entry-section" id="timeline" data-reading-label="按月份找">
+          <h2>回来找旧内容，就按月份翻</h2>
           <div class="archive-month">
             <div class="archive-month-label" id="month-2026-07">2026-07 / 最近更新</div>
             <div class="archive-lineup">
@@ -278,20 +278,20 @@
 
               <a class="archive-lineup-card" href="/lab-busbar-platform.html">
                 <time datetime="2026-04-23">2026-04-23 / lab / platform / order 2</time>
-                <strong>母线铜排平台这一轮：旧公式、parity 和公网启动</strong>
-                <p>旧公式、导出模板、验证脚本和启动方式已经写进仓库，不再只靠手边那张 Excel。</p>
+                <strong>母线铜排平台：把散在 Excel 里的算法收进网页</strong>
+                <p>旧公式和导出模板继续保留，网页负责选择、计算和导出，每次改动都和旧结果对一遍。</p>
               </a>
 
               <a class="archive-lineup-card" href="/lab-cad-automation.html">
                 <time datetime="2026-04-23">2026-04-23 / lab / automation / order 3</time>
-                <strong>CAD 白框截图自动化：从手拖窗口到 run manifest</strong>
-                <p>输入、run root、manifest 和最终 PNG 放在一起后，手工截图变成了能反复运行的脚本。</p>
+                <strong>CAD 截图自动化：不用再一张张拖窗口</strong>
+                <p>先导出全图，再按文字位置自动裁切，最终 PNG 和结果清单会一起保存。</p>
               </a>
 
               <a class="archive-lineup-card" href="/lab-openclaw-delivery.html">
                 <time datetime="2026-04-23">2026-04-23 / lab / delivery / order 4</time>
-                <strong>OPENCLAW 客户包 V0.31：目录、ZIP、SHA256 和卸载入口</strong>
-                <p>最新版本目录、ZIP、SHA256、安装和卸载脚本、问题记录、VERSION 文件都放齐。</p>
+                <strong>OPENCLAW 客户包 V0.31：打开就知道怎么装、怎么卸</strong>
+                <p>当前版本、ZIP、校验值、安装和卸载入口都按使用顺序放好。</p>
               </a>
 
               <a class="archive-lineup-card" href="/lab-html-canvas-signal.html">
@@ -302,50 +302,50 @@
 
               <a class="archive-lineup-card" href="/workflow-harness-ohbp.html">
                 <time datetime="2026-04-23">2026-04-23 / workflow / benchmark / order 5</time>
-                <strong>OHBP / harnessbench：协议真源、bundle 和 verifier 记录</strong>
-                <p>把 raw workspace、final bundle、schema 校验和 verifier 结果拆开，避免让榜单替代原始材料。</p>
+                <strong>OHBP / harnessbench：先把测试材料留全，再看排名</strong>
+                <p>一次测试先留下协议版本、运行记录、材料包和复核结果，网页只负责展示。</p>
               </a>
 
               <a class="archive-lineup-card" href="/workflow-context-router.html">
                 <time datetime="2026-04-23">2026-04-23 / workflow / router / order 6</time>
-                <strong>Context Router V1：只建议，不擅自接管会话</strong>
-                <p>能力目录、bundle、intent map、session attach 和 route-log 先放清楚，再谈自动化。</p>
+                <strong>Context Router V1：能力只在需要时进场</strong>
+                <p>需要专用工具时只给建议，由人确认；任务结束后就收回。</p>
               </a>
 
               <a class="archive-lineup-card" href="/workflow-stock-research-desk.html">
                 <time datetime="2026-04-23">2026-04-23 / workflow / research desk / order 7</time>
-                <strong>老板研究台 V1：先压股票池，不碰自动下单</strong>
-                <p>研究压缩、资料整理、老板反馈和 OpenClaw 上层代理的范围。</p>
+                <strong>老板研究台 V1：先把今天值得看的股票挑出来</strong>
+                <p>后台缩小范围，前台整理理由和风险，最后仍由人决定。</p>
               </a>
             </div>
           </div>
         </section>
 
-        <section class="entry-section">
-          <h2>Workflow 项目记录</h2>
+        <section class="entry-section" id="workflow-notes" data-reading-label="工作流记录">
+          <h2>几篇工作流记录</h2>
           <div class="entry-grid">
             <a class="entry-card" href="/workflow-harness-ohbp.html">
               <time datetime="2026-04-23">2026-04-23 / workflow</time>
-              <strong>OHBP / harnessbench：先把材料留好，再谈榜单</strong>
-              <p>从协议文档、CLI、mock intake、verifier worker 到 verification_record，重点是别让页面自己当裁判。</p>
+              <strong>OHBP / harnessbench：先把测试材料留全，再看排名</strong>
+              <p>协议、运行记录、材料包和复核结果分开保存，分数才能回到那次运行。</p>
             </a>
 
             <a class="entry-card" href="/workflow-context-router.html">
               <time datetime="2026-04-23">2026-04-23 / workflow</time>
-              <strong>Context Router V1：只建议，不擅自接管会话</strong>
-              <p>catalog、bundle、intent-map、route-log 记录能力什么时候用、什么时候停，避免黑盒式自动切换。</p>
+              <strong>Context Router V1：能力只在需要时进场</strong>
+              <p>工具什么时候启用、为什么启用、什么时候收回，都要说得清楚。</p>
             </a>
 
             <a class="entry-card" href="/workflow-stock-research-desk.html">
               <time datetime="2026-04-23">2026-04-23 / workflow</time>
-              <strong>老板研究台 V1：先压股票池，不碰自动下单</strong>
-              <p>研究台先把股票池压成 dailyQueue、focusBriefs 和 styleMemorySummary。</p>
+              <strong>老板研究台 V1：先把今天值得看的股票挑出来</strong>
+              <p>它把股票池缩成今日清单，再把每只股票的理由、风险和资料放到一起。</p>
             </a>
           </div>
         </section>
 
-        <section class="entry-section">
-          <h2>项目 / 实验文章</h2>
+        <section class="entry-section" id="project-notes" data-reading-label="项目记录">
+          <h2>系统和实验，放在另一排</h2>
           <div class="entry-grid">
             <a class="entry-card" href="/lab-protocol-studio.html">
               <time datetime="2026-07-20">2026-07-20 / lab</time>
@@ -397,20 +397,20 @@
 
             <a class="entry-card" href="/lab-busbar-platform.html">
               <time datetime="2026-04-23">2026-04-23 / lab</time>
-              <strong>母线铜排计算平台：旧公式、对照验证和公网启动</strong>
-              <p>规则、导出、对照验证和公网启动方式放进同一套仓库，算料过程有了入口。</p>
+              <strong>母线铜排平台：把散在 Excel 里的算法收进网页</strong>
+              <p>网页负责选择、计算和导出，旧公式继续留着做新旧结果对照。</p>
             </a>
 
             <a class="entry-card" href="/lab-cad-automation.html">
               <time datetime="2026-04-23">2026-04-23 / lab</time>
-              <strong>CAD 白框截图自动化：从手拖窗口到 run manifest</strong>
-              <p>把研究资产从业务仓库里拆出来后，批量截图、manifest、PNG 输出开始稳定。</p>
+              <strong>CAD 截图自动化：不用再一张张拖窗口</strong>
+              <p>完整画面、文字位置、局部裁切和最终 PNG 已经能按同一条流程生成。</p>
             </a>
 
             <a class="entry-card" href="/lab-openclaw-delivery.html">
               <time datetime="2026-04-23">2026-04-23 / lab</time>
-              <strong>OPENCLAW 客户包 V0.31：目录、ZIP、SHA256 和卸载入口</strong>
-              <p>最新版本目录、ZIP、SHA256、安装向导和卸载入口放齐，客户拿到包能先走第一步。</p>
+              <strong>OPENCLAW 客户包 V0.31：打开就知道怎么装、怎么卸</strong>
+              <p>当前版本、ZIP、校验值、安装和卸载入口都按使用顺序放好。</p>
             </a>
 
             <a class="entry-card" href="/lab-html-canvas-signal.html">
@@ -427,8 +427,8 @@
           </div>
         </section>
 
-        <section class="entry-section" id="extras">
-          <h2>补充记录</h2>
+        <section class="entry-section" id="extras" data-reading-label="其他兴趣">
+          <h2>还有一些没法归类的东西</h2>
           <div class="entry-grid">
             <a class="entry-card" href="/about.html">
               <time datetime="2026-04">meta / about</time>
@@ -442,8 +442,6 @@
     <script type="module" src="/src/entry.ts"></script>
   </body>
 </html>
-
-
 
 
 

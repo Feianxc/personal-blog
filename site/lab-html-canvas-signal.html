@@ -132,15 +132,15 @@
       </header>
 
       <main class="entry-main canvas-lab-main">
-        <section class="entry-section">
-          <h2>这个实验放在这里，不放在首页默认首屏</h2>
+        <section class="entry-section" id="why-lab" data-reading-label="为何单独放">
+          <h2>这个实验先放在独立页面</h2>
           <p>
             独立 lab 页只保存 PixiJS、GSAP、模式切换、降级和测试记录；首页默认首屏仍保持轻量。
           </p>
         </section>
 
-        <section class="entry-section">
-          <h2>范围：Canvas 只负责气氛，不接管正文</h2>
+        <section class="entry-section" id="html-first" data-reading-label="正文优先">
+          <h2>Canvas 只负责气氛，正文仍是普通网页</h2>
           <div class="entry-quicklook canvas-boundary-grid">
             <article class="entry-quicklook-card">
               <span class="entry-quicklook-label">保留 HTML</span>
@@ -160,8 +160,8 @@
           </div>
         </section>
 
-        <section class="entry-section">
-          <h2>接入方式</h2>
+        <section class="entry-section" id="integration" data-reading-label="怎样接入">
+          <h2>高能模式按需加载，默认首页保持轻量</h2>
           <p>
             它不替换首页雨幕，也不默认加载；轻量雨幕保留为默认态，PixiJS / GSAP 版本只在高能模式下懒加载。
           </p>

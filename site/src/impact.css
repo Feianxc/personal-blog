@@ -230,9 +230,12 @@ html.impact-edition .secondary-link {
 }
 
 html.impact-edition .primary-link:active,
-html.impact-edition .secondary-link:active,
-html.impact-edition .reactor-mode:active {
+html.impact-edition .secondary-link:active {
   transform: scale(0.97);
+}
+
+html.impact-edition .reactor-mode:active {
+  transform: none;
 }
 
 html.impact-edition .signal-quick-action:focus-visible {
@@ -287,6 +290,24 @@ html.impact-edition .impact-reactor-intro {
   transform-style: preserve-3d;
 }
 
+/* The Reactor stage is decorative. Keep every visual/compositor layer out of
+   hit testing and opt only the real controls back in. This prevents a stale
+   transformed ancestor from intercepting a rapid 现场 → 工作 switch. */
+html.impact-edition .impact-reactor-scroll,
+html.impact-edition .impact-reactor-intro,
+html.impact-edition .cover-object,
+html.impact-edition .cover-object-sheet,
+html.impact-edition .signal-reactor {
+  pointer-events: none;
+}
+
+html.impact-edition .reactor-legend,
+html.impact-edition .reactor-mode,
+html.impact-edition .cover-log,
+html.impact-edition .cover-log-item {
+  pointer-events: auto;
+}
+
 html.impact-edition .impact-reactor-intro {
   display: grid;
   grid-template-rows: minmax(42rem, 1fr) auto;
@@ -308,6 +329,20 @@ html.impact-edition .cover-object.is-hot {
   box-shadow: none;
   overflow: visible;
   transform-style: preserve-3d;
+}
+
+/* The reactor contains real controls. Keep its parent out of the transient
+   reveal compositor so hit testing never changes while a route is selected. */
+html.impact-edition .cover-object.is-revealing {
+  filter: none;
+  animation: none;
+}
+
+html.impact-edition .cover.is-impact-top .cover-panel,
+html.impact-edition .cover.is-impact-top .impact-reactor-scroll {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
 }
 
 html.impact-edition .cover-object::before {
@@ -481,6 +516,7 @@ html.impact-edition .signal-reactor-canvas {
     drop-shadow(0 0 52px rgb(81 219 231 / 16%))
     drop-shadow(0 0 66px rgb(255 106 26 / 18%));
   mix-blend-mode: screen;
+  pointer-events: none;
   transition: filter 320ms var(--impact-ease-out);
 }
 
@@ -561,9 +597,13 @@ html.impact-edition .reactor-legend {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.6rem;
+  isolation: isolate;
+  pointer-events: auto;
 }
 
 html.impact-edition .reactor-mode {
+  position: relative;
+  z-index: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -579,8 +619,8 @@ html.impact-edition .reactor-mode {
   box-shadow: 0 12px 32px rgb(0 0 0 / 24%);
   backdrop-filter: blur(14px) saturate(1.2);
   cursor: pointer;
+  touch-action: manipulation;
   transition:
-    transform 150ms var(--impact-ease-out),
     color 180ms ease,
     border-color 180ms ease,
     background-color 180ms ease,
@@ -747,7 +787,7 @@ html.impact-edition .section-signals::before {
     color: var(--impact-bone);
     border-color: rgb(244 234 213 / 28%);
     background: rgb(244 234 213 / 8%);
-    transform: translateY(-2px);
+    transform: none;
   }
 
   html.impact-edition .cover-object-sheet > .signal-quick-actions {

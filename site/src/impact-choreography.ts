@@ -116,6 +116,10 @@ export function setupImpactChoreography(options: ImpactOptions) {
       const introItems = gsap.utils.toArray<HTMLElement>(
         '.cover-kicker, .cover-subline, .cover-lede, .cover-actions, .cover-orientation, .cover-diagnostics',
       )
+      const coverPanel = cover.querySelector<HTMLElement>('.cover-panel')
+      let visualScroll: ReturnType<typeof gsap.timeline> | null = null
+      let topResetFrame = 0
+      let topSettleTimer = 0
 
       const intro = gsap.timeline({ defaults: { ease: 'power4.out' } })
       intro
@@ -175,12 +179,12 @@ export function setupImpactChoreography(options: ImpactOptions) {
         )
 
       if (desktop) {
-        const visualScroll = gsap.timeline({
+        visualScroll = gsap.timeline({
           scrollTrigger: {
             trigger: cover,
             start: 'top top',
             end: 'bottom top',
-            scrub: 0.8,
+            scrub: true,
           },
         })
 
@@ -188,8 +192,8 @@ export function setupImpactChoreography(options: ImpactOptions) {
           .to(
             '.cover-panel',
             {
-              yPercent: -8,
-              autoAlpha: 0.18,
+              yPercent: -3,
+              autoAlpha: 1,
               duration: 1,
               ease: 'none',
             },
@@ -198,11 +202,11 @@ export function setupImpactChoreography(options: ImpactOptions) {
           .to(
             scrollLayer,
             {
-              xPercent: -4,
-              yPercent: 2,
-              scale: 1.06,
-              rotationY: -4,
-              rotationZ: 0.5,
+              xPercent: -2,
+              yPercent: 1.5,
+              scale: 1.035,
+              rotationY: -2,
+              rotationZ: 0.3,
               transformOrigin: '54% 50%',
               duration: 0.52,
               ease: 'none',
@@ -212,12 +216,12 @@ export function setupImpactChoreography(options: ImpactOptions) {
           .to(
             scrollLayer,
             {
-              xPercent: -18,
-              yPercent: 18,
-              scale: 0.72,
-              rotationY: 10,
-              rotationZ: -2.4,
-              autoAlpha: 0.08,
+              xPercent: -11,
+              yPercent: 10,
+              scale: 0.84,
+              rotationY: 7,
+              rotationZ: -1.4,
+              autoAlpha: 0.42,
               duration: 0.48,
               ease: 'none',
             },
@@ -225,18 +229,75 @@ export function setupImpactChoreography(options: ImpactOptions) {
           )
       }
 
-      ScrollTrigger.create({
+      const restoreTopVisualState = () => {
+        const isAtTop = window.scrollY <= 2
+        cover.classList.toggle('is-impact-top', isAtTop)
+        if (!isAtTop) return
+
+        cover.style.setProperty('--impact-scroll', '0')
+        visualScroll?.progress(0)
+
+        const writeResetPose = () => {
+          if (window.scrollY > 2) return
+          if (coverPanel) {
+            gsap.set(coverPanel, { autoAlpha: 1, yPercent: 0 })
+          }
+          gsap.set(scrollLayer, {
+            autoAlpha: 1,
+            xPercent: 0,
+            yPercent: 0,
+            scale: 1,
+            rotationY: 0,
+            rotationZ: 0,
+          })
+        }
+
+        writeResetPose()
+        if (topResetFrame) window.cancelAnimationFrame(topResetFrame)
+        topResetFrame = window.requestAnimationFrame(() => {
+          topResetFrame = 0
+          visualScroll?.progress(0)
+          writeResetPose()
+        })
+      }
+
+      /* A fast programmatic down/up round-trip can coalesce the final scroll
+         event. Re-read the real position once scrolling settles so a stale
+         ScrollTrigger frame can never leave the hero in its deep-scroll pose. */
+      const syncScrollVisualState = () => {
+        restoreTopVisualState()
+        if (topSettleTimer) window.clearTimeout(topSettleTimer)
+        topSettleTimer = window.setTimeout(() => {
+          topSettleTimer = 0
+          restoreTopVisualState()
+        }, 140)
+      }
+
+      window.addEventListener('scroll', syncScrollVisualState, { passive: true })
+
+      const scrollProgress = ScrollTrigger.create({
         trigger: cover,
         start: 'top top',
         end: 'bottom top',
         onUpdate: (self) => {
           cover.style.setProperty('--impact-scroll', self.progress.toFixed(4))
+          if (self.progress <= 0.001) restoreTopVisualState()
         },
-        onLeaveBack: () => cover.style.setProperty('--impact-scroll', '0'),
+        onLeaveBack: restoreTopVisualState,
       })
 
+      restoreTopVisualState()
+
       return () => {
+        window.removeEventListener('scroll', syncScrollVisualState)
+        if (topResetFrame) window.cancelAnimationFrame(topResetFrame)
+        if (topSettleTimer) window.clearTimeout(topSettleTimer)
+        scrollProgress.kill()
+        visualScroll?.kill()
         intro.kill()
+        cover.classList.remove('is-impact-top')
+        if (coverPanel) gsap.set(coverPanel, { clearProps: 'opacity,visibility,transform' })
+        gsap.set(scrollLayer, { clearProps: 'opacity,visibility,transform,transformOrigin' })
         cover.style.setProperty('--impact-scroll', '0')
         cover.style.setProperty('--impact-beam', '1')
       }

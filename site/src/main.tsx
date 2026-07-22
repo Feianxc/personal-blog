@@ -48,7 +48,7 @@ const interactiveTargets = Array.from(
   document.querySelectorAll<HTMLElement>('[data-interactive-lens]'),
 )
 const coverAtmosphereTargets = Array.from(
-  document.querySelectorAll<HTMLElement>('.cover-panel, .cover-object, .cover-log'),
+  document.querySelectorAll<HTMLElement>('.cover-panel, .cover-log'),
 )
 const quietZoneTargets = Array.from(
   document.querySelectorAll<HTMLElement>(
@@ -84,9 +84,11 @@ const pointerWakeLayer =
       })
     : null)
 const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+const finePointerQuery = window.matchMedia('(pointer: fine)')
+const hoverPointerQuery = window.matchMedia('(hover: hover)')
 let prefersReducedMotion = reducedMotionQuery.matches
-const supportsFinePointer = window.matchMedia('(pointer: fine)').matches
-const supportsHoverPointer = window.matchMedia('(hover: hover)').matches
+let supportsFinePointer = finePointerQuery.matches
+let supportsHoverPointer = hoverPointerQuery.matches
 let enhancedPointerEnabled = supportsFinePointer && supportsHoverPointer && !prefersReducedMotion
 
 document.documentElement.classList.toggle('motion-reduce', prefersReducedMotion)
@@ -95,6 +97,7 @@ reducedMotionQuery.addEventListener('change', (event) => {
   enhancedPointerEnabled = supportsFinePointer && supportsHoverPointer && !event.matches
   document.documentElement.classList.toggle('motion-reduce', event.matches)
   setGlobalReducedMotionPreference(event.matches)
+  syncEnhancedPointerCapability()
 })
 
 const rainCanvas = document.getElementById('rain-canvas') as HTMLCanvasElement | null
@@ -184,6 +187,7 @@ const pointerState = {
 let pointerRaf = 0
 let pointerPressTimer = 0
 let pointerChargeTimer = 0
+let pointerRestTimer = 0
 let pointerSyncRaf = 0
 let scrollRestTimer = 0
 let scrollAmbientRaf = 0
@@ -228,6 +232,9 @@ reducedMotionQuery.addEventListener('change', (event) => {
   impactChoreography = setupImpactChoreography({ reducedMotion: event.matches })
 
   if (event.matches) {
+    window.clearTimeout(pointerRestTimer)
+    pointerRestTimer = 0
+    if (pointerShell) pointerShell.dataset.pointerRest = 'moving'
     pointerWakeLayer?.replaceChildren()
     document.querySelectorAll('.impact-wave, .click-stamp').forEach((node) => node.remove())
     revealTargets.forEach((element) => {
@@ -296,6 +303,8 @@ if (!document.hidden) {
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     window.clearTimeout(motionIdleTimer)
+    window.clearTimeout(pointerRestTimer)
+    pointerRestTimer = 0
     setBodyMotionState('hidden')
     queuedInteractiveElement = null
     queuedSurfaceAtmospheres.clear()
@@ -315,6 +324,7 @@ document.addEventListener('visibilitychange', () => {
 
     if (pointerShell) {
       pointerShell.dataset.pointerState = 'hidden'
+      pointerShell.dataset.pointerRest = 'moving'
       animatePointerShell()
     }
 
@@ -348,13 +358,9 @@ const scrollMotionState = {
 setAmbientPointerPosition(pointerState.targetX, pointerState.targetY)
 primeScrollMotionState()
 
-if (enhancedPointerEnabled) {
-  document.body.classList.add('has-pointer-fx')
-}
-
-if (!supportsFinePointer || !supportsHoverPointer) {
-  document.body.classList.add('has-touch-probe')
-}
+syncEnhancedPointerCapability()
+finePointerQuery.addEventListener('change', syncEnhancedPointerCapability)
+hoverPointerQuery.addEventListener('change', syncEnhancedPointerCapability)
 
 revealTargets.forEach((element, index) => {
   element.style.setProperty('--reveal-delay', `${Math.min(index % 5, 4) * 58}ms`)
@@ -496,6 +502,11 @@ if (revealTargets.length > 0) {
 
 interactiveTargets.forEach((element) => {
   const focusTarget = (event: PointerEvent) => {
+    if (isNestedStableControl(element, event)) {
+      suspendParentInteractionForControl(element)
+      return
+    }
+
     rememberInteractionSnapshot(element)
     writeLocalPointerPosition(element, event)
     syncPointer(event)
@@ -503,6 +514,11 @@ interactiveTargets.forEach((element) => {
   }
 
   const moveTarget = (event: PointerEvent) => {
+    if (isNestedStableControl(element, event)) {
+      suspendParentInteractionForControl(element)
+      return
+    }
+
     queueInteractivePointer(element, event)
   }
 
@@ -520,7 +536,12 @@ interactiveTargets.forEach((element) => {
 
   const pressTarget = (event: PointerEvent) => {
     if (event.button !== 0) return
+    if (isNestedStableControl(element, event)) {
+      suspendParentInteractionForControl(element)
+      return
+    }
 
+    resetPointerRest()
     element.classList.remove('is-pressed')
     window.requestAnimationFrame(() => {
       element.classList.add('is-pressed')
@@ -552,7 +573,12 @@ interactiveTargets.forEach((element) => {
     })
   }
 
-  const releaseTarget = () => {
+  const releaseTarget = (event: PointerEvent) => {
+    if (isNestedStableControl(element, event)) {
+      element.classList.remove('is-pressed')
+      return
+    }
+
     endPointerCharge(element)
     window.setTimeout(() => element.classList.remove('is-pressed'), 160)
   }
@@ -570,6 +596,12 @@ setupSignalAxisDashboard()
 
 coverAtmosphereTargets.forEach((element) => {
   const moveSurface = (event: PointerEvent) => {
+    if (isNestedStableControl(element, event)) {
+      queuedSurfaceAtmospheres.delete(element)
+      clearSurfaceAtmosphere(element)
+      return
+    }
+
     queueSurfaceAtmosphere(element, event)
   }
 
@@ -592,11 +624,25 @@ window.addEventListener(
   { passive: true },
 )
 
-window.addEventListener('pointerleave', () => {
+/* CDP, remote desktops and a few Windows browser paths can emit mousemove
+   without a matching PointerEvent. The idle signal should still follow a
+   real mouse, while touch remains excluded by enhancedPointerEnabled. */
+window.addEventListener(
+  'mousemove',
+  (event) => {
+    syncPointer(event)
+  },
+  { passive: true },
+)
+
+document.documentElement.addEventListener('mouseleave', () => {
+  window.clearTimeout(pointerRestTimer)
+  pointerRestTimer = 0
   pointerState.visible = false
   lastWakeAt = 0
   if (pointerShell) {
     pointerShell.dataset.pointerState = activeInteractiveTarget ? 'armed' : 'hidden'
+    pointerShell.dataset.pointerRest = 'moving'
   }
   animatePointerShell()
 })
@@ -751,13 +797,39 @@ function animatePointerShell() {
   pointerRaf = window.requestAnimationFrame(frame)
 }
 
-function syncPointer(event: PointerEvent) {
+function syncEnhancedPointerCapability() {
+  supportsFinePointer = finePointerQuery.matches
+  supportsHoverPointer = hoverPointerQuery.matches
+  enhancedPointerEnabled = supportsFinePointer && supportsHoverPointer && !prefersReducedMotion
+
+  document.body.classList.toggle('has-pointer-fx', enhancedPointerEnabled)
+  document.body.classList.toggle('has-touch-probe', !supportsFinePointer || !supportsHoverPointer)
+
+  if (enhancedPointerEnabled) return
+
+  window.clearTimeout(pointerRestTimer)
+  pointerRestTimer = 0
+  if (pointerShell) pointerShell.dataset.pointerRest = 'moving'
+}
+
+function syncPointer(event: PointerEvent | MouseEvent) {
+  if (!enhancedPointerEnabled) syncEnhancedPointerCapability()
+  const pointerType = 'pointerType' in event ? event.pointerType : 'mouse'
+  if (!enhancedPointerEnabled && pointerType === 'mouse' && !prefersReducedMotion) {
+    enhancedPointerEnabled = true
+    document.body.classList.add('has-pointer-fx')
+  }
   if (!enhancedPointerEnabled) return
 
   markMotionActive(1500)
   pointerState.targetX = event.clientX
   pointerState.targetY = event.clientY
   pointerState.visible = true
+  if (isPointerOverControl(event)) {
+    resetPointerRest()
+  } else {
+    schedulePointerRest()
+  }
   animatePointerShell()
 
   if (!pointerSyncRaf) {
@@ -832,6 +904,7 @@ function setInteractiveFocus(
   element: HTMLElement,
   event?: PointerEvent,
 ) {
+  resetPointerRest()
   markMotionActive(1800)
   if (activeInteractiveTarget && activeInteractiveTarget !== element) {
     activeInteractiveTarget.classList.remove('is-hot')
@@ -903,6 +976,57 @@ function clearInteractiveFocus(element: HTMLElement) {
 
   rainBackground?.setInteractionMode('idle')
   rainBackground?.clearInteraction()
+  schedulePointerRest()
+}
+
+function isNestedStableControl(surface: HTMLElement, event: PointerEvent) {
+  const controlSelector = 'button, a, input, textarea, select, [data-stable-control]'
+  let target = event.target instanceof Element ? event.target : null
+
+  if ((!target || target === surface) && Number.isFinite(event.clientX) && Number.isFinite(event.clientY)) {
+    target = document.elementFromPoint(event.clientX, event.clientY)
+  }
+
+  const control = target?.closest(controlSelector)
+  return Boolean(control && control !== surface && surface.contains(control))
+}
+
+function isPointerOverControl(event: PointerEvent | MouseEvent) {
+  const target = document.elementFromPoint(event.clientX, event.clientY) || (event.target instanceof Element ? event.target : null)
+  return Boolean(target?.closest('button, a, input, textarea, select, [data-stable-control]'))
+}
+
+function suspendParentInteractionForControl(surface: HTMLElement) {
+  if (queuedInteractiveElement === surface) queuedInteractiveElement = null
+  queuedSurfaceAtmospheres.delete(surface)
+  clearLocalPointerPosition(surface)
+  clearSurfaceAtmosphere(surface)
+
+  if (activeInteractiveTarget === surface) {
+    clearInteractiveFocus(surface)
+  }
+
+  resetPointerRest()
+}
+
+function resetPointerRest() {
+  window.clearTimeout(pointerRestTimer)
+  pointerRestTimer = 0
+  if (pointerShell) pointerShell.dataset.pointerRest = 'moving'
+}
+
+function schedulePointerRest() {
+  resetPointerRest()
+  if (!enhancedPointerEnabled || !pointerShell || !pointerState.visible || document.hidden) return
+
+  pointerRestTimer = window.setTimeout(() => {
+    pointerRestTimer = 0
+    if (!enhancedPointerEnabled || !pointerState.visible || document.hidden) return
+
+    pointerShell.dataset.pointerState = 'idle'
+    pointerShell.dataset.pointerRest = 'settled'
+    animatePointerShell()
+  }, 920)
 }
 
 function beginInteractiveBeat(element: HTMLElement) {

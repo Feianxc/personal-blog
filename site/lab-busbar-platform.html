@@ -6,9 +6,9 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta
       name="description"
-      content="把母线铜排 Excel 计算流程做成可测试、可部署的平台：规则、导出、对照验证和启动流程怎么一起落进同一套仓库。"
+      content="我把散在 Excel、脚本和个人记忆里的母线铜排算法收进一个网页，同时保留旧公式和新旧结果对照。"
     />
-    <title>母线铜排平台：旧公式、对照快照和公网启动被固定下来 - FEIAN</title>
+    <title>母线铜排平台：把散在 Excel 里的算法收进网页 - FEIAN</title>
     <link rel="stylesheet" href="/src/entry.css" />
     <style>
       .proof-badges,
@@ -213,191 +213,86 @@
 
         <div class="entry-header-grid">
           <div class="entry-header-copy">
-            <p class="entry-kicker">构建记录 / excel → api → web</p>
-            <h1>母线铜排平台：旧公式、对照快照和公网启动被固定下来</h1>
-            <p class="entry-subhead">以前能算，但靠 Excel、脚本和记忆；这一轮先把事实源、对照快照和启动入口留下来。</p>
-            <p class="entry-lede">
-              这件事最开始不像平台，更像一堆 Excel、模板、规则和人工经验。难点不只是把结果算出来，而是把“始端 / 铜排 / U 型”的规则、导出模板、parity 对照和启动方式固定下来，让别人回来还能接着用。
-            </p>
+            <p class="entry-kicker">项目记录 / Excel 算法 → 网页工作台</p>
+            <h1>母线铜排平台：把散在 Excel 里的算法收进网页</h1>
+            <p class="entry-subhead">以前会算，主要靠 Excel、脚本和熟悉文件的人。现在公式、模板和启动方式都有固定位置。</p>
+            <p class="entry-lede">我没有一上来重写算法。先把已经用过的始端、铜排和 U 型公式留好，再让网页负责选择规格、计算和导出。每次改动都和旧结果对一遍，算得不一样就先停下来找原因。</p>
             <div class="entry-meta">
               <span>2026-04-23 整理</span>
               <span>FastAPI / Vite / React</span>
-              <span>冻结事实源 / parity / 公网启动</span>
+              <span>旧公式 / 新旧对照 / 网页启动</span>
             </div>
           </div>
 
           <aside class="entry-filecard entry-signalcard" aria-label="平台速览">
-            <p class="entry-filecard-label">固定下来的对象</p>
+            <p class="entry-filecard-label">现在从哪里开始都能找到路</p>
             <div class="entry-signalgrid">
-              <div>
-                <span>对象</span>
-                <strong>backend / frontend / tests / artifacts 不再散着放</strong>
-              </div>
-              <div>
-                <span>规则</span>
-                <strong>冻结事实源和导出模板被明确标成不可随意改名的资产</strong>
-              </div>
-              <div>
-                <span>验证</span>
-                <strong>pytest、前端构建、E2E 和 parity 流程都挂上了</strong>
-              </div>
-              <div>
-                <span>运行</span>
-                <strong>一键启动脚本会构建前端、拉起 uvicorn、启动 tunnel 并写日志</strong>
-              </div>
+              <div><span>公式</span><strong>旧版公式底稿和导出模板单独保留</strong></div>
+              <div><span>网页</span><strong>选择规格、计算和导出都在一个入口</strong></div>
+              <div><span>对照</span><strong>新结果会和旧结果逐项比较</strong></div>
+              <div><span>启动</span><strong>本地服务、日志和公网入口由脚本统一拉起</strong></div>
             </div>
-            <p class="entry-filecard-note">
-              这一轮留下的重点是 <code>facts</code>、测试、parity 快照和启动脚本。以后换机器或换人，先查这些，不用先问公式藏在哪个 Excel 里。
-            </p>
+            <p class="entry-filecard-note">换一台电脑或换一个人接手，也不用先问公式藏在哪张 Excel 里。</p>
           </aside>
         </div>
       </header>
 
       <main class="entry-main">
-        <section class="entry-section">
-          <h2>先保住旧公式，再谈平台</h2>
-          <p>
-            这种业务最容易卡在个人记忆里：公式在哪、模板在哪、哪个 Excel 该拿来对照，只有当时处理的人清楚；一旦换机器、换人、换线程，就重新掉回找文件、找规则、猜版本的状态。所以这次先把对象和范围固定下来。
-          </p>
-          
+        <section class="entry-section" id="origin" data-reading-label="先保旧公式">
+<h2>先把原来的算法留住</h2>
+          <p>这个项目最早是一叠 Excel、模板和零散脚本。只有熟悉它的人知道哪张表能算、哪张表只是参考。我先把正在使用的公式和模板单独留好，再整理文件名和入口。这样后面做网页时，旧算法仍然能随时拿出来对照。</p>
         </section>
 
-        <section class="entry-section" id="objects">
-          <h2>这轮先点名保护的文件</h2>
+        <section class="entry-section" id="objects" data-reading-label="文件别找错">
+<h2>公式、模板和对照表，各自放回固定位置</h2>
           <table class="proof-table">
-            <thead>
-              <tr>
-                <th scope="col">对象</th>
-                <th scope="col">现在放在哪</th>
-                <th scope="col">作用</th>
-              </tr>
-            </thead>
+            <thead><tr><th scope="col">内容</th><th scope="col">放在哪里</th><th scope="col">平时怎么用</th></tr></thead>
             <tbody>
-              <tr>
-                <td><strong>计算与规则装载</strong></td>
-                <td><code>backend/</code></td>
-                <td>不再让计算逻辑只藏在零散脚本里，后端成了正式入口。</td>
-              </tr>
-              <tr>
-                <td><strong>前端工作台</strong></td>
-                <td><code>frontend/</code></td>
-                <td>Vite + React 负责把选择、计算、导出和后续验证放进一个可操作界面。</td>
-              </tr>
-              <tr>
-                <td><strong>冻结事实源</strong></td>
-                <td><code>analysis_outputs/quickcalc_v3/**</code></td>
-                <td>这些文件被明确标成“不应随意删除或改名”的资产，说明系统开始有了稳定地基。</td>
-              </tr>
-              <tr>
-                <td><strong>对照验证</strong></td>
-                <td><code>tests/</code> 与 <code>artifacts/parity_snapshots/</code></td>
-                <td>这让“算对没有”不再只靠肉眼和记忆。</td>
-              </tr>
-              <tr>
-                <td><strong>上线入口</strong></td>
-                <td><code>一键启动公网服务.cmd</code> / <code>tools/project-launcher.ps1</code></td>
-                <td>这次不是只跑本地 demo，而是把构建、后端、tunnel、健康检查一起接通。</td>
-              </tr>
+              <tr><td><strong>计算逻辑</strong></td><td><code>backend/</code></td><td>网页把规格交给后端，后端按已有规则计算，不再调用临时脚本。</td></tr>
+              <tr><td><strong>操作页面</strong></td><td><code>frontend/</code></td><td>选择、计算、查看结果和导出文件都从这里进入。</td></tr>
+              <tr><td><strong>旧版公式底稿</strong></td><td><code>analysis_outputs/quickcalc_v3/**</code></td><td>这些文件不随意改名或覆盖，出现差异时可以回头查。</td></tr>
+              <tr><td><strong>新旧结果对照</strong></td><td><code>tests/</code> 与 <code>artifacts/parity_snapshots/</code></td><td>每次改规则后跑一遍，先确认旧规格没有被带坏。</td></tr>
+              <tr><td><strong>启动入口</strong></td><td><code>一键启动公网服务.cmd</code></td><td>一次完成前端构建、后端启动、健康检查和日志记录。</td></tr>
             </tbody>
           </table>
-          <p class="proof-note">
-            最关键的一点是：现在仓库已经不只是“有代码”，而是连冻结事实源、导出模板和启动流程都被明确纳入结构了。
-          </p>
+          <p class="proof-note">代码当然重要，但我更在意后来的人能不能找到公式、跑出结果，再和旧版对上。</p>
         </section>
 
-        <section class="entry-section" id="chain">
-          <h2>从本地公式到可访问服务</h2>
-          <div class="proof-badges" aria-label="流程节点">
-            <span class="proof-badge">backend/requirements.txt</span>
-            <span class="proof-badge">frontend/vite.config.ts</span>
-            <span class="proof-badge">analysis_outputs/quickcalc_v3</span>
-            <span class="proof-badge">artifacts/export_templates</span>
-            <span class="proof-badge">tests/</span>
-            <span class="proof-badge">tools/project-launcher.ps1</span>
-          </div>
-          <pre class="proof-pre">1. Excel / 冻结事实源继续保留
-2. FastAPI 后端负责规则装载、计算、导出
-3. Vite + React 前端负责选择、计算和结果入口
-4. pytest / 构建 / E2E / parity 挂上验证链
-5. project-launcher.ps1 负责构建 dist、启动 uvicorn、拉起 tunnel、写入 pid 与日志
-6. 复查对象是 facts、tests、launcher，不再猜“上次到底怎么跑起来的”</pre>
-          <p>
-            这里最像平台的地方，不是技术栈名字，而是它已经把“规则在哪、怎么验证、怎么起服务、日志落哪”一起说清楚了。
-          </p>
+        <section class="entry-section" id="chain" data-reading-label="怎样跑起来">
+<h2>从选规格到导出结果，已经有一条固定路线</h2>
+          <div class="proof-badges" aria-label="使用步骤"><span class="proof-badge">选择规格</span><span class="proof-badge">后端计算</span><span class="proof-badge">网页看结果</span><span class="proof-badge">导出文件</span><span class="proof-badge">新旧对照</span></div>
+          <pre class="proof-pre">1. 选择始端、铜排和 U 型规格
+2. 后端读取保留的公式并完成计算
+3. 网页显示结果并生成导出文件
+4. 自动测试与旧版快照逐项比较
+5. 对照通过后，启动脚本再开放访问入口</pre>
+          <p>这条路线把以前靠记忆完成的几步连了起来。公式在哪、结果怎么导出、改完以后怎样确认，都能从项目里直接找到。</p>
         </section>
 
-        <section class="entry-section" id="evidence">
-          <h2>材料：parity、构建和公网启动</h2>
+        <section class="entry-section" id="evidence" data-reading-label="确认没算错">
+<h2>每次改动，都要和旧结果对一遍</h2>
           <div class="proof-grid">
-            <article class="proof-card">
-              <h3>冻结事实源被正式点名</h3>
-              <p>
-                README 里直接列了 <code>start_sections.json</code>、<code>standard_blocks.json</code>、<code>u_sheet.json</code>、<code>formula_inventory.csv</code> 以及两份关键 Excel。
-                这说明系统已经承认：平台的地基不是个人记忆里的公式，而是可见、可指认、可保留的事实源。
-              </p>
-            </article>
-
-            <article class="proof-card">
-              <h3>模块化选择先做表达层，不急着硬造新内核</h3>
-              <p>
-                README 也把范围写得很清楚：当前模块化首先是一种新的选择表达方式，底层仍回落到已验证的 legacy <code>typeCode</code> /
-                block 公式体系。这个判断很重要，因为它说明这次没有为了“更先进”而打断稳定流程。
-              </p>
-            </article>
-
-            <article class="proof-card">
-              <h3>一键启动流程已经接到公网级别</h3>
-              <pre class="proof-pre">脚本默认会：
-1. 构建前端 dist
-2. 启动 uvicorn（127.0.0.1:8002）
-3. 启动 Cloudflare Tunnel
-4. 写入 pid / 日志到 .workspace/cloudflared/
-5. 做本地健康检查</pre>
-              <p>这说明这次不只是在本机“能跑”，而是已经开始考虑别人怎么稳定打开它。</p>
-            </article>
-
-            <article class="proof-card">
-              <h3>验证命令已经被收成固定动作</h3>
-              <p>
-                <code>python -m pytest tests -q</code>、<code>npm run build</code>、前端 E2E 都在 README 里被写成固定入口。它把“我知道怎么验”改成了“别人也能照着验”。</p>
-            </article>
+            <article class="proof-card"><h3>旧版底稿没有被丢掉</h3><p><code>start_sections.json</code>、<code>standard_blocks.json</code>、<code>u_sheet.json</code>、公式清单和两份关键 Excel 都单独保留。新页面不是凭空另写一套算法。</p></article>
+            <article class="proof-card"><h3>先换操作方式，不急着换计算内核</h3><p>网页可以用更清楚的方式选择规格，底层仍回到已经使用过的 <code>typeCode</code> 和 block 公式。这个阶段先让人好用，再慢慢整理内核。</p></article>
+            <article class="proof-card"><h3>启动脚本也留了日志</h3><p>脚本会构建前端、启动后端、拉起访问通道并做健康检查。哪一步没起来，不用靠猜。</p></article>
+            <article class="proof-card"><h3>检查命令有固定入口</h3><p>后端测试、前端构建和页面检查都写进 README。后来的人可以照着跑，不必重新问一遍。</p></article>
           </div>
         </section>
 
-        <section class="entry-section" id="next">
-          <h2>改规则前的核查对象</h2>
+        <section class="entry-section" id="next" data-reading-label="改前先检查">
+<h2>以后再改规则，我会先看这几件事</h2>
           <div class="proof-grid">
-            <article class="proof-card">
-              <h3>还没做完</h3>
-              <ul>
-                <li>模块化 busbar 现在先是选择表达层，不是完全自由拼装的新计算内核。</li>
-                <li>后续新增始端类型或铜排类型，仍要优先基于 <code>analysis_outputs/quickcalc_v3/**</code> 扩展。</li>
-                <li>本地私有配置仍放在 <code>.workspace/cloudflared/runtime/launcher.settings.json</code>，说明运行环境还没完全产品化。</li>
-              </ul>
-            </article>
-
-            <article class="proof-card">
-              <h3>后续对象</h3>
-              <ul>
-                <li>核查冻结事实源和 parity 快照有没有被新需求冲坏。</li>
-                <li>核查 <code>project-launcher.ps1</code> 的启动流程是否还和当前运行方式一致。</li>
-                <li>更自由的模块化放在稳定 legacy 体系之后。</li>
-              </ul>
-            </article>
+            <article class="proof-card"><h3>现在还没做满</h3><ul><li>网页已经能组合常用规格，但还不是任意部件都能自由拼装。</li><li>新增类型仍要先补进旧版公式底稿，再接到网页里。</li><li>公网启动仍带有本机配置，换环境时需要重新填写。</li></ul></article>
+            <article class="proof-card"><h3>下次先检查</h3><ul><li>旧规格的新旧对照是否仍然一致。</li><li>启动脚本和当前端口、访问方式是否匹配。</li><li>新需求有没有先写清公式，再去改页面。</li></ul></article>
           </div>
         </section>
 
-        <section class="entry-note">
-          <p>
-            留下来的不是“做了个母线平台”这句话，而是 Excel、脚本和记录被收成一套别人回来还能接着跑的东西。
-          </p>
-        </section>
+        <section class="entry-note"><p>以前这套算法会不会继续工作，很看谁还记得那些 Excel。现在至少有一个人人都能找到的入口。</p></section>
       </main>
     </div>
     <script type="module" src="/src/entry.ts"></script>
   </body>
 </html>
-
 
 
 

@@ -5,13 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "audit:copy": "node ./scripts/audit-human-copy.mjs",
     "clean:dist": "node ./scripts/clean-dist.mjs",
     "build": "npm run clean:dist && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "verify:entry": "node ./scripts/verify-entry-frame-readwrite.mjs",
     "qa:full": "node ./scripts/full-site-qa.mjs",
-    "validate": "npm run lint && npm run build && npm run verify:entry && npm run qa:full"
+    "validate": "npm run audit:copy && npm run lint && npm run build && npm run verify:entry && npm run qa:full"
   },
   "dependencies": {
     "framer-motion": "^12.38.0",

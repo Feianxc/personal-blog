@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="description" content="老板研究台 V1：自动化选股的范围说明，重点是研究压缩、风格学习和多角色晨会整理。" />
-    <title>老板研究台 V1：压缩股票池，但不越过人的判断 - FEIAN</title>
+    <meta name="description" content="老板研究台 V1：后台先缩小股票范围，前台整理今天值得看的材料，最后仍由人决定。" />
+    <title>老板研究台 V1：先把今天值得看的股票挑出来 - FEIAN</title>
     <link rel="stylesheet" href="/src/entry.css" />
     <style>
       .entry-anchor-nav,.proof-badges{display:flex;flex-wrap:wrap;gap:.6rem}.entry-anchor-nav{margin:1rem 0 0;padding:0;list-style:none}.entry-anchor-nav a,.proof-badge{display:inline-flex;align-items:center;padding:.45rem .75rem;border:1px solid var(--line-strong);border-radius:999px;background:var(--panel-soft);color:var(--muted);font-family:var(--mono);font-size:.76rem;letter-spacing:.04em}.entry-section code,.proof-table code{font-family:var(--mono);font-size:.84em;color:var(--accent-strong)}.proof-grid{display:grid;gap:1rem;margin-top:1rem}.proof-card,.proof-note{padding:1rem 1.05rem;border:1px solid var(--line);background:var(--panel-soft)}.proof-card h3{margin:0;font-size:1rem;line-height:1.5}.proof-card p,.proof-note,.proof-card li{color:var(--muted);line-height:1.8}.proof-note{margin-top:1rem;border-style:dashed}.proof-table{width:100%;margin-top:1rem;border-collapse:collapse}.proof-table th,.proof-table td{padding:.8rem .9rem;border:1px solid var(--line);text-align:left;vertical-align:top}.proof-table th{color:var(--accent);font-family:var(--mono);font-size:.76rem;letter-spacing:.05em}.proof-table td{color:var(--muted);line-height:1.8}.proof-table strong{color:var(--text)}.proof-pre{margin:1rem 0 0;padding:1rem 1.05rem;overflow:auto;border:1px solid var(--line);background:#091019;color:var(--accent-strong);font-family:var(--mono);font-size:.8rem;line-height:1.75}@media (min-width:760px){.proof-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media (max-width:760px){.proof-table{display:block;overflow-x:auto}}
@@ -66,19 +66,36 @@
   <body class="entry-page entry-page--workflow entry-page--enhanced">
     <div class="entry-shell">
       <header class="entry-topbar"><a href="/index.html"><strong>FEIAN</strong><span>工作流档案 / stockdesk</span></a><nav class="entry-nav" aria-label="页面导航"><a href="/index.html">首页</a><a href="/workflow.html">工作流</a><a href="/archive.html">归档 / 时间线</a></nav></header>
-      <header class="entry-header entry-header-feature"><div class="entry-filebar" aria-label="文章状态"><div class="entry-filebar-tag"><span>工作流案例 / workflow</span><strong>boss mirror / stock desk</strong></div><div class="entry-filebar-route"><span>项目 → 自动化选股</span><span>更新 2026-04-23</span></div></div><div class="entry-header-grid"><div class="entry-header-copy"><p class="entry-kicker">research compression / agent meeting / style memory</p><h1>老板研究台 V1：压缩股票池，但不越过人的判断</h1><p class="entry-subhead">dailyQueue、focusBriefs 和 styleMemorySummary 负责压出今天该看的票。</p><p class="entry-lede">这个项目不碰自动交易。它像一张研究桌面：后台把股票池压缩成今天值得看的几项，前台把材料递上来；通过、退回和备注再回流成风格记忆。</p><div class="entry-meta"><span>2026-04-23 整理</span><span>FastAPI / product desk</span><span>agentUniverse / dailyQueue / OpenClaw bridge</span></div></div><aside class="entry-filecard entry-signalcard" aria-label="研究台速览"><p class="entry-filecard-label">V1 的 4 个真实范围</p><div class="entry-signalgrid"><div><span>不是</span><strong>不是自动交易 / 自动下单 / 券商直连</strong></div><div><span>前台</span><strong>今日待处理队列、单票材料档案、风格记忆</strong></div><div><span>后台</span><strong>agentUniverse → agentDesk → dailyQueue</strong></div><div><span>龙虾</span><strong>OpenClaw 是上层研究代理，不是交易执行内核</strong></div></div><p class="entry-filecard-note">价值不在替老板做决定，而在压出当天处理队列。</p></aside></div></header>
+      <header class="entry-header entry-header-feature"><div class="entry-filebar" aria-label="文章状态"><div class="entry-filebar-tag"><span>工作流案例 / workflow</span><strong>boss mirror / stock desk</strong></div><div class="entry-filebar-route"><span>项目 → 自动化选股</span><span>更新 2026-04-23</span></div></div><div class="entry-header-grid"><div class="entry-header-copy"><p class="entry-kicker">股票池 / 当日清单 / 人工反馈</p><h1>老板研究台 V1：先把今天值得看的股票挑出来</h1><p class="entry-subhead">后台先把大股票池缩成一张今日清单，前台再把每只股票的材料放到一起。</p><p class="entry-lede">这个项目不会自动下单。它更像一张研究桌面：先把今天值得看的几只股票挑出来，再把理由、风险和原始资料放到同一页。老板通过、退回或写备注以后，系统记住这些偏好，但最后的决定始终由人来做。</p><div class="entry-meta"><span>2026-04-23 整理</span><span>FastAPI / product desk</span><span>agentUniverse / dailyQueue / OpenClaw bridge</span></div></div><aside class="entry-filecard entry-signalcard" aria-label="研究台速览"><p class="entry-filecard-label">第一版只做这些</p><div class="entry-signalgrid"><div><span>底线</span><strong>不自动交易，不连接券商下单</strong></div><div><span>清单</span><strong>先给出今天最值得看的几只股票</strong></div><div><span>材料</span><strong>理由、风险和原始资料放在同一页</strong></div><div><span>反馈</span><strong>通过、退回和备注会留下来</strong></div></div><p class="entry-filecard-note">它帮我缩小当天要看的范围，最终决定仍由人来做。</p></aside></div></header>
       <main class="entry-main">
-        <section class="entry-section"><h2>不碰自动下单</h2><p>自动化选股很容易写过头：全市场扫描、AI 判断、自动执行。但当前仓库把范围写得比较清楚：它是研究压缩 + 风格学习工作台，不是交易执行系统。这个“不做”是项目范围。</p></section>
-        <section class="entry-section" id="objects"><h2>研究台靠哪些对象撑住</h2><table class="proof-table"><thead><tr><th scope="col">对象</th><th scope="col">现在放在哪</th><th scope="col">为什么不能少</th></tr></thead><tbody><tr><td><strong>产品前台</strong></td><td><code>product/index.html</code> / <code>styles.css</code> / <code>app.js</code></td><td>老板打开的是桌面，不是后端日志；三大视图要在前台收住。</td></tr><tr><td><strong>产品后端</strong></td><td><code>product/backend/app.py</code> / <code>engine.py</code> / <code>universe.py</code></td><td>Demo / Live / Synthetic、股票池、评分和状态结构都要在后端稳定产出。</td></tr><tr><td><strong>核心状态</strong></td><td><code>agentUniverse</code> / <code>agentDesk</code> / <code>dailyQueue</code> / <code>focusBriefs</code></td><td>它们把“全池扫描”压成当天处理队列，是老板桌面的主干。</td></tr><tr><td><strong>风格记忆</strong></td><td><code>styleMemorySummary</code> / <code>approved</code> / <code>rejected</code> / <code>reasonTag</code></td><td>老板每次判断都要留下最小反馈，不然系统永远不像他。</td></tr><tr><td><strong>OpenClaw 桥接</strong></td><td><code>openclaw_kit/</code></td><td>龙虾只做上层研究代理、盯盘摘要、复核建议和风格镜像，不接管交易执行。</td></tr><tr><td><strong>交接文档</strong></td><td><code>docs/PROJECT_HANDOFF.md</code> / <code>BOSS_MIRROR_V1.md</code></td><td>它们把当前定位从“系统很完整”改成“帮助老板更快处理今天研究任务”。</td></tr></tbody></table></section>
-        <section class="entry-section" id="chain"><h2>从股票池到老板桌面</h2><div class="proof-badges" aria-label="信息流节点"><span class="proof-badge">agentUniverse</span><span class="proof-badge">chunkSize = 10</span><span class="proof-badge">push / watch / drop</span><span class="proof-badge">agentDesk</span><span class="proof-badge">dailyQueue</span><span class="proof-badge">AI 团队晨会</span></div><pre class="proof-pre">1. 股票池先进入 agentUniverse
-2. 按 chunkSize = 10 切成分队批次
-3. 分队先分层：push / watch / drop
-4. 主研究台汇总成 agentDesk
-5. 面向老板再压成 dailyQueue / focusBriefs / styleMemorySummary
-6. 需要进一步收敛时，再触发 AI 团队晨会：侦察 / 分析 / 风险 / 简报</pre><p>这套流程不替老板拍板，只减少当天不值得立刻看的噪音。</p></section>
-        <section class="entry-section" id="evidence"><h2>材料：dailyQueue、审批回写、风格记忆</h2><div class="proof-grid"><article class="proof-card"><h3>README 直接把项目改名成研究台</h3><p>根 README 写得很清楚：这是“老板研究台 V1”，不是 AI 自动交易系统，而是研究压缩 + 风格学习工作台。</p></article><article class="proof-card"><h3>BOSS_MIRROR_V1 写清了非目标</h3><p>不做自动交易 / 自动下单，不做券商直连，不做全市场 24x7 调度，不做复杂强化学习训练，也不做多 agent 展示。</p></article><article class="proof-card"><h3>PROJECT_HANDOFF 已经说明主干重构完成</h3><p>截至 2026-04-06，主干已完成 boss-facing stockdesk workspace 重构，重点从全景展示转向“先帮老板缩小范围”。</p></article><article class="proof-card"><h3>审批回写是风格入口</h3><p><code>approved / rejected</code>、<code>reasonTag</code>、<code>note</code> 这些对象说明系统不是只会输出分数，而是开始接老板的反馈。</p></article></div></section>
-        <section class="entry-section" id="next"><h2>后续核查对象</h2><div class="proof-grid"><article class="proof-card"><h3>还没做完</h3><ul><li>Live 模式仍以稳定优先、精选股票池、串行抓取为主。</li><li>风格记忆还处在最小反馈阶段，不是完整训练系统。</li><li>OpenClaw 仍是桥接验证期和上层研究代理试运行期。</li></ul></article><article class="proof-card"><h3>后续对象</h3><ul><li><code>product/start_server.py</code> 与 <code>127.0.0.1:8787</code> 启动检查。</li><li><code>dailyQueue</code> 是否能压出当天队列。</li><li>OpenClaw 桥接保持研究代理范围，不接交易执行。</li></ul></article></div></section>
-        <section class="entry-note"><p>它没有夸大 AI 判断，而是把注意力压缩、材料档案和风格回写摆在台面上。</p></section>
+        <section class="entry-section" id="no-trade" data-reading-label="不自动下单">
+<h2>它只整理研究材料，不会替人下单</h2>
+          <p>“自动化选股”很容易让人误以为系统会自己买卖。这里没有这层能力，也不打算偷偷加进去。它只负责缩小研究范围、整理材料和记录反馈。下单、仓位和风险承担都留给人。</p>
+        </section>
+        <section class="entry-section" id="objects" data-reading-label="桌面怎么搭">
+<h2>这张研究桌面里，哪几样东西最重要</h2>
+          <table class="proof-table"><thead><tr><th scope="col">内容</th><th scope="col">位置</th><th scope="col">用来做什么</th></tr></thead><tbody><tr><td><strong>研究桌面</strong></td><td><code>product/index.html</code></td><td>显示今日清单、单只股票材料和反馈入口。</td></tr><tr><td><strong>后台服务</strong></td><td><code>product/backend/</code></td><td>读取股票池，整理评分和状态。</td></tr><tr><td><strong>今日清单</strong></td><td><code>dailyQueue</code> / <code>focusBriefs</code></td><td>把大股票池缩成今天值得先看的几项。</td></tr><tr><td><strong>偏好记录</strong></td><td><code>approved</code> / <code>rejected</code> / <code>reasonTag</code></td><td>记住老板为什么通过或退回，不只记一个结果。</td></tr><tr><td><strong>研究助手</strong></td><td><code>openclaw_kit/</code></td><td>整理盯盘摘要和复核建议，不接触交易执行。</td></tr></tbody></table>
+        </section>
+        <section class="entry-section" id="chain" data-reading-label="今天看什么">
+<h2>从一池股票到今天的待看清单</h2>
+          <div class="proof-badges" aria-label="研究步骤"><span class="proof-badge">股票池</span><span class="proof-badge">分批扫描</span><span class="proof-badge">先看 / 观察 / 暂缓</span><span class="proof-badge">今日清单</span><span class="proof-badge">人工反馈</span></div>
+          <pre class="proof-pre">1. 股票池分批进入后台
+2. 每只股票先归到“先看、观察、暂缓”
+3. 后台把最值得看的项目收进 dailyQueue
+4. 前台补齐理由、风险和原始资料
+5. 老板通过、退回或写备注
+6. 下一次整理时参考这些真实反馈</pre>
+          <p>系统省掉的是当天不值得立刻看的噪音，不是人的判断。</p>
+        </section>
+        <section class="entry-section" id="evidence" data-reading-label="判断会留下">
+<h2>每次通过或退回，都会留下理由</h2>
+          <div class="proof-grid"><article class="proof-card"><h3>今日清单不是一张分数表</h3><p>每只股票都带着摘要、风险和资料入口，老板能看见它为什么被放到今天。</p></article><article class="proof-card"><h3>退回也有用</h3><p><code>reasonTag</code> 和备注会记录“为什么不看”，下次遇到相似情况可以少走一遍。</p></article><article class="proof-card"><h3>研究助手只做整理</h3><p>它可以生成摘要和复核建议，但不能把研究建议变成交易动作。</p></article><article class="proof-card"><h3>项目定位已经收窄</h3><p>第一版只想帮助老板更快处理今天的研究任务，不追求全市场全天自动运行。</p></article></div>
+        </section>
+        <section class="entry-section" id="next" data-reading-label="还在试用">
+<h2>目前还是试用版，这几件事没有做满</h2>
+          <div class="proof-grid"><article class="proof-card"><h3>现在的限制</h3><ul><li>实时模式先从精选股票池和串行抓取开始。</li><li>偏好记录还很简单，远不到自动学会全部判断。</li><li>OpenClaw 仍处在研究助手试用阶段。</li></ul></article><article class="proof-card"><h3>接下来先看</h3><ul><li>今日清单能不能稳定压出真正值得看的项目。</li><li>反馈理由是否足够清楚，能不能被下次复用。</li><li>任何新功能都不能越过“不自动交易”的边界。</li></ul></article></div>
+        </section>
+        <section class="entry-note"><p>如果它最后只是让我少翻几十只暂时不用看的股票，这个版本就已经有用了。</p></section>
       </main>
     </div><script type="module" src="/src/entry.ts"></script>
   </body>
